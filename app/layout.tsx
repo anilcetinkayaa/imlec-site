@@ -13,21 +13,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "İmleç Yazılım | FİŞ260",
+  title: "İmleç Yazılım",
   description:
-    "İmleç Yazılım tarafından geliştirilen FİŞ260, muhasebeciler için masaüstü OCR ve Excel aktarım uygulamasıdır.",
+    "İmleç Yazılım, muhasebe ve finans ekipleri için teknik, sade ve güvenilir masaüstü yazılım ürünleri geliştirir.",
   keywords: [
     "İmleç Yazılım",
     "FİŞ260",
+    "ÇÖZVER",
     "muhasebe",
+    "finansal analiz",
     "OCR",
-    "fiş okuma",
-    "Excel aktarımı",
+    "masaüstü yazılım",
   ],
   openGraph: {
-    title: "İmleç Yazılım | FİŞ260",
+    title: "İmleç Yazılım",
     description:
-      "Muhasebeciler için masaüstü OCR ve Excel aktarım uygulaması.",
+      "Muhasebe ve finans ekipleri için masaüstü yazılım ürünleri.",
     type: "website",
     locale: "tr_TR",
     siteName: "İmleç Yazılım",

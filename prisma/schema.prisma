@@ -1,0 +1,375 @@
+// Review draft only.
+// Do not run migrations from this schema until the model names, relations,
+// enum values, and constraints are reviewed.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  SUPPORT
+  ADMIN
+  OWNER
+}
+
+enum SessionType {
+  WEB
+  DESKTOP
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  EXPIRED
+  PAUSED
+}
+
+enum EntitlementStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+  REVOKED
+  GRACE_PERIOD
+}
+
+enum EntitlementSource {
+  SUBSCRIPTION
+  TRIAL
+  ADMIN
+  MANUAL
+}
+
+enum DeviceStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum WebhookEventStatus {
+  PENDING
+  PROCESSED
+  FAILED
+  IGNORED
+}
+
+enum AuditEventType {
+  USER_LOGIN
+  DESKTOP_SESSION_CREATED
+  DESKTOP_SESSION_REVOKED
+  DEVICE_REGISTERED
+  DEVICE_REVOKED
+  ENTITLEMENT_ACTIVATED
+  ENTITLEMENT_REVOKED
+  ENTITLEMENT_EXPIRED
+  SUBSCRIPTION_UPDATED
+  PAYMENT_SUCCEEDED
+  PAYMENT_FAILED
+  WEBHOOK_PROCESSED
+  WEBHOOK_FAILED
+  ADMIN_ACTION
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  name            String?
+  passwordHash    String?
+  role            UserRole  @default(USER)
+  emailVerifiedAt DateTime?
+  disabledAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  sessions       Session[]
+  subscriptions  Subscription[]
+  entitlements   Entitlement[]
+  devices        Device[]
+  payments       Payment[]
+  invoices       Invoice[]
+  memberships    Membership[]
+  adminActions   AdminAction[] @relation("AdminActionsByUser")
+  targetedActions AdminAction[] @relation("AdminActionsForUser")
+  auditEvents    AuditLog[]    @relation("AuditActor")
+  targetedEvents AuditLog[]    @relation("AuditTarget")
+
+  @@index([role])
+  @@index([disabledAt])
+}
+
+model Session {
+  id         String      @id @default(cuid())
+  userId     String
+  productId  String?
+  deviceId   String?
+  type       SessionType
+  tokenHash  String      @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  lastUsedAt DateTime?
+  createdAt  DateTime    @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  device  Device?  @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+
+  @@index([userId, type])
+  @@index([productId])
+  @@index([deviceId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+}
+
+model Product {
+  id        String        @id @default(cuid())
+  slug      String        @unique
+  name      String
+  status    ProductStatus @default(ACTIVE)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  subscriptions Subscription[]
+  entitlements  Entitlement[]
+  devices       Device[]
+  sessions      Session[]
+  payments      Payment[]
+  invoices      Invoice[]
+
+  @@index([status])
+}
+
+model Subscription {
+  id                     String             @id @default(cuid())
+  userId                 String
+  productId              String
+  provider               String
+  providerCustomerId     String?
+  providerSubscriptionId String
+  providerVariantId      String?
+  status                 SubscriptionStatus
+  renewsAt               DateTime?
+  endsAt                 DateTime?
+  trialEndsAt            DateTime?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  product      Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  entitlements Entitlement[]
+  payments     Payment[]
+  invoices     Invoice[]
+
+  @@unique([provider, providerSubscriptionId])
+  @@index([provider, providerCustomerId])
+  @@index([userId, productId])
+  @@index([status])
+}
+
+model Entitlement {
+  id             String            @id @default(cuid())
+  userId         String
+  productId      String
+  subscriptionId String?
+  status         EntitlementStatus
+  source         EntitlementSource
+  startsAt       DateTime          @default(now())
+  expiresAt      DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  product      Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, productId])
+  @@index([productId, status])
+  @@index([subscriptionId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+}
+
+model Device {
+  id              String       @id @default(cuid())
+  userId          String
+  productId       String
+  deviceName      String?
+  fingerprintHash String
+  status          DeviceStatus @default(ACTIVE)
+  lastSeenAt      DateTime?
+  trustedUntil    DateTime?
+  revokedAt       DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Restrict)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  sessions Session[]
+
+  @@unique([userId, productId, fingerprintHash])
+  @@index([userId, productId])
+  @@index([trustedUntil])
+  @@index([revokedAt])
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  userId          String
+  productId       String
+  subscriptionId  String?
+  provider        String
+  providerOrderId String
+  amount          Int
+  currency        String
+  status          PaymentStatus
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  product      Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, providerOrderId])
+  @@index([userId, productId])
+  @@index([subscriptionId])
+  @@index([status])
+  @@index([paidAt])
+}
+
+model Invoice {
+  id                String   @id @default(cuid())
+  userId            String
+  productId         String
+  subscriptionId    String?
+  provider          String
+  providerInvoiceId String
+  invoiceUrl        String?
+  downloadUrl       String?
+  issuedAt          DateTime?
+  createdAt         DateTime @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  product      Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, providerInvoiceId])
+  @@index([userId, productId])
+  @@index([subscriptionId])
+  @@index([issuedAt])
+}
+
+model WebhookEvent {
+  id           String             @id @default(cuid())
+  provider     String
+  eventId      String
+  eventType    String
+  payloadHash  String?
+  payload      Json
+  status       WebhookEventStatus @default(PENDING)
+  processedAt  DateTime?
+  errorMessage String?
+  createdAt    DateTime           @default(now())
+
+  @@unique([provider, eventId])
+  @@index([provider, eventType])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id            String         @id @default(cuid())
+  actorUserId   String?
+  targetUserId  String?
+  adminActionId String?
+  eventType     AuditEventType
+  entityType    String?
+  entityId      String?
+  metadata      Json?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime       @default(now())
+
+  actor       User?        @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  target      User?        @relation("AuditTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+  adminAction AdminAction? @relation(fields: [adminActionId], references: [id], onDelete: SetNull)
+
+  @@index([actorUserId])
+  @@index([targetUserId])
+  @@index([eventType])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model AdminAction {
+  id           String   @id @default(cuid())
+  adminUserId  String
+  targetUserId String?
+  action       String
+  reason       String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  admin      User       @relation("AdminActionsByUser", fields: [adminUserId], references: [id], onDelete: Restrict)
+  targetUser User?      @relation("AdminActionsForUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+  auditLogs  AuditLog[]
+
+  @@index([adminUserId])
+  @@index([targetUserId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model Organization {
+  id           String    @id @default(cuid())
+  name         String
+  billingEmail String?
+  archivedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  memberships Membership[]
+
+  @@index([archivedAt])
+}
+
+model Membership {
+  id             String         @id @default(cuid())
+  userId         String
+  organizationId String
+  role           MembershipRole @default(MEMBER)
+  removedAt      DateTime?
+  createdAt      DateTime       @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId, role])
+  @@index([removedAt])
+}
