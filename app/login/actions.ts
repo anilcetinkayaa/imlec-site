@@ -2,7 +2,17 @@
 
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
-import { signIn } from "@/auth";
+import { auth, signIn } from "@/auth";
+
+function isNextRedirectError(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "digest" in error &&
+    typeof error.digest === "string" &&
+    error.digest.startsWith("NEXT_REDIRECT")
+  );
+}
 
 function getSafeCallbackUrl(value: FormDataEntryValue | null) {
   if (typeof value !== "string") {
@@ -20,38 +30,33 @@ function getSafeCallbackUrl(value: FormDataEntryValue | null) {
   return value;
 }
 
-function isFailedSignInUrl(value: string) {
-  const url = new URL(value, "https://imlecyazilim.com");
-
-  return (
-    url.searchParams.has("error") ||
-    url.pathname === "/login" ||
-    url.pathname === "/api/auth/callback/credentials"
-  );
-}
-
 export async function loginAction(formData: FormData) {
   const redirectTo = getSafeCallbackUrl(formData.get("callbackUrl"));
-  let signInResult: string | undefined;
 
   try {
-    signInResult = await signIn("credentials", {
+    console.log("[AUTH DEBUG] signIn redirectTo:", redirectTo);
+
+    const signInResult = await signIn("credentials", {
       email: formData.get("email"),
       password: formData.get("password"),
-      redirect: false,
       redirectTo,
     });
+
+    console.log("[AUTH DEBUG] signIn result:", signInResult);
+    console.log("[AUTH DEBUG] returned URL:", signInResult);
+
+    const session = await auth();
+    console.log("[AUTH DEBUG] session exists after login:", !!session?.user);
   } catch (error) {
+    if (isNextRedirectError(error)) {
+      throw error;
+    }
+
     if (error instanceof AuthError) {
+      console.log("[AUTH DEBUG] signIn AuthError:", error.type);
       redirect("/login?error=invalid-credentials");
     }
 
     throw error;
   }
-
-  if (!signInResult || isFailedSignInUrl(signInResult)) {
-    redirect("/login?error=invalid-credentials");
-  }
-
-  redirect(redirectTo);
 }
