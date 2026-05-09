@@ -1,7 +1,7 @@
 "use server";
 
 import { AuthError } from "next-auth";
-import { auth, signIn } from "@/auth";
+import { signIn } from "@/auth";
 
 export type LoginActionResult = {
   success: boolean;
@@ -41,9 +41,6 @@ export async function loginAction(
         return { success: false, error: "Email veya şifre hatalı." };
       }
     }
-
-    const session = await auth();
-    console.log("[AUTH DEBUG] session exists after login:", !!session?.user);
 
     return { success: true };
   } catch (error) {

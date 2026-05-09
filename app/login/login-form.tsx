@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { FormEvent, useState, useTransition } from "react";
 import { loginAction } from "./actions";
 
@@ -15,7 +14,6 @@ export function LoginForm({
   initialError,
   registered,
 }: LoginFormProps) {
-  const router = useRouter();
   const [error, setError] = useState(initialError);
   const [isPending, startTransition] = useTransition();
 
@@ -29,8 +27,7 @@ export function LoginForm({
       const result = await loginAction(formData);
 
       if (result.success) {
-        router.push(callbackUrl);
-        router.refresh();
+        window.location.href = callbackUrl;
         return;
       }
 
