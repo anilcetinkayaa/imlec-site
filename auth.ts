@@ -31,7 +31,10 @@ export const authConfig = {
             ? credentials.password
             : "";
 
+        console.log("[AUTH DEBUG] normalized email:", email);
+
         if (!email || !password) {
+          console.log("[AUTH DEBUG] missing credentials");
           return null;
         }
 
@@ -47,6 +50,10 @@ export const authConfig = {
           },
         });
 
+        console.log("[AUTH DEBUG] user found:", !!user);
+        console.log("[AUTH DEBUG] passwordHash exists:", !!user?.passwordHash);
+        console.log("[AUTH DEBUG] disabledAt:", user?.disabledAt);
+
         if (!user?.passwordHash || user.disabledAt) {
           return null;
         }
@@ -55,6 +62,8 @@ export const authConfig = {
           password,
           user.passwordHash,
         );
+
+        console.log("[AUTH DEBUG] password matches:", passwordMatches);
 
         if (!passwordMatches) {
           return null;
