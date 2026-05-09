@@ -21,15 +21,26 @@ export async function loginAction(
       redirect: false,
     });
 
+    const returnedUrl =
+      typeof signInResult === "string"
+        ? signInResult
+        : typeof signInResult === "object" &&
+            signInResult !== null &&
+            "url" in signInResult &&
+            typeof signInResult.url === "string"
+          ? signInResult.url
+          : null;
+
     console.log("[AUTH DEBUG] signIn result:", signInResult);
-    console.log(
-      "[AUTH DEBUG] returned URL:",
-      typeof signInResult === "object" &&
-        signInResult !== null &&
-        "url" in signInResult
-        ? signInResult.url
-        : null,
-    );
+    console.log("[AUTH DEBUG] returned URL:", returnedUrl);
+
+    if (returnedUrl) {
+      const url = new URL(returnedUrl, "https://imlecyazilim.com");
+
+      if (url.searchParams.has("error")) {
+        return { success: false, error: "Email veya şifre hatalı." };
+      }
+    }
 
     const session = await auth();
     console.log("[AUTH DEBUG] session exists after login:", !!session?.user);

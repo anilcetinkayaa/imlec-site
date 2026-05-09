@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -43,7 +44,17 @@ function formatDate(date: Date | null) {
 }
 
 export default async function AccountPage() {
+  const cookieStore = await cookies();
+  const cookieNames = cookieStore.getAll().map((cookie) => cookie.name);
+  const authCookieNames = cookieNames.filter((name) =>
+    name.includes("authjs."),
+  );
   const session = await auth();
+
+  console.log("[AUTH DEBUG] account auth cookies:", authCookieNames);
+  console.log("[AUTH DEBUG] account session exists:", !!session?.user);
+  console.log("[AUTH DEBUG] account session user id:", session?.user?.id);
+  console.log("[AUTH DEBUG] account session user email:", session?.user?.email);
 
   if (!session?.user) {
     redirect("/login");
