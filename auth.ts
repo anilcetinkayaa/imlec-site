@@ -7,7 +7,7 @@ import { normalizeEmail, verifyPassword } from "@/src/server/auth/password";
 export const authConfig = {
   adapter: PrismaAdapter(prisma),
   secret: process.env.AUTH_SECRET,
-  trustHost: process.env.AUTH_TRUST_HOST === "true",
+  trustHost: true,
   session: {
     strategy: "jwt",
   },
