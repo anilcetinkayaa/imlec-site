@@ -221,6 +221,8 @@ model Device {
   productId       String
   deviceName      String?
   fingerprintHash String
+  os              String?
+  appVersion      String?
   status          DeviceStatus @default(ACTIVE)
   lastSeenAt      DateTime?
   trustedUntil    DateTime?
