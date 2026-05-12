@@ -74,7 +74,14 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
         },
         devices: {
           orderBy: { lastSeenAt: "desc" },
-          include: {
+          select: {
+            id: true,
+            deviceName: true,
+            os: true,
+            appVersion: true,
+            status: true,
+            lastSeenAt: true,
+            revokedAt: true,
             product: {
               select: {
                 id: true,
