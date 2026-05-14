@@ -262,7 +262,10 @@ export default async function AccountPage() {
                 </div>
               </article>
 
-              <article className="rounded-xl border border-blue-400/20 bg-blue-400/[0.055] p-6 shadow-[0_0_40px_rgba(59,130,246,0.08)]">
+              <article
+                id="download"
+                className="rounded-xl border border-blue-400/25 bg-blue-400/[0.065] p-6 shadow-[0_0_46px_rgba(59,130,246,0.1)]"
+              >
                 <p className="font-mono text-xs uppercase tracking-[0.22em] text-blue-300/75">
                   İndirilebilir uygulamalar
                 </p>
@@ -270,8 +273,8 @@ export default async function AccountPage() {
                   Uygulama indir
                 </h2>
                 <p className="mt-3 text-sm leading-6 text-zinc-400">
-                  Yetkili ürünleriniz için Windows installer dosyaları burada
-                  görünür. FİŞ260 installer gerçek download akışına bağlıdır.
+                  Yetkili ürünleriniz için Windows kurulum dosyaları burada
+                  görünür. FİŞ260 indirme akışı ürün erişimiyle korunur.
                 </p>
                 <div className="mt-5 grid gap-3">
                   {products.map((product) =>

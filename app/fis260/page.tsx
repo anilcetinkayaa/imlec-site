@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const workflow = [
-  "Fiş görsellerini yükle",
-  "OCR ile alanları çıkar",
-  "Kontrol ekranında düzenle",
-  "Excel çıktısını oluştur",
+  "Fiş yükle",
+  "OCR işle",
+  "Alanları kontrol et",
+  "Excel al",
 ];
 
 const features = [
@@ -25,22 +25,22 @@ const features = [
 ];
 
 const technical = [
-  ["Platform", "Windows desktop"],
-  ["Çıktı", "Excel uyumlu dosya"],
+  ["Platform", "Windows masaüstü"],
+  ["Çıktı", "Excel dosyası"],
   ["Sürüm", "v0.1.0"],
-  ["Dağıtım", "Account panel installer"],
+  ["Dağıtım", "Yetkili Account paneli"],
 ];
 
 const faqs = [
   {
     question: "FİŞ260 web uygulaması mı?",
     answer:
-      "Hayır. FİŞ260 Windows üzerinde çalışan masaüstü uygulamasıdır. Web platformu üyelik, erişim, cihaz ve installer akışını yönetir.",
+      "Hayır. FİŞ260 Windows üzerinde çalışan masaüstü uygulamasıdır. Web platformu üyelik, erişim, cihaz ve kurulum dosyası akışını yönetir.",
   },
   {
     question: "Installer nereden indirilir?",
     answer:
-      "Ürün erişimi olan kullanıcılar giriş yaptıktan sonra Account panelinde FİŞ260 Windows installer butonunu görür.",
+      "Ürün erişimi olan kullanıcılar giriş yaptıktan sonra Hesap panelinde FİŞ260 Windows indirme butonunu görür.",
   },
   {
     question: "ÇÖZVER ile aynı üyelik mi?",
@@ -71,10 +71,10 @@ export default function Fis260Page() {
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/account"
+              href="/api/downloads/fis260"
               className="inline-flex h-11 items-center justify-center rounded-lg bg-zinc-100 px-5 text-sm font-medium text-zinc-950 transition hover:bg-white"
             >
-              Account panelden indir
+              Windows için indir
             </Link>
             <a
               href="#workflow"
@@ -109,7 +109,7 @@ export default function Fis260Page() {
                   </p>
                 </div>
                 <span className="rounded-md border border-blue-400/20 bg-blue-400/10 px-2.5 py-1 font-mono text-[11px] text-blue-200">
-                  v0.1.0
+                  Beta v0.1.0
                 </span>
               </div>
             </div>
@@ -127,6 +127,20 @@ export default function Fis260Page() {
         id="workflow"
         className="mx-auto max-w-7xl border-t border-white/[0.08] px-6 py-12 sm:px-8 lg:px-10"
       >
+        <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[0.22em] text-blue-300/75">
+              Nasıl çalışır?
+            </p>
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white">
+              Fişten Excel&apos;e kısa ve kontrollü akış.
+            </h2>
+          </div>
+          <p className="max-w-xl text-sm leading-6 text-zinc-400">
+            FİŞ260 masaüstünde çalışır; web platformu ise indirme, üyelik ve
+            cihaz doğrulama katmanını yönetir.
+          </p>
+        </div>
         <div className="grid gap-4 md:grid-cols-4">
           {workflow.map((step, index) => (
             <div
@@ -146,7 +160,7 @@ export default function Fis260Page() {
         {features.map((feature) => (
           <div
             key={feature}
-            className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-5"
+            className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-5 transition hover:border-white/[0.14] hover:bg-white/[0.04]"
           >
             <div className="mb-4 h-1.5 w-1.5 rounded-full bg-blue-300" />
             <p className="text-sm leading-6 text-zinc-300">{feature}</p>
@@ -164,7 +178,7 @@ export default function Fis260Page() {
           </h2>
           <p className="mt-4 text-sm leading-6 text-zinc-400">
             Uygulama masaüstünde çalışır; web platformu lisans, cihaz ve
-            installer dağıtım katmanı olarak konumlanır.
+            kurulum dosyası dağıtım katmanı olarak konumlanır.
           </p>
         </div>
         <div className="overflow-hidden rounded-xl border border-white/[0.08]">
@@ -181,7 +195,7 @@ export default function Fis260Page() {
       </section>
 
       <section
-        id="pricing"
+        id="uyelikler"
         className="mx-auto grid max-w-7xl gap-4 border-t border-white/[0.08] px-6 py-12 sm:px-8 lg:grid-cols-[0.85fr_1.15fr] lg:px-10"
       >
         <div>
