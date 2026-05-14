@@ -18,6 +18,10 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+html {
+  scroll-padding-top: 96px;
+}
+
 ::selection {
   background: rgba(96, 165, 250, 0.26);
   color: #ffffff;

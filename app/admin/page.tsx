@@ -122,12 +122,20 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               Kullanıcılar
             </h1>
           </div>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/admin/announcements"
+              className="rounded-lg border border-blue-300/20 px-4 py-2 text-sm text-blue-200 transition hover:bg-blue-300/10"
+            >
+              Duyurular / Yayınlar
+            </Link>
           <Link
             href="/account"
             className="rounded-lg border border-white/[0.12] px-4 py-2 text-sm text-zinc-300 transition hover:bg-white/[0.05]"
           >
             Üyelik paneli
           </Link>
+          </div>
         </div>
 
         <form className="mt-6 flex flex-col gap-3 sm:flex-row" action="/admin">

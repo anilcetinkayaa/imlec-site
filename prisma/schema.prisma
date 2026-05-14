@@ -96,6 +96,13 @@ enum MembershipRole {
   MEMBER
 }
 
+enum AnnouncementType {
+  GUNCELLEME
+  BILGILENDIRME
+  BAKIM
+  YENI_OZELLIK
+}
+
 model User {
   id              String    @id @default(cuid())
   email           String    @unique
@@ -374,4 +381,20 @@ model Membership {
   @@unique([userId, organizationId])
   @@index([organizationId, role])
   @@index([removedAt])
+}
+
+model Announcement {
+  id          String           @id @default(cuid())
+  title       String
+  body        String
+  type        AnnouncementType
+  isPublished Boolean          @default(false)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([isPublished, startsAt, endsAt])
+  @@index([createdAt])
+  @@index([type])
 }

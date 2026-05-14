@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/src/db/prisma";
 import { getUserProductAccess } from "@/src/server/entitlements";
 import { PRODUCT_DOWNLOADS } from "@/src/server/products";
-import { logoutAction } from "./actions";
+import { PlatformNav } from "../platform-nav";
 
 export const metadata: Metadata = {
   title: "Üyelik Paneli | İmleç Yazılım",
@@ -115,28 +114,9 @@ export default async function AccountPage() {
     <main className="min-h-screen overflow-hidden bg-[#08090b] text-zinc-100">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(circle_at_50%_0%,rgba(37,99,235,0.12),transparent_58%)]" />
 
-      <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-7 sm:px-8 lg:px-10">
-        <nav className="flex items-center justify-between border-b border-white/[0.08] pb-6">
-          <Link
-            href="/"
-            className="text-[15px] font-semibold tracking-tight text-white"
-          >
-            İmleç Yazılım
-          </Link>
+      <PlatformNav compact />
 
-          <div className="hidden items-center gap-7 text-sm text-zinc-400 sm:flex">
-            <Link href="/fis260" className="transition hover:text-white">
-              FİŞ260
-            </Link>
-            <Link href="/cozver" className="transition hover:text-white">
-              ÇÖZVER
-            </Link>
-            <form action={logoutAction}>
-              <button className="transition hover:text-white">Çıkış</button>
-            </form>
-          </div>
-        </nav>
-
+      <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-6 sm:px-8 lg:px-10">
         <section className="py-10">
           <p className="font-mono text-xs uppercase tracking-[0.28em] text-blue-300/80">
             Platform hesabı
@@ -178,7 +158,7 @@ export default async function AccountPage() {
 
           <section className="grid gap-4">
             <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-              <article className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-6">
+              <article id="products" className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-6">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="font-mono text-xs uppercase tracking-[0.22em] text-blue-300/75">
@@ -254,7 +234,7 @@ export default async function AccountPage() {
             </div>
 
             <div className="grid gap-4 xl:grid-cols-3">
-              <article className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-6">
+              <article id="devices" className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-6">
                 <p className="font-mono text-xs uppercase tracking-[0.22em] text-blue-300/75">
                   Aktif cihazlar
                 </p>
@@ -282,16 +262,27 @@ export default async function AccountPage() {
                 </div>
               </article>
 
-              <article className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-6">
+              <article className="rounded-xl border border-blue-400/20 bg-blue-400/[0.055] p-6 shadow-[0_0_40px_rgba(59,130,246,0.08)]">
                 <p className="font-mono text-xs uppercase tracking-[0.22em] text-blue-300/75">
                   İndirilebilir uygulamalar
+                </p>
+                <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white">
+                  Uygulama indir
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-zinc-400">
+                  Yetkili ürünleriniz için Windows installer dosyaları burada
+                  görünür. FİŞ260 installer gerçek download akışına bağlıdır.
                 </p>
                 <div className="mt-5 grid gap-3">
                   {products.map((product) =>
                     product.hasAccess ? (
                       <a
                         key={product.id}
-                        href="#"
+                        href={
+                          product.slug === "fis260"
+                            ? "/api/downloads/fis260"
+                            : "#"
+                        }
                         className="inline-flex h-11 items-center justify-center rounded-lg bg-zinc-100 px-5 text-sm font-medium text-zinc-950 transition hover:bg-white"
                       >
                         {PRODUCT_DOWNLOADS[product.slug] ??
@@ -334,7 +325,7 @@ export default async function AccountPage() {
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
-              <article className="rounded-xl border border-white/[0.08] bg-white/[0.018] p-6">
+              <article id="payments" className="rounded-xl border border-white/[0.08] bg-white/[0.018] p-6">
                 <p className="font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">
                   Ödeme geçmişi
                 </p>
