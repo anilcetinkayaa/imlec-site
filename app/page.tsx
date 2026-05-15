@@ -1,295 +1,417 @@
 import Image from "next/image";
 import Link from "next/link";
+import type * as React from "react";
+import {
+  ArrowRight,
+  Download,
+  KeyRound,
+  MonitorCheck,
+  ShieldCheck,
+} from "lucide-react";
+import { Footer } from "@/components/marketing/Footer";
+import { ProductVideoOrPlaceholder } from "@/components/marketing/ProductVideoOrPlaceholder";
+import { SectionHeader } from "@/components/marketing/SectionHeader";
+import { SiteHeader } from "@/components/marketing/SiteHeader";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { CHANGELOG_ENTRIES } from "@/lib/changelog";
+import { FIS260_DEMO_VIDEO_SRC, VIDEO_PLACEHOLDER } from "@/lib/config";
 import fis260Preview from "@/public/fis260-preview.png";
-import { PlatformNav } from "./platform-nav";
+
+const pillars = [
+  {
+    icon: KeyRound,
+    title: "Ürün erişimi",
+    description:
+      "Satın alınan masaüstü ürünleri tek hesap altında görünür ve yönetilir.",
+    chip: "Cihaz başına lisans",
+  },
+  {
+    icon: Download,
+    title: "Güvenli indirme",
+    description:
+      "Kurulum dosyaları üyelik ve ürün erişimi kontrolünden sonra sunulur.",
+    chip: "256-bit imzalı kurulum",
+  },
+  {
+    icon: MonitorCheck,
+    title: "Cihaz yönetimi",
+    description:
+      "Desktop oturumları üyelik durumunu ve cihaz doğrulamasını web hesabıyla eşler.",
+    chip: "30 günde bir güncelleme",
+  },
+];
 
 const products = [
   {
     name: "FİŞ260",
-    status: "Aktif",
-    label: "Muhasebe OCR",
     href: "/fis260",
+    status: "active" as const,
+    statusLabel: "Aktif",
     description:
-      "Fiş görsellerinden alanları çıkaran, kontrol akışıyla Excel çıktısı hazırlayan Windows masaüstü uygulaması.",
-    meta: ["Windows", "OCR", "Excel aktarım"],
+      "Fiş görsellerinden alanları çıkaran, kontrol akışıyla Excel çıktısı hazırlayan Windows uygulaması.",
+    tags: ["Muhasebe OCR", "Excel aktarım", "Windows 10/11"],
+    accent: "var(--accent-fis260)",
+    mark: "F",
+    featured: true,
   },
   {
     name: "ÇÖZVER",
-    status: "Yakında",
-    label: "Finansal analiz",
     href: "/cozver",
+    status: "coming-soon" as const,
+    statusLabel: "Geliştiriliyor",
     description:
-      "Finansal analiz ve spread hazırlığı için geliştirilen, ayrı üyelik yapısına sahip masaüstü ürün alanı.",
-    meta: ["Analiz", "Spread", "Planlanıyor"],
+      "Finansal analiz ve spread hazırlığı için geliştirilen ikinci masaüstü ürün.",
+    tags: ["Finansal analiz", "Spread", "Yakında"],
+    accent: "var(--accent-cozver)",
+    mark: "Ç",
+    featured: false,
   },
 ];
 
-const platformPillars = [
-  ["Ürün erişimi", "Her masaüstü uygulama için ayrı yetki ve üyelik takibi."],
-  ["Güvenli indirme", "Kurulum dosyaları hesap ve ürün erişimiyle korunur."],
-  ["Cihaz yönetimi", "Masaüstü uygulamalar cihaz doğrulama akışına bağlanır."],
+const steps = [
+  ["01", "Yükle", "Fiş görsellerini FİŞ260 çalışma alanına alın."],
+  ["02", "OCR", "Alanları uygulama içinde otomatik olarak çıkarın."],
+  ["03", "Kontrol", "Eksik veya hatalı alanları aktarım öncesi gözden geçirin."],
+  ["04", "Excel", "Muhasebe akışına uygun Excel çıktısını oluşturun."],
 ];
 
-const updates = [
-  {
-    version: "FİŞ260 v0.1.0",
-    date: "Mayıs 2026",
-    text: "İlk Windows kurulum dosyası hazır. Yetkili kullanıcılar Hesap panelinden indirebilir.",
-  },
-  {
-    version: "Platform hesabı",
-    date: "Mayıs 2026",
-    text: "Ürün erişimi, cihaz doğrulama ve indirme akışı tek hesap altında toplandı.",
-  },
-  {
-    version: "ÇÖZVER hazırlığı",
-    date: "Yakında",
-    text: "Finansal analiz ürünü ayrı üyelik ve fiyatlandırma yapısıyla platforma eklenecek.",
-  },
-];
-
-export default function Home() {
+function WindowChrome({
+  title,
+  children,
+  skew = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  skew?: boolean;
+}) {
   return (
-    <main className="min-h-screen overflow-hidden bg-[#08090b] text-zinc-100">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_50%_0%,rgba(37,99,235,0.13),transparent_58%)]" />
-      <div className="pointer-events-none absolute inset-x-0 top-[30rem] h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
-
-      <PlatformNav />
-
-      <section className="relative mx-auto max-w-7xl px-6 pb-14 pt-16 sm:px-8 lg:px-10 lg:pb-18 lg:pt-20">
-        <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
-          <div>
-            <div className="mb-7 inline-flex w-fit items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.025] px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.22em] text-blue-200/80">
-              Masaüstü finans araçları
-            </div>
-            <h1 className="max-w-4xl text-5xl font-semibold leading-[1.04] tracking-tight text-white sm:text-6xl lg:text-7xl">
-              Finans ve muhasebe ekipleri için masaüstü yazılım platformu.
-            </h1>
-            <p className="mt-7 max-w-2xl text-base leading-8 text-zinc-400 sm:text-lg">
-              İmleç Yazılım; ürün erişimi, üyelik yönetimi, güvenli indirme ve
-              cihaz doğrulama katmanlarını tek hesap altında toplayan masaüstü
-              yazılım platformudur.
-            </p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/api/downloads/fis260"
-                className="inline-flex h-11 items-center justify-center rounded-lg bg-zinc-100 px-5 text-sm font-medium text-zinc-950 transition hover:bg-white"
-              >
-                Windows için indir
-              </Link>
-              <Link
-                href="#products"
-                className="inline-flex h-11 items-center justify-center rounded-lg border border-white/[0.12] bg-white/[0.03] px-5 text-sm font-medium text-zinc-100 transition hover:border-white/[0.22] hover:bg-white/[0.06]"
-              >
-                Ürünleri incele
-              </Link>
-            </div>
-          </div>
-
-          <div className="grid gap-3">
-            {platformPillars.map(([title, text]) => (
-              <div
-                key={title}
-                className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-5"
-              >
-                <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-blue-300/75">
-                  Platform
-                </p>
-                <h2 className="mt-3 text-xl font-semibold tracking-tight text-white">
-                  {title}
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-zinc-400">{text}</p>
-              </div>
-            ))}
-          </div>
+    <div
+      className={`overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-1)] shadow-[0_32px_90px_oklch(0_0_0/0.42)] ${
+        skew ? "lg:rotate-[-1.25deg]" : ""
+      }`}
+    >
+      <div className="flex h-10 items-center justify-between border-b border-[var(--border-subtle)] bg-white/[0.035] px-4">
+        <div className="flex items-center gap-2">
+          <span className="size-2.5 rounded-full bg-[#ff5f57]" />
+          <span className="size-2.5 rounded-full bg-[#ffbd2e]" />
+          <span className="size-2.5 rounded-full bg-[#28c840]" />
         </div>
-      </section>
+        <span className="font-mono text-[11px] text-[var(--text-tertiary)]">
+          {title}
+        </span>
+      </div>
+      {children}
+    </div>
+  );
+}
 
-      <section
-        id="products"
-        className="relative mx-auto max-w-7xl border-t border-white/[0.08] px-6 py-14 sm:px-8 lg:px-10"
-      >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-blue-300/75">
-              Ürünler
-            </p>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-              Aynı platform, ayrı masaüstü ürünleri.
-            </h2>
-          </div>
-          <p className="max-w-xl text-sm leading-6 text-zinc-400">
-            FİŞ260 bugün aktif. ÇÖZVER aynı hesap yapısına bağlanacak ikinci
-            ürün olarak hazırlanıyor.
-          </p>
+function HeroSection() {
+  return (
+    <section className="relative mx-auto grid max-w-7xl gap-12 px-6 pb-14 pt-16 sm:px-8 lg:grid-cols-[0.92fr_1.08fr] lg:px-10 lg:pb-20 lg:pt-20">
+      <div className="pointer-events-none absolute right-[-160px] top-10 size-[600px] rounded-full bg-[var(--accent-brand)] opacity-[0.18] blur-[120px] motion-safe:animate-[spin_12s_linear_infinite]" />
+      <div className="relative z-10 flex flex-col justify-center">
+        <p className="text-label mb-6 font-mono text-[var(--accent-brand)]">
+          Masaüstü finans araçları
+        </p>
+        <h1 className="text-display max-w-4xl text-[var(--text-primary)]">
+          Muhasebe ve finans ekipleri için Türkiye&apos;nin masaüstü yazılım
+          platformu.
+        </h1>
+        <p className="text-body-l mt-7 max-w-2xl text-[var(--text-secondary)]">
+          İmleç Yazılım; ürün erişimi, güvenli indirme ve cihaz doğrulama
+          akışlarını tek hesap altında toplayan B2B masaüstü yazılım
+          platformudur.
+        </p>
+        <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+          <Button asChild size="lg">
+            <Link href="/api/downloads/fis260">
+              <Download aria-hidden="true" strokeWidth={1.5} />
+              Windows için indir
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" size="lg">
+            <Link href="/products">
+              Ürünleri incele
+              <ArrowRight aria-hidden="true" strokeWidth={1.5} />
+            </Link>
+          </Button>
         </div>
+      </div>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
-          {products.map((product) => (
-            <article
-              key={product.name}
-              className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-6 transition hover:border-white/[0.16] hover:bg-white/[0.04]"
-            >
-              <div className="flex items-start justify-between gap-4">
+      <div className="relative z-10 self-center">
+        <WindowChrome title="FİŞ260.exe" skew>
+          <Image
+            src={fis260Preview}
+            alt="FİŞ260 masaüstü uygulama ekran görüntüsü"
+            priority
+            className="h-auto w-full"
+          />
+        </WindowChrome>
+      </div>
+    </section>
+  );
+}
+
+function TrustBar() {
+  return (
+    <section className="border-y border-[var(--border-subtle)] bg-[var(--surface-0)]/70 px-6 py-3 sm:px-8 lg:px-10">
+      <div className="mx-auto max-w-7xl font-mono text-xs text-[var(--text-tertiary)]">
+        Beta v0.1.0 • Türkiye merkezli • KVKK uyumlu • Windows 10/11 desteği
+      </div>
+    </section>
+  );
+}
+
+function PlatformPillars() {
+  return (
+    <section className="mx-auto max-w-7xl px-6 py-16 sm:px-8 lg:px-10">
+      <SectionHeader
+        eyebrow="Platform yaklaşımı"
+        title="Üyelik, indirme ve cihaz doğrulama aynı hesapta birleşir."
+        lead="Web platformu masaüstü ürünlerin dağıtım ve erişim katmanıdır. Kullanıcı uygulamayı indirir, kurar ve aynı hesapla masaüstü oturumunu açar."
+      />
+      <div className="mt-8 grid gap-4 md:grid-cols-3">
+        {pillars.map((pillar) => {
+          const Icon = pillar.icon;
+          return (
+            <Card key={pillar.title} variant="interactive" className="p-5">
+              <span className="grid size-10 place-items-center rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-2)] text-[var(--accent-brand)]">
+                <Icon aria-hidden="true" className="size-5" strokeWidth={1.5} />
+              </span>
+              <h3 className="text-h4 mt-5 text-[var(--text-primary)]">
+                {pillar.title}
+              </h3>
+              <p className="text-body-s mt-2 text-[var(--text-secondary)]">
+                {pillar.description}
+              </p>
+              <span className="mt-5 inline-flex rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-2)] px-2.5 py-1 font-mono text-[11px] text-[var(--text-tertiary)]">
+                {pillar.chip}
+              </span>
+            </Card>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function ProductEcosystem() {
+  return (
+    <section
+      id="products"
+      className="mx-auto max-w-7xl border-t border-[var(--border-subtle)] px-6 py-16 sm:px-8 lg:px-10"
+    >
+      <SectionHeader
+        eyebrow="Ürün ekosistemi"
+        title="Aynı platformda ayrı masaüstü ürünleri."
+        lead="Her ürün kendi üyelik, erişim ve indirme akışına sahiptir. Hesap yapısı ortaktır; ürün sahipliği ayrı yönetilir."
+      />
+      <div className="mt-8 grid gap-4 lg:grid-cols-3">
+        {products.map((product) => (
+          <Card
+            key={product.name}
+            variant="interactive"
+            className={`p-6 ${product.featured ? "lg:col-span-2" : ""}`}
+            style={{ "--product-accent": product.accent } as React.CSSProperties}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <span className="grid size-16 place-items-center rounded-[var(--radius-md)] border border-white/10 bg-[var(--product-accent)]/15 font-mono text-xl font-semibold text-[var(--product-accent)]">
+                  {product.mark}
+                </span>
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-[0.22em] text-blue-300/75">
-                    {product.label}
+                  <p className="text-label font-mono text-[var(--product-accent)]">
+                    {product.name === "FİŞ260" ? "Muhasebe OCR" : "Finansal analiz"}
                   </p>
-                  <h3 className="mt-5 text-3xl font-semibold tracking-tight text-white">
+                  <h3 className="text-h3 mt-1 text-[var(--text-primary)]">
                     {product.name}
                   </h3>
                 </div>
+              </div>
+              <Badge variant={product.status}>{product.statusLabel}</Badge>
+            </div>
+            <p className="text-body mt-5 max-w-2xl text-[var(--text-secondary)]">
+              {product.description}
+            </p>
+            <div className="mt-6 flex flex-wrap gap-2">
+              {product.tags.map((tag) => (
                 <span
-                  className={`rounded-md border px-2.5 py-1 font-mono text-[11px] ${
-                    product.status === "Aktif"
-                      ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-200"
-                      : "border-white/[0.08] bg-white/[0.03] text-zinc-400"
-                  }`}
+                  key={tag}
+                  className="rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-2)] px-2.5 py-1 text-xs text-[var(--text-secondary)]"
                 >
-                  {product.status}
+                  {tag}
                 </span>
-              </div>
-              <p className="mt-4 max-w-xl text-sm leading-6 text-zinc-400">
-                {product.description}
-              </p>
-              <div className="mt-6 flex flex-wrap gap-2">
-                {product.meta.map((item) => (
-                  <span
-                    key={item}
-                    className="rounded-md border border-white/[0.08] bg-[#0c0d10] px-2.5 py-1 text-xs text-zinc-400"
-                  >
-                    {item}
-                  </span>
-                ))}
-              </div>
-              <Link
-                href={product.href}
-                className="mt-8 inline-flex h-11 items-center justify-center rounded-lg border border-white/[0.12] bg-white/[0.04] px-5 text-sm font-medium text-zinc-100 transition hover:border-white/[0.22] hover:bg-white/[0.07]"
-              >
+              ))}
+            </div>
+            <Button asChild variant="ghost" className="mt-7 px-0">
+              <Link href={product.href}>
                 Ürün sayfası
+                <ArrowRight aria-hidden="true" strokeWidth={1.5} />
               </Link>
-            </article>
+            </Button>
+          </Card>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ProductShowcase() {
+  return (
+    <section className="mx-auto grid max-w-7xl gap-10 border-t border-[var(--border-subtle)] px-6 py-16 sm:px-8 lg:grid-cols-[0.72fr_1.28fr] lg:px-10">
+      <div>
+        <SectionHeader
+          eyebrow="FİŞ260 akışı"
+          title="Fişten Excel'e kısa ve kontrollü akış."
+          lead="Uygulama masaüstünde çalışır. Web platformu üyelik, kurulum dosyası ve cihaz doğrulama katmanını yönetir."
+        />
+        <div className="mt-8 grid gap-0">
+          {steps.map(([number, title, description], index) => (
+            <div key={number} className="grid grid-cols-[40px_1fr] gap-4">
+              <div className="grid justify-items-center">
+                <span className="grid size-9 place-items-center rounded-full border border-[var(--border-default)] bg-[var(--surface-2)] font-mono text-[11px] text-[var(--text-secondary)]">
+                  {number}
+                </span>
+                {index < steps.length - 1 ? (
+                  <span className="h-12 border-l border-dotted border-[var(--border-default)]" />
+                ) : null}
+              </div>
+              <div className="pb-7">
+                <h3 className="text-base font-medium text-[var(--text-primary)]">
+                  {title}
+                </h3>
+                <p className="text-body-s mt-1 text-[var(--text-secondary)]">
+                  {description}
+                </p>
+              </div>
+            </div>
           ))}
         </div>
-      </section>
+      </div>
+      <WindowChrome title="FİŞ260 demo">
+        <ProductVideoOrPlaceholder
+          placeholder={VIDEO_PLACEHOLDER}
+          src={FIS260_DEMO_VIDEO_SRC}
+        />
+      </WindowChrome>
+    </section>
+  );
+}
 
-      <section className="mx-auto max-w-7xl border-t border-white/[0.08] px-6 py-14 sm:px-8 lg:px-10">
-        <div className="rounded-2xl border border-blue-400/20 bg-blue-400/[0.055] p-6 shadow-[0_0_48px_rgba(59,130,246,0.08)] sm:p-8">
-          <div className="grid gap-6 lg:grid-cols-[0.78fr_1.22fr] lg:items-center">
-            <div>
-              <p className="font-mono text-xs uppercase tracking-[0.24em] text-blue-200/80">
-                Beta v0.1.0
-              </p>
-              <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white">
-                FİŞ260 Windows kurulum dosyası hazır.
-              </h2>
-              <p className="mt-4 text-sm leading-6 text-zinc-300">
-                İndirme akışı üyelik ve ürün erişimiyle korunur. Yetkili
-                kullanıcılar Hesap panelinde indirme butonunu görür.
-              </p>
+function SecurityStrip() {
+  return (
+    <section className="border-y border-[var(--border-subtle)] bg-[var(--surface-1)]/60 px-6 py-10 sm:px-8 lg:px-10">
+      <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[auto_1fr] lg:items-center">
+        <span className="grid size-12 place-items-center rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-2)] text-[var(--accent-brand)]">
+          <ShieldCheck aria-hidden="true" className="size-6" strokeWidth={1.5} />
+        </span>
+        <p className="text-body text-[var(--text-secondary)]">
+          İmleç Yazılım, ürün erişimini web hesabı üzerinden doğrular. Cihaz
+          kayıtları üyelik durumuyla eşlenir; kurulum dosyası indirme akışı
+          yetkilendirilmiş route üzerinden çalışır. KVKK kapsamında hesap ve
+          cihaz verileri ürün erişimi için sınırlı tutulur.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function ChangelogTeaser() {
+  return (
+    <section
+      id="updates"
+      className="mx-auto max-w-7xl border-t border-[var(--border-subtle)] px-6 py-16 sm:px-8 lg:px-10"
+    >
+      <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+        <SectionHeader
+          eyebrow="Değişiklikler"
+          title="Ürün ve platform değişiklikleri."
+          lead="Son dağıtım notları, ürün erişimi ve kurulum akışındaki değişiklikleri izleyin."
+        />
+        <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--surface-1)]/70">
+          {CHANGELOG_ENTRIES.map((entry) => (
+            <div
+              key={`${entry.version}-${entry.title}`}
+              className="grid gap-3 border-t border-[var(--border-subtle)] p-5 first:border-t-0 sm:grid-cols-[160px_1fr]"
+            >
+              <div>
+                <span className="rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-2)] px-2 py-1 font-mono text-[11px] text-[var(--text-secondary)]">
+                  {entry.version}
+                </span>
+                <p className="mt-3 font-mono text-xs text-[var(--text-tertiary)]">
+                  {entry.date}
+                </p>
+              </div>
+              <div>
+                <h3 className="font-medium text-[var(--text-primary)]">
+                  {entry.title}
+                </h3>
+                <p className="text-body-s mt-1 text-[var(--text-secondary)]">
+                  {entry.summary}
+                </p>
+              </div>
             </div>
-            <div className="grid gap-3 sm:grid-cols-5">
-              {["Üye ol", "Giriş yap", "İndir", "Kur", "Kullan"].map(
-                (step, index) => (
-                  <div
-                    key={step}
-                    className="rounded-xl border border-white/[0.08] bg-[#0c0d10]/80 p-4"
-                  >
-                    <p className="font-mono text-[11px] text-zinc-500">
-                      0{index + 1}
-                    </p>
-                    <p className="mt-3 text-sm font-medium text-white">
-                      {step}
-                    </p>
-                  </div>
-                ),
-              )}
-              <Link
-                href="/api/downloads/fis260"
-                className="inline-flex h-11 items-center justify-center rounded-lg bg-zinc-100 px-5 text-sm font-medium text-zinc-950 transition hover:bg-white sm:col-span-5"
-              >
-                Windows için indir
+          ))}
+          <div className="border-t border-[var(--border-subtle)] p-5">
+            <Button asChild variant="ghost" className="px-0">
+              <Link href="/changelog">
+                Tüm değişiklikleri görüntüle
+                <ArrowRight aria-hidden="true" strokeWidth={1.5} />
               </Link>
-            </div>
+            </Button>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
+  );
+}
 
-      <section className="mx-auto grid max-w-7xl gap-10 border-t border-white/[0.08] px-6 py-14 sm:px-8 lg:grid-cols-[0.75fr_1.25fr] lg:px-10">
+function CTAFooterStrip() {
+  return (
+    <section className="border-t border-[var(--border-subtle)] bg-[var(--surface-1)] px-6 py-16 sm:px-8 lg:px-10">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.24em] text-blue-300/75">
-            Desktop showcase
+          <p className="text-label font-mono text-[var(--accent-brand)]">
+            Beta v0.1.0
           </p>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white">
-            Web platformu ve masaüstü uygulama aynı ekosistemin parçalarıdır.
+          <h2 className="text-h2 mt-4 text-[var(--text-primary)]">
+            FİŞ260&apos;ı bugün denemeye başlayın.
           </h2>
-          <p className="mt-4 text-sm leading-6 text-zinc-400">
-            FİŞ260 koyu tema, net kontrol yüzeyi ve sade işlem akışıyla web
-            platformunun premium teknik dilini masaüstüne taşır.
-          </p>
         </div>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button asChild size="lg">
+            <Link href="/api/downloads/fis260">
+              <Download aria-hidden="true" strokeWidth={1.5} />
+              Windows için indir
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="lg">
+            <Link href="/fis260">
+              Ürün sayfası
+              <ArrowRight aria-hidden="true" strokeWidth={1.5} />
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
 
-        <div className="relative">
-          <div className="absolute -inset-6 rounded-[28px] bg-blue-500/10 blur-3xl" />
-          <div className="relative overflow-hidden rounded-2xl border border-white/[0.1] bg-[#101216] shadow-[0_30px_100px_rgba(0,0,0,0.55)]">
-            <div className="flex h-10 items-center justify-between border-b border-white/[0.08] bg-white/[0.035] px-4">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
-                <span className="h-2.5 w-2.5 rounded-full bg-[#ffbd2e]" />
-                <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-              </div>
-              <span className="font-mono text-[11px] text-zinc-500">
-                FİŞ260.exe
-              </span>
-            </div>
-            <Image
-              src={fis260Preview}
-              alt="FİŞ260 masaüstü uygulama ekran görüntüsü"
-              priority
-              className="h-auto w-full"
-            />
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="updates"
-        className="mx-auto max-w-7xl border-t border-white/[0.08] px-6 py-14 sm:px-8 lg:px-10"
-      >
-        <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
-          <div>
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-blue-300/75">
-              Güncellemeler
-            </p>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white">
-              Platform değişiklikleri ve ürün notları.
-            </h2>
-          </div>
-          <div className="overflow-hidden rounded-xl border border-white/[0.08]">
-            {updates.map((update) => (
-              <div
-                key={update.version}
-                className="grid gap-2 border-t border-white/[0.07] bg-white/[0.018] p-5 first:border-t-0 sm:grid-cols-[160px_1fr]"
-              >
-                <div>
-                  <p className="text-sm font-medium text-white">
-                    {update.version}
-                  </p>
-                  <p className="mt-1 text-xs text-zinc-500">{update.date}</p>
-                </div>
-                <p className="text-sm leading-6 text-zinc-400">{update.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <footer className="border-t border-white/[0.08] px-6 py-8 text-sm text-zinc-500 sm:px-8 lg:px-10">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p>İmleç Yazılım</p>
-          <p>Finans ve muhasebe ekipleri için masaüstü yazılım ürünleri.</p>
-        </div>
-      </footer>
+export default function Home() {
+  return (
+    <main className="min-h-screen overflow-hidden bg-[var(--surface-0)] text-[var(--text-primary)]">
+      <SiteHeader />
+      <HeroSection />
+      <TrustBar />
+      <PlatformPillars />
+      <ProductEcosystem />
+      <ProductShowcase />
+      <SecurityStrip />
+      <ChangelogTeaser />
+      <CTAFooterStrip />
+      <Footer />
     </main>
   );
 }

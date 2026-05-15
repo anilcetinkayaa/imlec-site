@@ -1,18 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
+  metadataBase: new URL("https://imlecyazilim.com"),
   title: "İmleç Yazılım",
   description:
     "İmleç Yazılım, muhasebe ve finans ekipleri için teknik, sade ve güvenilir masaüstü yazılım ürünleri geliştirir.",
@@ -29,9 +21,17 @@ export const metadata: Metadata = {
     title: "İmleç Yazılım",
     description:
       "Muhasebe ve finans ekipleri için masaüstü yazılım ürünleri.",
+    images: ["/opengraph-image"],
     type: "website",
     locale: "tr_TR",
     siteName: "İmleç Yazılım",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "İmleç Yazılım",
+    description:
+      "Muhasebe ve finans ekipleri için masaüstü yazılım ürünleri.",
+    images: ["/opengraph-image"],
   },
 };
 
@@ -43,7 +43,7 @@ export default function RootLayout({
   return (
     <html
       lang="tr"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${GeistSans.variable} ${GeistMono.variable} dark h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
