@@ -5,6 +5,7 @@ import {
   requireAdminSession,
   toJsonValue,
 } from "@/src/server/admin-action-log";
+import { sendAdminActionAlert } from "@/src/server/admin-email";
 
 export const runtime = "nodejs";
 
@@ -111,6 +112,11 @@ export async function POST(request: Request) {
     });
 
     return updateResult;
+  });
+
+  await sendAdminActionAlert({
+    action: "DEVICE_REVOKE_ALL",
+    target: user.id,
   });
 
   return Response.json({ ok: true, count: result.count });

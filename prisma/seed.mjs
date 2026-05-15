@@ -14,8 +14,10 @@ const products = [
 ];
 
 async function main() {
+  const seededProducts = new Map();
+
   for (const product of products) {
-    await prisma.product.upsert({
+    const seededProduct = await prisma.product.upsert({
       where: {
         slug: product.slug,
       },
@@ -27,6 +29,39 @@ async function main() {
         slug: product.slug,
         name: product.name,
         status: "ACTIVE",
+      },
+    });
+
+    seededProducts.set(product.slug, seededProduct);
+  }
+
+  const fis260 = seededProducts.get("fis260");
+
+  if (fis260) {
+    await prisma.productVersion.upsert({
+      where: {
+        productId_version: {
+          productId: fis260.id,
+          version: "0.1.0",
+        },
+      },
+      update: {
+        minimumVersion: "0.1.0",
+        releaseNotes:
+          "FIS260 beta installer. Fis yukleme, OCR islemi ve Excel aktarim akisi.",
+        filePath: "fis260/FIS260_Setup_v0.1.0.exe",
+        sha256:
+          "828466679dbe554957e93f21aa4e53f01bb055282edbad3dc283ce010ae253d0",
+      },
+      create: {
+        productId: fis260.id,
+        version: "0.1.0",
+        minimumVersion: "0.1.0",
+        releaseNotes:
+          "FIS260 beta installer. Fis yukleme, OCR islemi ve Excel aktarim akisi.",
+        filePath: "fis260/FIS260_Setup_v0.1.0.exe",
+        sha256:
+          "828466679dbe554957e93f21aa4e53f01bb055282edbad3dc283ce010ae253d0",
       },
     });
   }

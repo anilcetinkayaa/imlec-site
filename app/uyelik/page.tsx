@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { auth } from "@/auth";
 import { Footer } from "@/components/marketing/Footer";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { Badge } from "@/components/ui/Badge";
@@ -16,6 +17,7 @@ import {
   MEMBERSHIP_CURRENCY,
   MEMBERSHIP_PRICE_TRY,
 } from "@/lib/config";
+import { buildLemonSqueezyCheckoutUrl } from "@/lib/lemonsqueezy-checkout";
 
 export const metadata: Metadata = {
   title: "Üyelikler | İmleç Yazılım",
@@ -56,7 +58,18 @@ function plannedPriceLabel() {
   return `Ticari sürümde aylık ${formattedPrice} olarak planlanmaktadır.`;
 }
 
-export default function MembershipPage() {
+export default async function MembershipPage() {
+  const session = await auth();
+  const checkoutUrl =
+    session?.user?.id && session.user.email && process.env.LEMONSQUEEZY_FIS260_CHECKOUT_URL
+      ? buildLemonSqueezyCheckoutUrl({
+          checkoutUrl: process.env.LEMONSQUEEZY_FIS260_CHECKOUT_URL,
+          email: session.user.email,
+          userId: session.user.id,
+          productSlug: "fis260",
+        })
+      : null;
+
   return (
     <main className="min-h-screen overflow-hidden bg-[var(--surface-0)] text-[var(--text-primary)]">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[36rem] bg-[radial-gradient(circle_at_50%_0%,oklch(0.70_0.18_250/0.14),transparent_62%)]" />
@@ -141,6 +154,11 @@ export default function MembershipPage() {
             <Button asChild size="lg" variant="primary">
               <Link href="/register">Üyelik talebi oluştur</Link>
             </Button>
+            {checkoutUrl ? (
+              <Button asChild size="lg" variant="outline">
+                <Link href={checkoutUrl}>Test checkout</Link>
+              </Button>
+            ) : null}
           </div>
         </Card>
       </section>

@@ -129,12 +129,18 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             >
               Duyurular / Yayınlar
             </Link>
-          <Link
-            href="/account"
-            className="rounded-lg border border-white/[0.12] px-4 py-2 text-sm text-zinc-300 transition hover:bg-white/[0.05]"
-          >
-            Üyelik paneli
-          </Link>
+            <Link
+              href="/admin/lemonsqueezy"
+              className="rounded-lg border border-purple-300/20 px-4 py-2 text-sm text-purple-200 transition hover:bg-purple-300/10"
+            >
+              Lemon Squeezy
+            </Link>
+            <Link
+              href="/account"
+              className="rounded-lg border border-white/[0.12] px-4 py-2 text-sm text-zinc-300 transition hover:bg-white/[0.05]"
+            >
+              Üyelik paneli
+            </Link>
           </div>
         </div>
 

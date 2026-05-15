@@ -1,11 +1,33 @@
 import { createHash, randomBytes } from "node:crypto";
 import * as OTPAuth from "otpauth";
-import { decryptString, encryptString } from "@/lib/crypto";
+import { decryptString, encryptString } from "./crypto";
 
 export const TOTP_ISSUER = "İmleç Yazılım";
+const BASE32_SECRET_PATTERN = /^[A-Z2-7]+=*$/;
 
 export function createTotpSecret() {
   return new OTPAuth.Secret({ size: 20 }).base32;
+}
+
+export function isValidTotpSecret(secret: string) {
+  if (!BASE32_SECRET_PATTERN.test(secret)) {
+    return false;
+  }
+
+  try {
+    OTPAuth.Secret.fromBase32(secret);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function createSecretFromBase32(secret: string) {
+  if (!isValidTotpSecret(secret)) {
+    throw new Error("INVALID_TOTP_SECRET");
+  }
+
+  return OTPAuth.Secret.fromBase32(secret);
 }
 
 export function createTotpUri({
@@ -21,7 +43,7 @@ export function createTotpUri({
     algorithm: "SHA1",
     digits: 6,
     period: 30,
-    secret,
+    secret: createSecretFromBase32(secret),
   });
 
   return totp.toString();
@@ -40,14 +62,18 @@ export function validateTotpToken({
     algorithm: "SHA1",
     digits: 6,
     period: 30,
-    secret,
+    secret: createSecretFromBase32(secret),
   });
 
-  return totp.validate({ token, window: 1 }) !== null;
+  return totp.validate({ token, window: 2 }) !== null;
 }
 
 export function encryptTotpSecret(secret: string) {
   return encryptString(secret);
+}
+
+export function decryptTotpSecret(encryptedSecret: string) {
+  return decryptString(encryptedSecret);
 }
 
 export function createRecoveryCodes() {

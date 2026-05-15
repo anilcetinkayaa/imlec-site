@@ -1,6 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { createElement } from "react";
+import { WelcomeEmail } from "@/emails/WelcomeEmail";
+import { sendMail } from "@/lib/mail";
 import { prisma } from "@/src/db/prisma";
 import { hashPassword, normalizeEmail } from "@/src/server/auth/password";
 
@@ -32,13 +35,23 @@ export async function registerAction(formData: FormData) {
 
   const passwordHash = await hashPassword(password);
 
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       email,
       name,
       passwordHash,
     },
   });
+
+  try {
+    await sendMail({
+      to: user.email,
+      subject: "İmleç Yazılım hesabınız oluşturuldu",
+      react: createElement(WelcomeEmail, { name: user.name }),
+    });
+  } catch (error) {
+    console.error("[WELCOME EMAIL ERROR]", error);
+  }
 
   redirect("/login?registered=1");
 }

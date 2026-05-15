@@ -96,8 +96,8 @@ export async function AccountOverviewContent() {
           <h2 className="text-h3 mt-4">Kurulum dosyası korumalı route üzerinden verilir.</h2>
           <p className="text-body-s mt-3 text-[var(--text-secondary)]">
             Ürün erişiminiz aktifse FİŞ260 indirme butonu mevcut download route&apos;una
-            gider. Route oturum ve entitlement kontrolünü yaptıktan sonra release
-            asset adresine yönlendirir.
+            gider. Route oturum ve entitlement kontrolünü yaptıktan sonra kısa süreli
+            imzalı R2 linkine yönlendirir.
           </p>
           <div className="mt-5 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4">
             <p className="text-body-s text-[var(--text-tertiary)]">Son kontrol</p>

@@ -89,12 +89,18 @@ export async function verify2FAAction(
   const recoveryIndex = record.recoveryCodes.findIndex((storedHash) =>
     safeHashEquals(storedHash, recoveryHash),
   );
-  const valid =
-    /^\d{6}$/.test(token) &&
-    validateTotpToken({
-      encryptedSecret: record.secret,
-      token,
-    });
+  let valid = false;
+
+  try {
+    valid =
+      /^\d{6}$/.test(token) &&
+      validateTotpToken({
+        encryptedSecret: record.secret,
+        token,
+      });
+  } catch {
+    valid = false;
+  }
   const recoveryValid = recoveryIndex >= 0;
 
   if (!valid && !recoveryValid) {
@@ -143,6 +149,8 @@ export async function verify2FAAction(
       twoFactorVerified: true,
     },
   });
+
+  attempts.delete(admin.session.user.id);
 
   return { ok: true, recoveryCodes };
 }

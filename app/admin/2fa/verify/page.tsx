@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { prisma } from "@/src/db/prisma";
 import { getAdminSession } from "@/src/server/admin";
 import { Verify2FAForm } from "./verify-2fa-form";
 
@@ -16,6 +18,54 @@ export default async function Admin2FAVerifyPage() {
 
   if (admin.status === "forbidden") {
     redirect("/");
+  }
+
+  const session = await auth();
+
+  if (session?.user?.twoFactorVerified) {
+    redirect("/admin");
+  }
+
+  const [record, user] = await Promise.all([
+    prisma.admin2FA.findUnique({
+      where: {
+        userId: admin.session.user.id,
+      },
+      select: {
+        verified: true,
+      },
+    }),
+    prisma.user.findUnique({
+      where: {
+        id: admin.session.user.id,
+      },
+      select: {
+        twoFactorEnabled: true,
+      },
+    }),
+  ]);
+
+  if (!record) {
+    if (user?.twoFactorEnabled) {
+      return (
+        <main className="min-h-screen bg-[#08090b] px-6 py-12 text-zinc-100">
+          <section className="mx-auto max-w-xl rounded-2xl border border-red-400/20 bg-red-400/10 p-6">
+            <p className="font-mono text-xs uppercase tracking-[0.22em] text-red-200">
+              Admin 2FA
+            </p>
+            <h1 className="mt-4 text-3xl font-semibold tracking-tight">
+              2FA kaydı bulunamadı.
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-red-100/80">
+              Bu hesapta 2FA aktif görünüyor ancak doğrulama kaydı yok. Güvenli
+              reset akışı ile yeniden kurulum yapılmalıdır.
+            </p>
+          </section>
+        </main>
+      );
+    }
+
+    redirect("/admin/2fa/setup");
   }
 
   return (

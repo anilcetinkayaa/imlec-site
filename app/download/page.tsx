@@ -215,7 +215,7 @@ export default async function DownloadPage() {
           {[
             "Oturum kontrolü",
             "Ürün erişimi doğrulama",
-            "GitHub release redirect",
+            "10 dakikalık imzalı R2 linki",
           ].map((item) => (
             <div key={item} className="flex items-center gap-3 text-body-s text-[var(--text-secondary)]">
               <Check className="size-4 text-[var(--success)]" strokeWidth={1.5} />
@@ -261,7 +261,7 @@ export default async function DownloadPage() {
             />
             <p className="text-body-s text-[var(--text-secondary)]">
               Bu sayfa dosyayı proxy&apos;lemez. Yetki kontrolü tamamlandığında mevcut
-              download route&apos;u GitHub release asset adresine yönlendirir.
+              download route&apos;u kısa süreli imzalı R2 indirme linkine yönlendirir.
             </p>
           </div>
         </Card>

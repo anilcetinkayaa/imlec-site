@@ -5,6 +5,7 @@ import {
   requireAdminSession,
   toJsonValue,
 } from "@/src/server/admin-action-log";
+import { sendAdminActionAlert } from "@/src/server/admin-email";
 
 export const runtime = "nodejs";
 
@@ -138,6 +139,11 @@ export async function POST(request: Request) {
     });
 
     return after;
+  });
+
+  await sendAdminActionAlert({
+    action: "ENTITLEMENT_GRANT",
+    target: user.id,
   });
 
   return Response.json({ ok: true, entitlementId: entitlement.id });

@@ -1,5 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { DeviceStatus } from "@prisma/client";
+import { createElement } from "react";
+import { NewDeviceActivatedEmail } from "@/emails/NewDeviceActivatedEmail";
+import { sendMail } from "@/lib/mail";
 import { prisma } from "@/src/db/prisma";
 
 export const runtime = "nodejs";
@@ -178,6 +181,7 @@ export async function POST(request: Request) {
     where: { id: tokenPayload.sub },
     select: {
       id: true,
+      email: true,
       disabledAt: true,
     },
   });
@@ -194,6 +198,19 @@ export async function POST(request: Request) {
   if (!product) {
     return jsonError("PRODUCT_NOT_FOUND", 404);
   }
+
+  const existingDevice = await prisma.device.findUnique({
+    where: {
+      userId_productId_fingerprintHash: {
+        userId: user.id,
+        productId: product.id,
+        fingerprintHash: deviceId,
+      },
+    },
+    select: {
+      id: true,
+    },
+  });
 
   await prisma.device.upsert({
     where: {
@@ -221,6 +238,21 @@ export async function POST(request: Request) {
       lastSeenAt: new Date(),
     },
   });
+
+  if (!existingDevice) {
+    try {
+      await sendMail({
+        to: user.email,
+        subject: "Yeni cihaz hesabınıza bağlandı",
+        react: createElement(NewDeviceActivatedEmail, {
+          deviceName: cleanOptionalText(body.deviceName),
+          productName: "FİŞ260",
+        }),
+      });
+    } catch (error) {
+      console.error("[NEW DEVICE EMAIL ERROR]", error);
+    }
+  }
 
   return Response.json({
     ok: true,

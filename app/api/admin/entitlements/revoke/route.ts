@@ -5,6 +5,7 @@ import {
   requireAdminSession,
   toJsonValue,
 } from "@/src/server/admin-action-log";
+import { sendAdminActionAlert } from "@/src/server/admin-email";
 
 export const runtime = "nodejs";
 
@@ -80,6 +81,11 @@ export async function POST(request: Request) {
         ipAddress: getClientIp(request),
       },
     });
+  });
+
+  await sendAdminActionAlert({
+    action: "ENTITLEMENT_REVOKE",
+    target: entitlement.userId,
   });
 
   return Response.json({ ok: true });

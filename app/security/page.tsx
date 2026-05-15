@@ -22,7 +22,7 @@ const securityItems = [
   {
     icon: Download,
     title: "Korumalı indirme",
-    text: "Installer dosyası yalnızca yetkili kullanıcılar için mevcut download route'u üzerinden release asset adresine yönlendirilir.",
+    text: "Installer dosyası yalnızca yetkili kullanıcılar için mevcut download route'u üzerinden kısa süreli imzalı R2 linkine yönlendirilir.",
   },
   {
     icon: MonitorCheck,
@@ -156,7 +156,7 @@ export default function SecurityPage() {
               {[
                 "Hesap bilgileri oturum ve ürün erişimi için kullanılır.",
                 "Cihaz kayıtları masaüstü uygulama doğrulaması için tutulur.",
-                "Download akışı dosyayı proxy'lemez; yetki kontrolünden sonra release asset adresine yönlendirme yapılır.",
+                "Download akışı dosyayı proxy'lemez; yetki kontrolünden sonra kısa süreli imzalı R2 linkine yönlendirme yapılır.",
                 "Ödeme formu test aşamasında gösterilmez; ticari ödeme akışı ayrıca tasarlanacaktır.",
               ].map((item) => (
                 <div key={item} className="flex gap-3 text-body-s text-[var(--text-secondary)]">
