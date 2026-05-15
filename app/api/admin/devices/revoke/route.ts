@@ -1,6 +1,10 @@
 import { DeviceStatus } from "@prisma/client";
 import { prisma } from "@/src/db/prisma";
-import { requireAdminApi } from "@/src/server/admin";
+import {
+  getClientIp,
+  requireAdminSession,
+  toJsonValue,
+} from "@/src/server/admin-action-log";
 
 export const runtime = "nodejs";
 
@@ -26,10 +30,10 @@ function isRevokeDeviceBody(value: unknown): value is RevokeDeviceBody {
 }
 
 export async function POST(request: Request) {
-  const unauthorized = await requireAdminApi();
+  const admin = await requireAdminSession();
 
-  if (unauthorized) {
-    return unauthorized;
+  if (admin.error) {
+    return admin.error;
   }
 
   let body: unknown;
@@ -46,22 +50,34 @@ export async function POST(request: Request) {
 
   const device = await prisma.device.findUnique({
     where: { id: body.deviceId },
-    select: { id: true },
   });
 
   if (!device) {
     return jsonError("DEVICE_NOT_FOUND", 404);
   }
 
-  // reason ileride AuditLog/AdminAction entegrasyonu için alınabilir.
-  void body.reason;
+  await prisma.$transaction(async (tx) => {
+    const after = await tx.device.update({
+      where: { id: device.id },
+      data: {
+        status: DeviceStatus.REVOKED,
+        revokedAt: new Date(),
+      },
+    });
 
-  await prisma.device.update({
-    where: { id: device.id },
-    data: {
-      status: DeviceStatus.REVOKED,
-      revokedAt: new Date(),
-    },
+    await tx.adminActionLog.create({
+      data: {
+        adminId: admin.session.user.id,
+        targetUserId: device.userId,
+        action: "DEVICE_REVOKE",
+        before: toJsonValue(device),
+        after: toJsonValue({
+          device: after,
+          reason: body.reason ?? null,
+        }),
+        ipAddress: getClientIp(request),
+      },
+    });
   });
 
   return Response.json({ ok: true });

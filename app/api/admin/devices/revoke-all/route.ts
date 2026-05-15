@@ -1,6 +1,10 @@
 import { DeviceStatus } from "@prisma/client";
 import { prisma } from "@/src/db/prisma";
-import { requireAdminApi } from "@/src/server/admin";
+import {
+  getClientIp,
+  requireAdminSession,
+  toJsonValue,
+} from "@/src/server/admin-action-log";
 
 export const runtime = "nodejs";
 
@@ -32,10 +36,10 @@ function isRevokeAllDevicesBody(
 }
 
 export async function POST(request: Request) {
-  const unauthorized = await requireAdminApi();
+  const admin = await requireAdminSession();
 
-  if (unauthorized) {
-    return unauthorized;
+  if (admin.error) {
+    return admin.error;
   }
 
   let body: unknown;
@@ -70,19 +74,43 @@ export async function POST(request: Request) {
     }
   }
 
-  // reason ileride AuditLog/AdminAction entegrasyonu için alınabilir.
-  void body.reason;
-
-  const result = await prisma.device.updateMany({
-    where: {
+  const result = await prisma.$transaction(async (tx) => {
+    const where = {
       userId: user.id,
       productId: body.productId || undefined,
       revokedAt: null,
-    },
-    data: {
-      status: DeviceStatus.REVOKED,
-      revokedAt: new Date(),
-    },
+    };
+    const before = await tx.device.findMany({ where });
+    const updateResult = await tx.device.updateMany({
+      where,
+      data: {
+        status: DeviceStatus.REVOKED,
+        revokedAt: new Date(),
+      },
+    });
+    const after = await tx.device.findMany({
+      where: {
+        id: {
+          in: before.map((device) => device.id),
+        },
+      },
+    });
+
+    await tx.adminActionLog.create({
+      data: {
+        adminId: admin.session.user.id,
+        targetUserId: user.id,
+        action: "DEVICE_REVOKE_ALL",
+        before: toJsonValue(before),
+        after: toJsonValue({
+          devices: after,
+          reason: body.reason ?? null,
+        }),
+        ipAddress: getClientIp(request),
+      },
+    });
+
+    return updateResult;
   });
 
   return Response.json({ ok: true, count: result.count });

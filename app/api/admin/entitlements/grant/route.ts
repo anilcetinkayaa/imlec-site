@@ -1,6 +1,10 @@
 import { EntitlementSource, EntitlementStatus } from "@prisma/client";
 import { prisma } from "@/src/db/prisma";
-import { requireAdminApi } from "@/src/server/admin";
+import {
+  getClientIp,
+  requireAdminSession,
+  toJsonValue,
+} from "@/src/server/admin-action-log";
 
 export const runtime = "nodejs";
 
@@ -42,10 +46,10 @@ function parseOptionalDate(value: string | null | undefined) {
 }
 
 export async function POST(request: Request) {
-  const unauthorized = await requireAdminApi();
+  const admin = await requireAdminSession();
 
-  if (unauthorized) {
-    return unauthorized;
+  if (admin.error) {
+    return admin.error;
   }
 
   let body: unknown;
@@ -85,32 +89,55 @@ export async function POST(request: Request) {
     return jsonError("PRODUCT_NOT_FOUND", 404);
   }
 
-  // reason ileride AuditLog/AdminAction entegrasyonu için alınabilir.
-  void body.reason;
-
-  const entitlement = await prisma.entitlement.upsert({
-    where: {
-      userId_productId: {
+  const entitlement = await prisma.$transaction(async (tx) => {
+    const before = await tx.entitlement.findUnique({
+      where: {
+        userId_productId: {
+          userId: user.id,
+          productId: product.id,
+        },
+      },
+    });
+    const after = await tx.entitlement.upsert({
+      where: {
+        userId_productId: {
+          userId: user.id,
+          productId: product.id,
+        },
+      },
+      update: {
+        status: EntitlementStatus.ACTIVE,
+        source: EntitlementSource.MANUAL,
+        startsAt: new Date(),
+        expiresAt,
+        revokedAt: null,
+      },
+      create: {
         userId: user.id,
         productId: product.id,
+        status: EntitlementStatus.ACTIVE,
+        source: EntitlementSource.MANUAL,
+        startsAt: new Date(),
+        expiresAt,
+        revokedAt: null,
       },
-    },
-    update: {
-      status: EntitlementStatus.ACTIVE,
-      source: EntitlementSource.MANUAL,
-      startsAt: new Date(),
-      expiresAt,
-      revokedAt: null,
-    },
-    create: {
-      userId: user.id,
-      productId: product.id,
-      status: EntitlementStatus.ACTIVE,
-      source: EntitlementSource.MANUAL,
-      startsAt: new Date(),
-      expiresAt,
-      revokedAt: null,
-    },
+    });
+
+    await tx.adminActionLog.create({
+      data: {
+        adminId: admin.session.user.id,
+        targetUserId: user.id,
+        action: "ENTITLEMENT_GRANT",
+        before: toJsonValue(before),
+        after: toJsonValue({
+          entitlement: after,
+          reason: body.reason ?? null,
+        }),
+        ipAddress: getClientIp(request),
+      },
+    });
+
+    return after;
   });
 
   return Response.json({ ok: true, entitlementId: entitlement.id });

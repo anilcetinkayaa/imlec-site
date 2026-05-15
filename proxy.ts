@@ -43,9 +43,29 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  if (request.nextUrl.pathname.startsWith("/admin")) {
+    const is2FARoute = request.nextUrl.pathname.startsWith("/admin/2fa");
+
+    if (token.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    if (!token.twoFactorRequired && !is2FARoute) {
+      return NextResponse.redirect(new URL("/admin/2fa/setup", request.url));
+    }
+
+    if (
+      token.twoFactorRequired &&
+      token.twoFactorVerified !== true &&
+      !is2FARoute
+    ) {
+      return NextResponse.redirect(new URL("/admin/2fa/verify", request.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/account/:path*"],
+  matcher: ["/account/:path*", "/admin/:path*"],
 };

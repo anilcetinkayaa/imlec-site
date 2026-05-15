@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/src/db/prisma";
 import { getAdminSession } from "@/src/server/admin";
-import { AdminUserActions } from "./admin-user-actions";
+import { AdminUserDetailTabs } from "./admin-user-detail-tabs";
 
 export const metadata: Metadata = {
   title: "Kullanıcı Detayı | İmleç Yazılım Admin",
@@ -56,7 +56,14 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
   }
 
   const { userId } = await params;
-  const [user, products] = await Promise.all([
+  const [
+    user,
+    products,
+    fis260Product,
+    recentDownloadLogs,
+    actionLogs,
+    notes,
+  ] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -99,6 +106,62 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
         id: true,
         name: true,
         slug: true,
+      },
+    }),
+    prisma.product.findUnique({
+      where: { slug: "fis260" },
+      select: {
+        id: true,
+        slug: true,
+      },
+    }),
+    prisma.downloadLog.findMany({
+      where: {
+        userId,
+        productSlug: "fis260",
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 5,
+      select: {
+        id: true,
+        success: true,
+        reason: true,
+        createdAt: true,
+      },
+    }),
+    prisma.adminActionLog.findMany({
+      where: {
+        targetUserId: userId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 20,
+      select: {
+        id: true,
+        adminId: true,
+        action: true,
+        before: true,
+        after: true,
+        ipAddress: true,
+        createdAt: true,
+      },
+    }),
+    prisma.userNote.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 20,
+      select: {
+        id: true,
+        adminId: true,
+        body: true,
+        createdAt: true,
       },
     }),
   ]);
@@ -231,20 +294,55 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
             </article>
           </section>
 
-          <AdminUserActions
+          <AdminUserDetailTabs
             userId={user.id}
             products={products}
             entitlements={user.entitlements.map((entitlement) => ({
               id: entitlement.id,
               productName: entitlement.product.name,
+              productSlug: entitlement.product.slug,
               status: entitlement.status,
+              source: entitlement.source,
+              startsAt: formatDate(entitlement.startsAt),
+              expiresAt: formatDate(entitlement.expiresAt),
+              revokedAt: formatDate(entitlement.revokedAt),
             }))}
             devices={user.devices.map((device) => ({
               id: device.id,
               productName: device.product.name,
-              deviceName: device.deviceName,
+              deviceName: device.deviceName ?? "-",
+              os: device.os ?? "-",
+              appVersion: device.appVersion ?? "-",
               status: device.status,
+              lastSeenAt: formatDate(device.lastSeenAt),
+              revokedAt: formatDate(device.revokedAt),
             }))}
+            downloadLogs={recentDownloadLogs.map((log) => ({
+              id: log.id,
+              success: log.success,
+              reason: log.reason ?? "-",
+              createdAt: formatDate(log.createdAt),
+            }))}
+            actionLogs={actionLogs.map((log) => ({
+              id: log.id,
+              adminId: log.adminId,
+              action: log.action,
+              before: log.before,
+              after: log.after,
+              ipAddress: log.ipAddress ?? "-",
+              createdAt: formatDate(log.createdAt),
+            }))}
+            notes={notes.map((note) => ({
+              id: note.id,
+              adminId: note.adminId,
+              body: note.body,
+              createdAt: formatDate(note.createdAt),
+            }))}
+            diagnostic={{
+              productExists: Boolean(fis260Product),
+              latestReason: recentDownloadLogs[0]?.reason ?? "Log yok",
+              endpoint: `/api/admin/diagnose?userId=${user.id}&productSlug=fis260`,
+            }}
           />
         </div>
       </div>

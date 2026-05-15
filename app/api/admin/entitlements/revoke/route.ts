@@ -1,6 +1,10 @@
 import { EntitlementStatus } from "@prisma/client";
 import { prisma } from "@/src/db/prisma";
-import { requireAdminApi } from "@/src/server/admin";
+import {
+  getClientIp,
+  requireAdminSession,
+  toJsonValue,
+} from "@/src/server/admin-action-log";
 
 export const runtime = "nodejs";
 
@@ -28,10 +32,10 @@ function isRevokeEntitlementBody(
 }
 
 export async function POST(request: Request) {
-  const unauthorized = await requireAdminApi();
+  const admin = await requireAdminSession();
 
-  if (unauthorized) {
-    return unauthorized;
+  if (admin.error) {
+    return admin.error;
   }
 
   let body: unknown;
@@ -48,22 +52,34 @@ export async function POST(request: Request) {
 
   const entitlement = await prisma.entitlement.findUnique({
     where: { id: body.entitlementId },
-    select: { id: true },
   });
 
   if (!entitlement) {
     return jsonError("ENTITLEMENT_NOT_FOUND", 404);
   }
 
-  // reason ileride AuditLog/AdminAction entegrasyonu için alınabilir.
-  void body.reason;
+  await prisma.$transaction(async (tx) => {
+    const after = await tx.entitlement.update({
+      where: { id: entitlement.id },
+      data: {
+        status: EntitlementStatus.REVOKED,
+        revokedAt: new Date(),
+      },
+    });
 
-  await prisma.entitlement.update({
-    where: { id: entitlement.id },
-    data: {
-      status: EntitlementStatus.REVOKED,
-      revokedAt: new Date(),
-    },
+    await tx.adminActionLog.create({
+      data: {
+        adminId: admin.session.user.id,
+        targetUserId: entitlement.userId,
+        action: "ENTITLEMENT_REVOKE",
+        before: toJsonValue(entitlement),
+        after: toJsonValue({
+          entitlement: after,
+          reason: body.reason ?? null,
+        }),
+        ipAddress: getClientIp(request),
+      },
+    });
   });
 
   return Response.json({ ok: true });

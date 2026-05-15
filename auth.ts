@@ -46,6 +46,7 @@ export const authConfig = {
             name: true,
             passwordHash: true,
             role: true,
+            twoFactorEnabled: true,
             disabledAt: true,
           },
         });
@@ -74,15 +75,31 @@ export const authConfig = {
           email: user.email,
           name: user.name,
           role: user.role,
+          twoFactorEnabled: user.twoFactorEnabled,
         };
       },
     }),
   ],
   callbacks: {
-    jwt({ token, user }) {
+    jwt({ token, user, trigger, session }) {
       if (user?.id) {
         token.id = user.id;
         token.role = user.role;
+        token.twoFactorRequired = Boolean(user.twoFactorEnabled);
+        token.twoFactorVerified = !user.twoFactorEnabled;
+        token.twoFactorVerifiedAt = user.twoFactorEnabled
+          ? undefined
+          : Math.floor(Date.now() / 1000);
+      }
+
+      if (
+        trigger === "update" &&
+        session?.user?.twoFactorVerified === true &&
+        token.role === "ADMIN"
+      ) {
+        token.twoFactorRequired = true;
+        token.twoFactorVerified = true;
+        token.twoFactorVerifiedAt = Math.floor(Date.now() / 1000);
       }
 
       return token;
@@ -91,6 +108,7 @@ export const authConfig = {
       if (session.user && token.id && token.role) {
         session.user.id = token.id;
         session.user.role = token.role;
+        session.user.twoFactorVerified = token.twoFactorVerified;
       }
 
       return session;
@@ -98,4 +116,10 @@ export const authConfig = {
   },
 } satisfies NextAuthConfig;
 
-export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
+export const {
+  handlers,
+  auth,
+  signIn,
+  signOut,
+  unstable_update: update,
+} = NextAuth(authConfig);
