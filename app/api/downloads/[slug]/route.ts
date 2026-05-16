@@ -144,7 +144,11 @@ export async function GET(request: NextRequest, context: DownloadRouteContext) {
       reason: entitlement ? "ENTITLEMENT_INVALID" : "ENTITLEMENT_NOT_FOUND",
     });
 
-    return NextResponse.redirect(new URL("/fis260#uyelikler", request.url));
+    const accessUrl = new URL("/download", request.url);
+    accessUrl.searchParams.set("reason", "access-required");
+    accessUrl.searchParams.set("product", product.slug);
+
+    return NextResponse.redirect(accessUrl);
   }
 
   await writeDownloadLog({

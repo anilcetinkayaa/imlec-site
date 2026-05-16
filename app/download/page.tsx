@@ -5,6 +5,7 @@ import {
   Download,
   FileDown,
   LockKeyhole,
+  MessageCircle,
   MonitorDown,
   ShieldCheck,
 } from "lucide-react";
@@ -80,6 +81,44 @@ function LoginGate() {
         <Button asChild size="lg" variant="outline">
           <Link href="/register">Hesap oluştur</Link>
         </Button>
+      </div>
+    </Card>
+  );
+}
+
+function AccessRequiredNotice() {
+  return (
+    <Card className="p-6 sm:p-7" variant="elevated">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex gap-4">
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--accent-fis260)]/25 bg-[var(--accent-fis260)]/10 text-[var(--accent-fis260)]">
+            <LockKeyhole className="size-6" strokeWidth={1.5} />
+          </div>
+          <div>
+            <Badge variant="beta">Ürün erişimi gerekli</Badge>
+            <h2 className="text-h3 mt-4">
+              Bu hesap için FİŞ260 erişimi henüz tanımlanmamış.
+            </h2>
+            <p className="text-body mt-3 max-w-2xl text-[var(--text-secondary)]">
+              İndirme yapabilmek için hesabınıza deneme veya üyelik erişimi atanmalıdır.
+            </p>
+            <p className="text-body-s mt-3 max-w-2xl text-[var(--text-tertiary)]">
+              Hesap açmak oturum oluşturur; FİŞ260 kurulumu için ayrıca ürün erişimi
+              gerekir. Erişiminiz sonradan kaldırıldıysa da aynı kontrol uygulanır.
+            </p>
+          </div>
+        </div>
+        <div className="flex shrink-0 flex-col gap-3 sm:min-w-48">
+          <Button asChild variant="primary">
+            <Link href="/uyelik">Üyelikler</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="mailto:info@imlecyazilim.com">
+              <MessageCircle className="size-4" strokeWidth={1.5} />
+              Destek ile iletişime geç
+            </Link>
+          </Button>
+        </div>
       </div>
     </Card>
   );
@@ -173,7 +212,14 @@ function DownloadCard({
   );
 }
 
-export default async function DownloadPage() {
+type DownloadPageProps = {
+  searchParams: Promise<{
+    reason?: string;
+    product?: string;
+  }>;
+};
+
+export default async function DownloadPage({ searchParams }: DownloadPageProps) {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -194,6 +240,9 @@ export default async function DownloadPage() {
     (product) => product.slug in productDownloadMeta,
   );
   const ownedProducts = downloadableProducts.filter((product) => product.hasAccess);
+  const params = await searchParams;
+  const showAccessRequiredNotice =
+    params.reason === "access-required" && params.product === "fis260";
 
   return (
     <main className="min-h-screen overflow-hidden bg-[var(--surface-0)] text-[var(--text-primary)]">
@@ -215,7 +264,7 @@ export default async function DownloadPage() {
           {[
             "Oturum kontrolü",
             "Ürün erişimi doğrulama",
-            "10 dakikalık imzalı R2 linki",
+            "GitHub release redirect",
           ].map((item) => (
             <div key={item} className="flex items-center gap-3 text-body-s text-[var(--text-secondary)]">
               <Check className="size-4 text-[var(--success)]" strokeWidth={1.5} />
@@ -225,11 +274,13 @@ export default async function DownloadPage() {
         </div>
 
         <div className="mt-8 grid gap-5">
+          {showAccessRequiredNotice ? <AccessRequiredNotice /> : null}
+
           {ownedProducts.length > 0 ? (
             ownedProducts.map((product) => (
               <DownloadCard key={product.id} product={product} />
             ))
-          ) : (
+          ) : showAccessRequiredNotice ? null : (
             <Card className="p-6" variant="elevated">
               <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex gap-4">
@@ -237,17 +288,27 @@ export default async function DownloadPage() {
                     <FileDown className="size-6" strokeWidth={1.5} />
                   </div>
                   <div>
-                    <Badge variant="coming-soon">Erişim yok</Badge>
-                    <h2 className="text-h3 mt-3">İndirilebilir ürün bulunmuyor.</h2>
+                    <Badge variant="coming-soon">Ürün erişimi gerekli</Badge>
+                    <h2 className="text-h3 mt-3">
+                      Bu hesap için FİŞ260 erişimi henüz tanımlanmamış.
+                    </h2>
                     <p className="text-body-s mt-2 max-w-2xl text-[var(--text-secondary)]">
-                      Hesabınıza FİŞ260 ürün erişimi tanımlandığında kurulum
-                      dosyası burada görünecek.
+                      İndirme yapabilmek için hesabınıza deneme veya üyelik erişimi
+                      atanmalıdır.
                     </p>
                   </div>
                 </div>
-                <Button asChild variant="outline">
-                  <Link href="/uyelik">Üyelik talebi oluştur</Link>
-                </Button>
+                <div className="flex flex-col gap-3 sm:min-w-48">
+                  <Button asChild variant="primary">
+                    <Link href="/uyelik">Üyelikler</Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link href="mailto:info@imlecyazilim.com">
+                      <MessageCircle className="size-4" strokeWidth={1.5} />
+                      Destek ile iletişime geç
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </Card>
           )}
@@ -261,7 +322,7 @@ export default async function DownloadPage() {
             />
             <p className="text-body-s text-[var(--text-secondary)]">
               Bu sayfa dosyayı proxy&apos;lemez. Yetki kontrolü tamamlandığında mevcut
-              download route&apos;u kısa süreli imzalı R2 indirme linkine yönlendirir.
+              download route&apos;u GitHub release asset adresine yönlendirir.
             </p>
           </div>
         </Card>
