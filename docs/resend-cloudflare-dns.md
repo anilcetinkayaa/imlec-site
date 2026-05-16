@@ -45,7 +45,7 @@ Vercel Production ortamında şu değişkenler gerekir:
 
 ```txt
 RESEND_API_KEY=<resend-api-key>
-MAIL_FROM=İmleç Yazılım <noreply@imlecyazilim.com>
+EMAIL_FROM=İmleç Yazılım <bildirim@imlecyazilim.com>
 ADMIN_ALERT_EMAIL=admin@imlecyazilim.com
 ```
 

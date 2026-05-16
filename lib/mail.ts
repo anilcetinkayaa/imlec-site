@@ -9,8 +9,9 @@ export type SendMailInput = {
 
 export function getMailFromAddress() {
   return (
+    process.env.EMAIL_FROM ??
     process.env.MAIL_FROM ??
-    "İmleç Yazılım <noreply@imlecyazilim.com>"
+    "İmleç Yazılım <bildirim@imlecyazilim.com>"
   );
 }
 
