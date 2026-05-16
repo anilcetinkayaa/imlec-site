@@ -26,7 +26,9 @@ import {
   FIS260_INSTALLER_SIZE_BYTES,
   FIS260_INSTALLER_VERSION,
 } from "@/lib/config";
+import { prisma } from "@/src/db/prisma";
 import { getUserProductAccess } from "@/src/server/entitlements";
+import { requestFis260Access } from "./actions";
 
 export const metadata: Metadata = {
   title: "İndir | İmleç Yazılım",
@@ -86,7 +88,17 @@ function LoginGate() {
   );
 }
 
-function AccessRequiredNotice() {
+function AccessRequestButton({ disabled = false }: { disabled?: boolean }) {
+  return (
+    <form action={requestFis260Access}>
+      <Button className="w-full" disabled={disabled} type="submit" variant="primary">
+        {disabled ? "Talep beklemede" : "Erişim talebinde bulun"}
+      </Button>
+    </form>
+  );
+}
+
+function AccessRequiredNotice({ hasPendingRequest }: { hasPendingRequest: boolean }) {
   return (
     <Card className="p-6 sm:p-7" variant="elevated">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
@@ -109,9 +121,7 @@ function AccessRequiredNotice() {
           </div>
         </div>
         <div className="flex shrink-0 flex-col gap-3 sm:min-w-48">
-          <Button asChild variant="primary">
-            <Link href="/uyelik">Üyelikler</Link>
-          </Button>
+          <AccessRequestButton disabled={hasPendingRequest} />
           <Button asChild variant="outline">
             <Link href="mailto:info@imlecyazilim.com">
               <MessageCircle className="size-4" strokeWidth={1.5} />
@@ -120,6 +130,19 @@ function AccessRequiredNotice() {
           </Button>
         </div>
       </div>
+    </Card>
+  );
+}
+
+function AccessRequestSentBanner() {
+  return (
+    <Card className="border-[var(--success)]/25 bg-[var(--success)]/8 p-5" variant="default">
+      <Badge variant="active">Talep gönderildi</Badge>
+      <h2 className="text-h4 mt-3">Erişim talebiniz gönderildi.</h2>
+      <p className="text-body-s mt-2 max-w-2xl text-[var(--text-secondary)]">
+        İnceleme sonrası hesabınıza erişim tanımlanacaktır. Erişim onayı
+        verildiğinde bilgilendirme maili alacaksınız.
+      </p>
     </Card>
   );
 }
@@ -215,6 +238,7 @@ function DownloadCard({
 type DownloadPageProps = {
   searchParams: Promise<{
     reason?: string;
+    request?: string;
     product?: string;
   }>;
 };
@@ -243,6 +267,20 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
   const params = await searchParams;
   const showAccessRequiredNotice =
     params.reason === "access-required" && params.product === "fis260";
+  const showRequestSentBanner =
+    params.request === "sent" && params.product === "fis260";
+  const pendingFis260Request = await prisma.accessRequest.findUnique({
+    where: {
+      userId_productCode: {
+        userId: session.user.id,
+        productCode: "fis260",
+      },
+    },
+    select: {
+      status: true,
+    },
+  });
+  const hasPendingFis260Request = pendingFis260Request?.status === "PENDING";
 
   return (
     <main className="min-h-screen overflow-hidden bg-[var(--surface-0)] text-[var(--text-primary)]">
@@ -274,7 +312,10 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
         </div>
 
         <div className="mt-8 grid gap-5">
-          {showAccessRequiredNotice ? <AccessRequiredNotice /> : null}
+          {showRequestSentBanner ? <AccessRequestSentBanner /> : null}
+          {showAccessRequiredNotice ? (
+            <AccessRequiredNotice hasPendingRequest={hasPendingFis260Request} />
+          ) : null}
 
           {ownedProducts.length > 0 ? (
             ownedProducts.map((product) => (
@@ -299,9 +340,7 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
                   </div>
                 </div>
                 <div className="flex flex-col gap-3 sm:min-w-48">
-                  <Button asChild variant="primary">
-                    <Link href="/uyelik">Üyelikler</Link>
-                  </Button>
+                  <AccessRequestButton disabled={hasPendingFis260Request} />
                   <Button asChild variant="outline">
                     <Link href="mailto:info@imlecyazilim.com">
                       <MessageCircle className="size-4" strokeWidth={1.5} />

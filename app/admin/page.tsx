@@ -1,9 +1,13 @@
-import { EntitlementStatus } from "@prisma/client";
+import { AccessRequestStatus, EntitlementStatus } from "@prisma/client";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/src/db/prisma";
 import { getAdminSession } from "@/src/server/admin";
+import {
+  approveAccessRequest,
+  rejectAccessRequest,
+} from "./access-requests/actions";
 
 export const metadata: Metadata = {
   title: "Admin | İmleç Yazılım",
@@ -77,38 +81,64 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
 
-  const users = await prisma.user.findMany({
-    where: query
-      ? {
-          OR: [
-            { email: { contains: query, mode: "insensitive" } },
-            { name: { contains: query, mode: "insensitive" } },
-          ],
-        }
-      : undefined,
-    orderBy: {
-      createdAt: "desc",
-    },
-    take: 50,
-    include: {
-      entitlements: {
-        include: {
-          product: {
-            select: {
-              name: true,
-              slug: true,
+  const [users, pendingAccessRequests] = await Promise.all([
+    prisma.user.findMany({
+      where: query
+        ? {
+            OR: [
+              { email: { contains: query, mode: "insensitive" } },
+              { name: { contains: query, mode: "insensitive" } },
+            ],
+          }
+        : undefined,
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 50,
+      include: {
+        entitlements: {
+          include: {
+            product: {
+              select: {
+                name: true,
+                slug: true,
+              },
             },
           },
         },
-      },
-      devices: {
-        select: {
-          id: true,
-          lastSeenAt: true,
+        devices: {
+          select: {
+            id: true,
+            lastSeenAt: true,
+          },
         },
       },
-    },
-  });
+    }),
+    prisma.accessRequest.findMany({
+      where: {
+        status: AccessRequestStatus.PENDING,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+      take: 20,
+      include: {
+        product: {
+          select: {
+            name: true,
+            slug: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+          },
+        },
+      },
+    }),
+  ]);
 
   return (
     <main className="min-h-screen bg-[#08090b] px-6 py-8 text-zinc-100">
@@ -155,6 +185,76 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             Ara
           </button>
         </form>
+
+        <section className="mt-6 rounded-xl border border-white/[0.08] bg-white/[0.025] p-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.18em] text-blue-300/80">
+                Kapalı beta
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                Bekleyen erişim talepleri
+              </h2>
+            </div>
+            <span className="font-mono text-xs text-zinc-500">
+              {pendingAccessRequests.length} bekleyen talep
+            </span>
+          </div>
+
+          <div className="mt-5 grid gap-3">
+            {pendingAccessRequests.length > 0 ? (
+              pendingAccessRequests.map((request) => (
+                <div
+                  key={request.id}
+                  className="grid gap-4 rounded-lg border border-white/[0.07] bg-[#0c0d10] p-4 lg:grid-cols-[1.2fr_0.8fr_0.8fr_auto]"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-white">
+                      {request.email}
+                    </p>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      {request.user.name ?? "Ad kaydı yok"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
+                      Ürün
+                    </p>
+                    <p className="mt-1 text-sm text-zinc-300">
+                      {request.product?.name ?? request.productCode}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
+                      Tarih
+                    </p>
+                    <p className="mt-1 font-mono text-xs text-zinc-300">
+                      {formatDate(request.createdAt)}
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
+                    <form action={approveAccessRequest}>
+                      <input name="id" type="hidden" value={request.id} />
+                      <button className="h-9 w-full rounded-lg bg-emerald-400 px-3 text-sm font-medium text-emerald-950 transition hover:bg-emerald-300 sm:w-auto">
+                        Onayla
+                      </button>
+                    </form>
+                    <form action={rejectAccessRequest}>
+                      <input name="id" type="hidden" value={request.id} />
+                      <button className="h-9 w-full rounded-lg border border-red-400/30 bg-red-400/10 px-3 text-sm font-medium text-red-200 transition hover:bg-red-400/15 sm:w-auto">
+                        Reddet
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-lg border border-white/[0.07] bg-[#0c0d10] px-4 py-4 text-sm text-zinc-500">
+                Bekleyen erişim talebi yok.
+              </div>
+            )}
+          </div>
+        </section>
 
         <section className="mt-6 overflow-hidden rounded-xl border border-white/[0.08]">
           <div className="grid grid-cols-[1.4fr_1fr_0.8fr_1fr_1.2fr_0.7fr_1fr_0.7fr] bg-white/[0.035] px-4 py-3 text-xs uppercase tracking-[0.12em] text-zinc-500">
