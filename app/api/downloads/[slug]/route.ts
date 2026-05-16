@@ -1,8 +1,13 @@
-import { EntitlementStatus, UserRole } from "@prisma/client";
+import { EntitlementStatus } from "@prisma/client";
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/src/db/prisma";
-import { createInstallerSignedUrl } from "@/src/server/r2-downloads";
+
+const DOWNLOAD_URLS: Record<string, string> = {
+  fis260:
+    process.env.FIS260_DOWNLOAD_URL ??
+    "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.0-beta/FIS260_Setup_v0.1.0.exe",
+};
 
 type DownloadRouteContext = {
   params: Promise<{
@@ -60,49 +65,6 @@ function isEntitlementValid(entitlement: {
   );
 }
 
-async function createInstallerRedirect({
-  request,
-  userId,
-  productSlug,
-  filePath,
-  downloadName,
-  successReason,
-}: {
-  request: NextRequest;
-  userId: string;
-  productSlug: string;
-  filePath: string;
-  downloadName: string;
-  successReason: string;
-}) {
-  try {
-    const installerUrl = await createInstallerSignedUrl({
-      filePath,
-      downloadName,
-    });
-
-    await writeDownloadLog({
-      request,
-      userId,
-      productSlug,
-      success: true,
-      reason: successReason,
-    });
-
-    return NextResponse.redirect(installerUrl);
-  } catch (error) {
-    await writeDownloadLog({
-      request,
-      userId,
-      productSlug,
-      success: false,
-      reason: error instanceof Error ? error.message : "SIGNED_URL_ERROR",
-    });
-
-    return NextResponse.json({ ok: false, error: "SIGNED_URL_ERROR" }, { status: 503 });
-  }
-}
-
 export async function GET(request: NextRequest, context: DownloadRouteContext) {
   const { slug: rawSlug } = await context.params;
   const slug = rawSlug.toLowerCase();
@@ -117,7 +79,10 @@ export async function GET(request: NextRequest, context: DownloadRouteContext) {
       reason: "UNAUTHENTICATED",
     });
 
-    return NextResponse.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
+
+    return NextResponse.redirect(loginUrl);
   }
 
   const product = await prisma.product.findUnique({
@@ -127,7 +92,6 @@ export async function GET(request: NextRequest, context: DownloadRouteContext) {
     select: {
       id: true,
       slug: true,
-      name: true,
     },
   });
 
@@ -143,42 +107,18 @@ export async function GET(request: NextRequest, context: DownloadRouteContext) {
     return NextResponse.json({ ok: false, error: "PRODUCT_NOT_FOUND" }, { status: 404 });
   }
 
-  const productVersion = await prisma.productVersion.findFirst({
-    where: {
-      productId: product.id,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-    select: {
-      filePath: true,
-      version: true,
-    },
-  });
+  const downloadUrl = DOWNLOAD_URLS[product.slug];
 
-  if (!productVersion) {
+  if (!downloadUrl) {
     await writeDownloadLog({
       request,
       userId,
       productSlug: product.slug,
       success: false,
-      reason: "PRODUCT_VERSION_NOT_FOUND",
+      reason: "DOWNLOAD_URL_MISSING",
     });
 
-    return NextResponse.json({ ok: false, error: "PRODUCT_VERSION_NOT_FOUND" }, { status: 404 });
-  }
-
-  const downloadName = `${product.name}_Setup_v${productVersion.version}.exe`;
-
-  if (session.user.role === UserRole.ADMIN) {
-    return createInstallerRedirect({
-      request,
-      userId,
-      productSlug: product.slug,
-      filePath: productVersion.filePath,
-      downloadName,
-      successReason: "ADMIN_BYPASS",
-    });
+    return NextResponse.json({ ok: false, error: "DOWNLOAD_URL_MISSING" }, { status: 404 });
   }
 
   const entitlement = await prisma.entitlement.findUnique({
@@ -204,15 +144,16 @@ export async function GET(request: NextRequest, context: DownloadRouteContext) {
       reason: entitlement ? "ENTITLEMENT_INVALID" : "ENTITLEMENT_NOT_FOUND",
     });
 
-    return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    return NextResponse.redirect(new URL("/fis260#uyelikler", request.url));
   }
 
-  return createInstallerRedirect({
+  await writeDownloadLog({
     request,
     userId,
     productSlug: product.slug,
-    filePath: productVersion.filePath,
-    downloadName,
-    successReason: "ENTITLEMENT_VALID",
+    success: true,
+    reason: "ENTITLEMENT_VALID",
   });
+
+  return NextResponse.redirect(downloadUrl);
 }
