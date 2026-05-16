@@ -18,6 +18,8 @@ import {
   MEMBERSHIP_PRICE_TRY,
 } from "@/lib/config";
 import { buildLemonSqueezyCheckoutUrl } from "@/lib/lemonsqueezy-checkout";
+import { prisma } from "@/src/db/prisma";
+import { requestFis260AccessFromMembershipPage } from "@/app/download/actions";
 
 export const metadata: Metadata = {
   title: "Üyelikler | İmleç Yazılım",
@@ -58,8 +60,29 @@ function plannedPriceLabel() {
   return `Ticari sürümde aylık ${formattedPrice} olarak planlanmaktadır.`;
 }
 
-export default async function MembershipPage() {
+type MembershipPageProps = {
+  searchParams: Promise<{
+    request?: string;
+    product?: string;
+  }>;
+};
+
+function AccessRequestSuccessBanner() {
+  return (
+    <div className="mb-8 rounded-[var(--radius-lg)] border border-[var(--success)]/25 bg-[var(--success)]/8 px-4 py-4">
+      <Badge variant="active">Talep gönderildi</Badge>
+      <h2 className="text-h4 mt-3">Erişim talebiniz gönderildi.</h2>
+      <p className="text-body-s mt-2 max-w-2xl text-[var(--text-secondary)]">
+        İnceleme sonrası hesabınıza erişim tanımlanacaktır. Erişim onayı
+        verildiğinde bilgilendirme maili alacaksınız.
+      </p>
+    </div>
+  );
+}
+
+export default async function MembershipPage({ searchParams }: MembershipPageProps) {
   const session = await auth();
+  const params = await searchParams;
   const checkoutUrl =
     session?.user?.id && session.user.email && process.env.LEMONSQUEEZY_FIS260_CHECKOUT_URL
       ? buildLemonSqueezyCheckoutUrl({
@@ -69,6 +92,22 @@ export default async function MembershipPage() {
           productSlug: "fis260",
         })
       : null;
+  const pendingRequest = session?.user?.id
+    ? await prisma.accessRequest.findUnique({
+        where: {
+          userId_productCode: {
+            userId: session.user.id,
+            productCode: "fis260",
+          },
+        },
+        select: {
+          status: true,
+        },
+      })
+    : null;
+  const hasPendingRequest = pendingRequest?.status === "PENDING";
+  const showAccessRequestSent =
+    params.request === "sent" && params.product === "fis260";
 
   return (
     <main className="min-h-screen overflow-hidden bg-[var(--surface-0)] text-[var(--text-primary)]">
@@ -76,6 +115,8 @@ export default async function MembershipPage() {
       <SiteHeader />
 
       <section className="relative mx-auto max-w-5xl px-6 py-14 sm:px-8 lg:px-10 lg:py-20">
+        {showAccessRequestSent ? <AccessRequestSuccessBanner /> : null}
+
         <div className="mb-8 flex flex-col gap-3 rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--surface-2)] px-4 py-3 sm:flex-row sm:items-center">
           <Badge variant="beta">Test Aşaması</Badge>
           <p className="text-body-s text-[var(--text-secondary)]">
@@ -151,9 +192,22 @@ export default async function MembershipPage() {
             <p className="text-body-s max-w-md text-[var(--text-tertiary)]">
               Ödeme formu bulunmaz. Ticari ödeme akışı hazır olduğunda ayrıca duyurulur.
             </p>
-            <Button asChild size="lg" variant="primary">
-              <Link href="/register">Üyelik talebi oluştur</Link>
-            </Button>
+            {session?.user?.id ? (
+              <form action={requestFis260AccessFromMembershipPage}>
+                <Button
+                  disabled={hasPendingRequest}
+                  size="lg"
+                  type="submit"
+                  variant="primary"
+                >
+                  {hasPendingRequest ? "Talep beklemede" : "Erişim talebinde bulun"}
+                </Button>
+              </form>
+            ) : (
+              <Button asChild size="lg" variant="primary">
+                <Link href="/login?callbackUrl=/uyelik">Erişim talebinde bulun</Link>
+              </Button>
+            )}
             {checkoutUrl ? (
               <Button asChild size="lg" variant="outline">
                 <Link href={checkoutUrl}>Test checkout</Link>
