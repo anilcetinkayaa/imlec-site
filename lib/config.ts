@@ -1,6 +1,6 @@
-export const VIDEO_PLACEHOLDER = true;
+export const VIDEO_PLACEHOLDER = false;
 
-export const FIS260_DEMO_VIDEO_SRC = "";
+export const FIS260_DEMO_VIDEO_SRC = "/fis260.mp4";
 
 export const FIS260_INSTALLER_VERSION = "v0.1.0 beta";
 
