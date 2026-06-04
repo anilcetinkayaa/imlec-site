@@ -39,6 +39,7 @@ export async function GET(_request: Request, context: VersionRouteContext) {
       version: true,
       minimumVersion: true,
       releaseNotes: true,
+      filePath: true,
       sha256: true,
       createdAt: true,
     },
@@ -55,6 +56,9 @@ export async function GET(_request: Request, context: VersionRouteContext) {
     latest: latestVersion.version,
     minimum: latestVersion.minimumVersion ?? latestVersion.version,
     releaseNotes: latestVersion.releaseNotes ?? "",
+    downloadUrl: latestVersion.filePath.startsWith("http")
+      ? latestVersion.filePath
+      : new URL(`/downloads/${latestVersion.filePath}`, _request.url).toString(),
     sha256: latestVersion.sha256,
     releasedAt: latestVersion.createdAt.toISOString(),
   });

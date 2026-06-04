@@ -154,6 +154,30 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
+              href="/admin/support"
+              className="rounded-lg border border-red-300/20 px-4 py-2 text-sm text-red-200 transition hover:bg-red-300/10"
+            >
+              Destek
+            </Link>
+            <Link
+              href="/admin/versions"
+              className="rounded-lg border border-emerald-300/20 px-4 py-2 text-sm text-emerald-200 transition hover:bg-emerald-300/10"
+            >
+              Sürümler
+            </Link>
+            <Link
+              href="/admin/campaigns"
+              className="rounded-lg border border-amber-300/20 px-4 py-2 text-sm text-amber-200 transition hover:bg-amber-300/10"
+            >
+              Kampanyalar
+            </Link>
+            <Link
+              href="/admin/organizations"
+              className="rounded-lg border border-cyan-300/20 px-4 py-2 text-sm text-cyan-200 transition hover:bg-cyan-300/10"
+            >
+              Şirketler
+            </Link>
+            <Link
               href="/admin/announcements"
               className="rounded-lg border border-blue-300/20 px-4 py-2 text-sm text-blue-200 transition hover:bg-blue-300/10"
             >

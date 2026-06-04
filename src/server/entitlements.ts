@@ -28,7 +28,8 @@ export async function getUserProductAccess(userId: string) {
   return products.map((product) => {
     const entitlement = product.entitlements[0];
     const hasAccess =
-      entitlement?.status === EntitlementStatus.ACTIVE &&
+      (entitlement?.status === EntitlementStatus.ACTIVE ||
+        entitlement?.status === EntitlementStatus.GRACE_PERIOD) &&
       !entitlement.revokedAt &&
       (!entitlement.expiresAt || entitlement.expiresAt > new Date());
 

@@ -1,4 +1,5 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { DeviceStatus, SessionType } from "@prisma/client";
 import { prisma } from "@/src/db/prisma";
 import { getUserProductAccess } from "@/src/server/entitlements";
 
@@ -38,12 +39,14 @@ function notFoundResponse(error: "USER_NOT_FOUND" | "PRODUCT_NOT_FOUND") {
 
 function isEntitlementBody(value: unknown): value is {
   productCode: string;
+  deviceId?: string;
 } {
   return (
     typeof value === "object" &&
     value !== null &&
     "productCode" in value &&
-    typeof value.productCode === "string"
+    typeof value.productCode === "string" &&
+    (!("deviceId" in value) || typeof value.deviceId === "string")
   );
 }
 
@@ -146,6 +149,17 @@ function verifyDesktopToken(token: string) {
   }
 }
 
+function desktopDeviceLimit() {
+  const parsed = Number.parseInt(process.env.FIS260_DESKTOP_DEVICE_LIMIT ?? "3", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 3;
+}
+
+function offlineTrustedUntil() {
+  const days = Number.parseInt(process.env.FIS260_OFFLINE_GRACE_DAYS ?? "7", 10);
+  const safeDays = Number.isFinite(days) && days > 0 ? days : 7;
+  return new Date(Date.now() + safeDays * 24 * 60 * 60 * 1000);
+}
+
 export async function POST(request: Request) {
   const token = getBearerToken(request);
 
@@ -172,6 +186,7 @@ export async function POST(request: Request) {
   }
 
   const productSlug = normalizeProductCode(body.productCode);
+  const deviceFingerprint = body.deviceId?.trim();
 
   const user = await prisma.user.findUnique({
     where: { id: tokenPayload.sub },
@@ -179,10 +194,11 @@ export async function POST(request: Request) {
       id: true,
       email: true,
       name: true,
+      disabledAt: true,
     },
   });
 
-  if (!user) {
+  if (!user || user.disabledAt) {
     return notFoundResponse("USER_NOT_FOUND");
   }
 
@@ -193,10 +209,99 @@ export async function POST(request: Request) {
     return notFoundResponse("PRODUCT_NOT_FOUND");
   }
 
+  const dbProduct = await prisma.product.findUnique({
+    where: { slug: productSlug },
+    select: { id: true },
+  });
+
+  if (!dbProduct) {
+    return notFoundResponse("PRODUCT_NOT_FOUND");
+  }
+
+  const deviceLimit = desktopDeviceLimit();
+  let deviceAllowed = true;
+  let deviceStatus: string | null = null;
+  let offlineUntil: string | null = null;
+
+  if (deviceFingerprint) {
+    const device = await prisma.device.findUnique({
+      where: {
+        userId_productId_fingerprintHash: {
+          userId: user.id,
+          productId: dbProduct.id,
+          fingerprintHash: deviceFingerprint,
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+        revokedAt: true,
+      },
+    });
+
+    if (!device) {
+      deviceAllowed = false;
+      deviceStatus = "NOT_REGISTERED";
+    } else if (device.status !== DeviceStatus.ACTIVE || device.revokedAt) {
+      deviceAllowed = false;
+      deviceStatus = device.status;
+    } else {
+      const session = await prisma.session.findUnique({
+        where: {
+          tokenHash: createHash("sha256").update(token).digest("hex"),
+        },
+        select: {
+          id: true,
+          deviceId: true,
+          type: true,
+          expiresAt: true,
+          revokedAt: true,
+        },
+      });
+
+      if (
+        !session ||
+        session.type !== SessionType.DESKTOP ||
+        session.deviceId !== device.id ||
+        session.revokedAt ||
+        session.expiresAt <= new Date()
+      ) {
+        deviceAllowed = false;
+        deviceStatus = "SESSION_EXPIRED";
+      } else {
+      const trustedUntil = offlineTrustedUntil();
+        await prisma.$transaction([
+          prisma.device.update({
+            where: { id: device.id },
+            data: {
+              lastSeenAt: new Date(),
+              trustedUntil,
+            },
+          }),
+          prisma.session.update({
+            where: { id: session.id },
+            data: {
+              lastUsedAt: new Date(),
+            },
+          }),
+        ]);
+        deviceStatus = device.status;
+        offlineUntil = trustedUntil.toISOString();
+      }
+    }
+  }
+
   return Response.json({
     ok: true,
     productCode: body.productCode,
-    active: product.hasAccess,
+    active: product.hasAccess && deviceAllowed,
+    subscriptionActive: product.hasAccess,
+    deviceAllowed,
+    deviceStatus,
+    registeredDeviceLimit: deviceLimit,
+    offlineUntil,
+    entitlementStatus: product.entitlementStatus,
+    expiresAt: product.expiresAt,
     user: {
       id: user.id,
       email: user.email,

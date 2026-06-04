@@ -162,18 +162,19 @@ export function DeviceTable({
 }) {
   return (
     <Card className="overflow-hidden" variant="default">
-      <div className="grid grid-cols-[1.3fr_0.9fr_0.8fr_0.8fr_0.8fr] gap-4 border-b border-[var(--border-subtle)] bg-[var(--surface-2)] px-4 py-3 text-body-s text-[var(--text-tertiary)]">
+      <div className="grid grid-cols-[1.3fr_0.9fr_0.8fr_0.8fr_0.8fr_0.7fr] gap-4 border-b border-[var(--border-subtle)] bg-[var(--surface-2)] px-4 py-3 text-body-s text-[var(--text-tertiary)]">
         <span>Cihaz</span>
         <span>Ürün</span>
         <span>OS</span>
         <span>Son görülme</span>
         <span>Durum</span>
+        <span>İşlem</span>
       </div>
       {devices.length > 0 ? (
         devices.map((device) => (
           <div
             key={device.id}
-            className="grid grid-cols-[1.3fr_0.9fr_0.8fr_0.8fr_0.8fr] gap-4 border-b border-[var(--border-subtle)] px-4 py-3 text-body-s last:border-b-0"
+            className="grid grid-cols-[1.3fr_0.9fr_0.8fr_0.8fr_0.8fr_0.7fr] gap-4 border-b border-[var(--border-subtle)] px-4 py-3 text-body-s last:border-b-0"
           >
             <span className="min-w-0 truncate text-[var(--text-primary)]">
               {device.deviceName ?? "İsimsiz cihaz"}
@@ -189,6 +190,18 @@ export function DeviceTable({
               <Badge variant={device.status === "ACTIVE" ? "active" : "coming-soon"}>
                 {device.status}
               </Badge>
+            </span>
+            <span>
+              {device.status === "ACTIVE" ? (
+                <form action="/api/account/devices/revoke" method="post">
+                  <input type="hidden" name="deviceId" value={device.id} />
+                  <Button size="sm" variant="ghost">
+                    Kaldır
+                  </Button>
+                </form>
+              ) : (
+                <span className="text-[var(--text-tertiary)]">-</span>
+              )}
             </span>
           </div>
         ))

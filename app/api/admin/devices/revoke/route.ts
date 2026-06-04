@@ -31,7 +31,7 @@ function isRevokeDeviceBody(value: unknown): value is RevokeDeviceBody {
 }
 
 export async function POST(request: Request) {
-  const admin = await requireAdminSession();
+  const admin = await requireAdminSession({ write: true });
 
   if (admin.error) {
     return admin.error;

@@ -48,20 +48,20 @@ async function main() {
       update: {
         minimumVersion: "0.1.0",
         releaseNotes:
-          "FIS260 beta installer. Fis yukleme, OCR islemi ve Excel aktarim akisi.",
-        filePath: "fis260/FIS260_Setup_v0.1.0.exe",
+          "FIS260 kullanıcı modu. Fiş yükleme, OCR işlemi, Excel aktarımı ve güncelleme kontrol akışı.",
+        filePath: "fis260/FIS260-0.1.0-windows-x64.zip",
         sha256:
-          "828466679dbe554957e93f21aa4e53f01bb055282edbad3dc283ce010ae253d0",
+          "155bdc30de5c82e70a31cc80be139d47783aa98fb47a914a75d4509a0e1ddfc7",
       },
       create: {
         productId: fis260.id,
         version: "0.1.0",
         minimumVersion: "0.1.0",
         releaseNotes:
-          "FIS260 beta installer. Fis yukleme, OCR islemi ve Excel aktarim akisi.",
-        filePath: "fis260/FIS260_Setup_v0.1.0.exe",
+          "FIS260 kullanıcı modu. Fiş yükleme, OCR işlemi, Excel aktarımı ve güncelleme kontrol akışı.",
+        filePath: "fis260/FIS260-0.1.0-windows-x64.zip",
         sha256:
-          "828466679dbe554957e93f21aa4e53f01bb055282edbad3dc283ce010ae253d0",
+          "155bdc30de5c82e70a31cc80be139d47783aa98fb47a914a75d4509a0e1ddfc7",
       },
     });
   }

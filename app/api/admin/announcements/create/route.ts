@@ -53,7 +53,7 @@ async function parseBody(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const unauthorized = await requireAdminApi();
+  const unauthorized = await requireAdminApi({ write: true });
 
   if (unauthorized) {
     return unauthorized;

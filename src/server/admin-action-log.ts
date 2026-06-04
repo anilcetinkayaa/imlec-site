@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
-import { getAdminSession } from "@/src/server/admin";
+import { canWriteAdmin, getAdminSession } from "@/src/server/admin";
 
-export async function requireAdminSession() {
+export async function requireAdminSession(options?: { write?: boolean }) {
   const admin = await getAdminSession();
 
   if (admin.status === "unauthenticated") {
@@ -16,6 +16,12 @@ export async function requireAdminSession() {
   if (admin.status === "forbidden") {
     return {
       error: Response.json({ ok: false, error: "FORBIDDEN" }, { status: 403 }),
+    };
+  }
+
+  if (options?.write && !canWriteAdmin(admin.session.user.role)) {
+    return {
+      error: Response.json({ ok: false, error: "WRITE_FORBIDDEN" }, { status: 403 }),
     };
   }
 

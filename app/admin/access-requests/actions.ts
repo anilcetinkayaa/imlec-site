@@ -14,7 +14,7 @@ import {
 } from "@/src/server/admin-action-log";
 
 export async function approveAccessRequest(formData: FormData) {
-  const admin = await requireAdminSession();
+  const admin = await requireAdminSession({ write: true });
 
   if (admin.error) {
     return;
@@ -124,7 +124,7 @@ export async function approveAccessRequest(formData: FormData) {
 }
 
 export async function rejectAccessRequest(formData: FormData) {
-  const admin = await requireAdminSession();
+  const admin = await requireAdminSession({ write: true });
 
   if (admin.error) {
     return;

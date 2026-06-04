@@ -130,6 +130,7 @@ model User {
   payments       Payment[]
   invoices       Invoice[]
   accessRequests AccessRequest[]
+  supportTickets SupportTicket[]
   memberships    Membership[]
   adminActions   AdminAction[] @relation("AdminActionsByUser")
   targetedActions AdminAction[] @relation("AdminActionsForUser")
@@ -550,4 +551,43 @@ model Announcement {
   @@index([isPublished, startsAt, endsAt])
   @@index([createdAt])
   @@index([type])
+}
+
+model SupportTicket {
+  id             String   @id @default(cuid())
+  userId         String
+  productSlug    String
+  appVersion     String?
+  issueType      String
+  message        String
+  status         String   @default("OPEN")
+  sourceFileName String?
+  systemSummary  Json?
+  adminNote      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user        User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  attachments SupportAttachment[]
+
+  @@index([userId])
+  @@index([productSlug])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model SupportAttachment {
+  id          String   @id @default(cuid())
+  ticketId    String
+  kind        String
+  fileName    String
+  contentType String
+  sizeBytes   Int
+  content     Bytes
+  createdAt   DateTime @default(now())
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([kind])
 }

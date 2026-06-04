@@ -1,5 +1,5 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
-import { DeviceStatus } from "@prisma/client";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { DeviceStatus, EntitlementStatus, SessionType } from "@prisma/client";
 import { createElement } from "react";
 import { NewDeviceActivatedEmail } from "@/emails/NewDeviceActivatedEmail";
 import { sendMail } from "@/lib/mail";
@@ -146,6 +146,30 @@ function cleanOptionalText(value: string | undefined) {
   return text ? text.slice(0, 255) : null;
 }
 
+function desktopDeviceLimit() {
+  const parsed = Number.parseInt(process.env.FIS260_DESKTOP_DEVICE_LIMIT ?? "3", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 3;
+}
+
+function offlineTrustedUntil() {
+  const days = Number.parseInt(process.env.FIS260_OFFLINE_GRACE_DAYS ?? "7", 10);
+  const safeDays = Number.isFinite(days) && days > 0 ? days : 7;
+  return new Date(Date.now() + safeDays * 24 * 60 * 60 * 1000);
+}
+
+function entitlementIsActive(entitlement: {
+  status: EntitlementStatus;
+  expiresAt: Date | null;
+  revokedAt: Date | null;
+} | null) {
+  return (
+    (entitlement?.status === EntitlementStatus.ACTIVE ||
+      entitlement?.status === EntitlementStatus.GRACE_PERIOD) &&
+    !entitlement.revokedAt &&
+    (!entitlement.expiresAt || entitlement.expiresAt > new Date())
+  );
+}
+
 export async function POST(request: Request) {
   const token = getBearerToken(request);
 
@@ -209,10 +233,60 @@ export async function POST(request: Request) {
     },
     select: {
       id: true,
+      status: true,
+      revokedAt: true,
     },
   });
 
-  await prisma.device.upsert({
+  if (existingDevice?.status === DeviceStatus.REVOKED || existingDevice?.revokedAt) {
+    return jsonError("DEVICE_REVOKED", 403);
+  }
+
+  const entitlement = await prisma.entitlement.findUnique({
+    where: {
+      userId_productId: {
+        userId: user.id,
+        productId: product.id,
+      },
+    },
+    select: {
+      status: true,
+      expiresAt: true,
+      revokedAt: true,
+    },
+  });
+
+  if (!entitlementIsActive(entitlement)) {
+    return jsonError("ENTITLEMENT_INACTIVE", 403);
+  }
+
+  const deviceLimit = desktopDeviceLimit();
+  if (!existingDevice) {
+    const activeDeviceCount = await prisma.device.count({
+      where: {
+        userId: user.id,
+        productId: product.id,
+        status: DeviceStatus.ACTIVE,
+        revokedAt: null,
+      },
+    });
+
+    if (activeDeviceCount >= deviceLimit) {
+      return Response.json(
+        {
+          ok: false,
+          error: "DEVICE_LIMIT_REACHED",
+          deviceLimit,
+          activeDeviceCount,
+        },
+        { status: 403 },
+      );
+    }
+  }
+
+  const trustedUntil = offlineTrustedUntil();
+
+  const registeredDevice = await prisma.device.upsert({
     where: {
       userId_productId_fingerprintHash: {
         userId: user.id,
@@ -226,6 +300,7 @@ export async function POST(request: Request) {
       appVersion: cleanOptionalText(body.appVersion),
       status: DeviceStatus.ACTIVE,
       lastSeenAt: new Date(),
+      trustedUntil,
     },
     create: {
       userId: user.id,
@@ -236,8 +311,52 @@ export async function POST(request: Request) {
       appVersion: cleanOptionalText(body.appVersion),
       status: DeviceStatus.ACTIVE,
       lastSeenAt: new Date(),
+      trustedUntil,
+    },
+    select: {
+      id: true,
     },
   });
+
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const tokenExpiresAt = new Date(tokenPayload.exp * 1000);
+
+  await prisma.$transaction([
+    prisma.session.updateMany({
+      where: {
+        userId: user.id,
+        productId: product.id,
+        type: SessionType.DESKTOP,
+        revokedAt: null,
+        NOT: {
+          tokenHash,
+        },
+      },
+      data: {
+        revokedAt: new Date(),
+      },
+    }),
+    prisma.session.upsert({
+      where: {
+        tokenHash,
+      },
+      update: {
+        deviceId: registeredDevice.id,
+        expiresAt: tokenExpiresAt,
+        revokedAt: null,
+        lastUsedAt: new Date(),
+      },
+      create: {
+        userId: user.id,
+        productId: product.id,
+        deviceId: registeredDevice.id,
+        type: SessionType.DESKTOP,
+        tokenHash,
+        expiresAt: tokenExpiresAt,
+        lastUsedAt: new Date(),
+      },
+    }),
+  ]);
 
   if (!existingDevice) {
     try {
@@ -256,5 +375,7 @@ export async function POST(request: Request) {
 
   return Response.json({
     ok: true,
+    deviceLimit,
+    trustedUntil: trustedUntil.toISOString(),
   });
 }
