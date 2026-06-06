@@ -661,7 +661,7 @@ class LauncherWindow(QMainWindow):
         if image_url:
             image = QLabel()
             image.setObjectName("newsImage")
-            image.setFixedHeight(190)
+            image.setFixedHeight(428)
             image.setMinimumWidth(520)
             image.setAlignment(Qt.AlignmentFlag.AlignCenter)
             pixmap = self.fetch_pixmap(image_url)
@@ -694,7 +694,7 @@ class LauncherWindow(QMainWindow):
 
     def fit_announcement_image(self, pixmap: QPixmap) -> QPixmap:
         target_width = 760
-        target_height = 190
+        target_height = 428
         scaled = pixmap.scaled(
             target_width,
             target_height,
