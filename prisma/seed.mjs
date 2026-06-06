@@ -4,6 +4,10 @@ const prisma = new PrismaClient();
 
 const products = [
   {
+    slug: "launcher",
+    name: "İmleç Yazılım Merkezi",
+  },
+  {
     slug: "fis260",
     name: "FİŞ260",
   },

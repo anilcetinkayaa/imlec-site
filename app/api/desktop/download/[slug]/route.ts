@@ -176,7 +176,7 @@ export async function GET(request: NextRequest, context: DesktopDownloadContext)
     },
   });
 
-  if (!entitlementIsActive(entitlement)) {
+  if (slug !== "launcher" && !entitlementIsActive(entitlement)) {
     await writeDownloadLog({
       request,
       userId: payload.sub,

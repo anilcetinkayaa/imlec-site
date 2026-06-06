@@ -214,11 +214,13 @@ export async function GET(request: Request) {
     },
     products: products.map((product) => {
       const latest = latestByProductId.get(product.id);
+      const isLauncher = product.slug === "launcher";
+      const hasAccess = product.hasAccess || isLauncher;
 
       return {
         slug: product.slug,
         name: product.name,
-        hasAccess: product.hasAccess,
+        hasAccess,
         entitlementStatus: product.entitlementStatus,
         entitlementSource: product.entitlementSource,
         expiresAt: product.expiresAt,
@@ -226,14 +228,14 @@ export async function GET(request: Request) {
         minimumVersion: latest?.minimumVersion ?? latest?.version ?? null,
         releaseNotes: latest?.releaseNotes ?? "",
         downloadUrl:
-          product.hasAccess && latest
+          hasAccess && latest
             ? signedDownloadUrl(request, {
                 userId: user.id,
                 productSlug: product.slug,
                 version: latest.version,
               }) ?? buildDownloadUrl(request, latest.filePath)
             : null,
-        sha256: product.hasAccess ? latest?.sha256 ?? null : null,
+        sha256: hasAccess ? latest?.sha256 ?? null : null,
         releasedAt: latest?.createdAt.toISOString() ?? null,
       };
     }),

@@ -10,7 +10,7 @@ import zipfile
 from pathlib import Path
 
 import requests
-from PySide6.QtCore import QObject, QSettings, QThread, Qt, Signal, Slot
+from PySide6.QtCore import QObject, QSettings, QThread, Qt, QTimer, Signal, Slot
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
@@ -34,7 +34,7 @@ from PySide6.QtWidgets import (
 
 
 AUTH_BASE_URL = os.environ.get("IMLEC_AUTH_BASE_URL", "https://imlecyazilim.com").rstrip("/")
-LAUNCHER_VERSION = "0.1.0"
+LAUNCHER_VERSION = "0.1.1"
 PRODUCT_EXE_NAMES = {
     "fis260": "FIS260.exe",
     "cozver": "Cozver.exe",
@@ -303,6 +303,77 @@ class ProductInstallWorker(QObject):
             self.error.emit(self.slug, str(exc))
 
 
+class LauncherSelfUpdateWorker(QObject):
+    progress = Signal(int, str)
+    finished = Signal()
+    error = Signal(str)
+
+    def __init__(self, product: dict):
+        super().__init__()
+        self.product = dict(product)
+
+    def run(self):
+        try:
+            download_url = str(self.product.get("downloadUrl") or "").strip()
+            sha256 = str(self.product.get("sha256") or "").strip().lower()
+            version = str(self.product.get("latestVersion") or "").strip()
+            if not download_url or not sha256 or not version:
+                raise RuntimeError("Launcher güncelleme paketi bilgisi eksik.")
+
+            work_dir = data_root() / "Downloads"
+            work_dir.mkdir(parents=True, exist_ok=True)
+            package_path = work_dir / f"launcher-{version}.zip"
+            temp_path = package_path.with_suffix(".zip.part")
+            digest = hashlib.sha256()
+
+            self.progress.emit(5, "Launcher güncellemesi indiriliyor")
+            response = requests.get(download_url, stream=True, timeout=(10, 90))
+            response.raise_for_status()
+            total = int(response.headers.get("content-length") or 0)
+            done = 0
+            with temp_path.open("wb") as handle:
+                for chunk in response.iter_content(chunk_size=1024 * 1024):
+                    if not chunk:
+                        continue
+                    handle.write(chunk)
+                    digest.update(chunk)
+                    done += len(chunk)
+                    if total:
+                        self.progress.emit(min(85, 5 + int(done * 80 / total)), "Launcher güncellemesi indiriliyor")
+
+            actual = digest.hexdigest().lower()
+            if actual != sha256:
+                temp_path.unlink(missing_ok=True)
+                raise RuntimeError("Launcher güncelleme paketi doğrulanamadı.")
+            if package_path.exists():
+                package_path.unlink()
+            temp_path.replace(package_path)
+
+            updater = app_root() / "ImlecLauncherUpdater.exe"
+            if not updater.is_file():
+                raise RuntimeError("Launcher güncelleme yardımcısı bulunamadı.")
+
+            self.progress.emit(95, "Launcher yeniden başlatmaya hazırlanıyor")
+            subprocess.Popen(
+                [
+                    str(updater),
+                    "--package",
+                    str(package_path),
+                    "--install-dir",
+                    str(app_root()),
+                    "--exe-name",
+                    Path(sys.executable).name if getattr(sys, "frozen", False) else "ImlecLauncher.exe",
+                    "--parent-pid",
+                    str(os.getpid()),
+                ],
+                cwd=str(app_root()),
+                close_fds=True,
+            )
+            self.finished.emit()
+        except Exception as exc:
+            self.error.emit(str(exc))
+
+
 class LauncherWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -312,6 +383,13 @@ class LauncherWindow(QMainWindow):
         self.product_widgets: dict[str, dict[str, QWidget]] = {}
         self.worker_thread: QThread | None = None
         self.worker: ProductInstallWorker | None = None
+        self.launcher_update_thread: QThread | None = None
+        self.launcher_update_worker: LauncherSelfUpdateWorker | None = None
+        self.announcements: list[dict] = []
+        self.announcement_index = 0
+        self.announcement_timer = QTimer(self)
+        self.announcement_timer.setInterval(10000)
+        self.announcement_timer.timeout.connect(self.next_announcement)
 
         self.setWindowTitle("İmleç Yazılım")
         self.resize(1180, 760)
@@ -503,16 +581,33 @@ class LauncherWindow(QMainWindow):
         layout = QVBoxLayout(section)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(16)
-        self.announcement_layout = QVBoxLayout()
-        self.announcement_layout.setSpacing(14)
-        self.announcement_layout.addWidget(self.empty_card("Yükleniyor", "Yayınlar alınıyor..."))
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setObjectName("scrollArea")
-        holder = QWidget()
-        holder.setLayout(self.announcement_layout)
-        scroll.setWidget(holder)
-        layout.addWidget(scroll)
+        self.announcement_stage = QFrame()
+        self.announcement_stage.setObjectName("carouselCard")
+        stage_layout = QVBoxLayout(self.announcement_stage)
+        stage_layout.setContentsMargins(22, 20, 22, 20)
+        stage_layout.setSpacing(12)
+        self.announcement_content = QVBoxLayout()
+        self.announcement_content.setSpacing(10)
+        self.announcement_content.addWidget(self.empty_card("Yükleniyor", "Yayınlar alınıyor..."))
+        controls = QHBoxLayout()
+        self.announcement_prev = QPushButton("‹")
+        self.announcement_prev.setObjectName("roundButton")
+        self.announcement_prev.clicked.connect(self.previous_announcement)
+        self.announcement_counter = QLabel("0 / 0")
+        self.announcement_counter.setObjectName("tinyText")
+        self.announcement_counter.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.announcement_next = QPushButton("›")
+        self.announcement_next.setObjectName("roundButton")
+        self.announcement_next.clicked.connect(self.next_announcement)
+        controls.addStretch(1)
+        controls.addWidget(self.announcement_prev)
+        controls.addWidget(self.announcement_counter)
+        controls.addWidget(self.announcement_next)
+        controls.addStretch(1)
+        stage_layout.addLayout(self.announcement_content)
+        stage_layout.addLayout(controls)
+        layout.addWidget(self.announcement_stage)
+        layout.addStretch(1)
         return section
 
     def build_apps_section(self) -> QWidget:
@@ -642,14 +737,36 @@ class LauncherWindow(QMainWindow):
 
     def refresh_announcements(self):
         announcements = self.api.announcements()
-        clear_layout(self.announcement_layout)
-        if not announcements:
-            self.announcement_layout.addWidget(self.empty_card("Duyuru yok", "Şu anda yayınlanmış duyuru bulunmuyor."))
-            self.announcement_layout.addStretch(1)
+        self.announcements = announcements[:8]
+        self.announcement_index = 0
+        self.render_current_announcement()
+        if len(self.announcements) > 1:
+            self.announcement_timer.start()
+        else:
+            self.announcement_timer.stop()
+
+    def render_current_announcement(self):
+        clear_layout(self.announcement_content)
+        total = len(self.announcements)
+        self.announcement_counter.setText(f"{min(self.announcement_index + 1, total)} / {total}" if total else "0 / 0")
+        self.announcement_prev.setEnabled(total > 1)
+        self.announcement_next.setEnabled(total > 1)
+        if not self.announcements:
+            self.announcement_content.addWidget(self.empty_card("Duyuru yok", "Şu anda yayınlanmış duyuru bulunmuyor."))
             return
-        for announcement in announcements[:8]:
-            self.announcement_layout.addWidget(self.announcement_card(announcement))
-        self.announcement_layout.addStretch(1)
+        self.announcement_content.addWidget(self.announcement_card(self.announcements[self.announcement_index]))
+
+    def next_announcement(self):
+        if len(self.announcements) <= 1:
+            return
+        self.announcement_index = (self.announcement_index + 1) % len(self.announcements)
+        self.render_current_announcement()
+
+    def previous_announcement(self):
+        if len(self.announcements) <= 1:
+            return
+        self.announcement_index = (self.announcement_index - 1) % len(self.announcements)
+        self.render_current_announcement()
 
     def announcement_card(self, announcement: dict) -> QFrame:
         card = QFrame()
@@ -723,10 +840,10 @@ class LauncherWindow(QMainWindow):
     def product_card(self, product: dict) -> QFrame:
         slug = safe_slug(str(product.get("slug") or ""))
         name = str(product.get("name") or slug.upper())
-        installed = read_installed_version(slug)
+        installed = LAUNCHER_VERSION if slug == "launcher" else read_installed_version(slug)
         latest = str(product.get("latestVersion") or "").strip()
         has_access = bool(product.get("hasAccess"))
-        exe_exists = product_exe_path(product).is_file()
+        exe_exists = True if slug == "launcher" else product_exe_path(product).is_file()
         update_ready = bool(has_access and latest and installed and exe_exists and is_newer_version(latest, installed))
 
         card = QFrame()
@@ -782,7 +899,7 @@ class LauncherWindow(QMainWindow):
             return
         status = widgets["status"]
         action = widgets["action"]
-        installed = read_installed_version(slug)
+        installed = LAUNCHER_VERSION if slug == "launcher" else read_installed_version(slug)
         latest = str(product.get("latestVersion") or "").strip()
         has_access = bool(product.get("hasAccess"))
         exe = product_exe_path(product)
@@ -790,6 +907,16 @@ class LauncherWindow(QMainWindow):
         if not has_access:
             status.setText("Bu hesapta erişim yok.")
             action.setText("Erişim Yok")
+            action.setEnabled(False)
+            action.setObjectName("disabledAction")
+        elif slug == "launcher" and latest and is_newer_version(latest, LAUNCHER_VERSION):
+            status.setText("Launcher için yeni sürüm hazır.")
+            action.setText("Launcher'ı Güncelle")
+            action.setEnabled(True)
+            action.setObjectName("warningButton")
+        elif slug == "launcher":
+            status.setText("Launcher güncel.")
+            action.setText("Güncel")
             action.setEnabled(False)
             action.setObjectName("disabledAction")
         elif not exe.is_file():
@@ -817,7 +944,7 @@ class LauncherWindow(QMainWindow):
         updates = []
         for product in self.products:
             slug = safe_slug(str(product.get("slug") or ""))
-            installed = read_installed_version(slug)
+            installed = LAUNCHER_VERSION if slug == "launcher" else read_installed_version(slug)
             latest = str(product.get("latestVersion") or "").strip()
             if bool(product.get("hasAccess")) and installed and latest and is_newer_version(latest, installed):
                 updates.append(f"• {product.get('name') or slug.upper()}: {installed} → {latest}")
@@ -834,6 +961,9 @@ class LauncherWindow(QMainWindow):
         if not widgets:
             return
         text = widgets["action"].text().lower()
+        if slug == "launcher" and widgets["action"].isEnabled():
+            self.install_launcher_update(product)
+            return
         if "başlat" in text:
             self.launch_product(product)
         elif "indir" in text or "güncelle" in text:
@@ -846,6 +976,30 @@ class LauncherWindow(QMainWindow):
             self.update_product_state(product)
             return
         subprocess.Popen([str(exe)], cwd=str(exe.parent), close_fds=True)
+
+    def install_launcher_update(self, product: dict):
+        if self.launcher_update_thread and self.launcher_update_thread.isRunning():
+            QMessageBox.information(self, "Launcher güncellemesi", "Launcher güncellemesi zaten devam ediyor.")
+            return
+        slug = safe_slug(str(product.get("slug") or ""))
+        widgets = self.product_widgets.get(slug)
+        if widgets:
+            widgets["action"].setEnabled(False)
+            widgets["progress"].setVisible(True)
+            widgets["progress"].setValue(0)
+            widgets["status"].setText("Launcher güncellemesi hazırlanıyor")
+        self.launcher_update_thread = QThread(self)
+        self.launcher_update_worker = LauncherSelfUpdateWorker(product)
+        self.launcher_update_worker.moveToThread(self.launcher_update_thread)
+        self.launcher_update_thread.started.connect(self.launcher_update_worker.run)
+        self.launcher_update_worker.progress.connect(self.on_launcher_update_progress)
+        self.launcher_update_worker.finished.connect(self.on_launcher_update_ready)
+        self.launcher_update_worker.error.connect(self.on_launcher_update_error)
+        self.launcher_update_worker.finished.connect(self.launcher_update_thread.quit)
+        self.launcher_update_worker.error.connect(self.launcher_update_thread.quit)
+        self.launcher_update_thread.finished.connect(self.launcher_update_worker.deleteLater)
+        self.launcher_update_thread.finished.connect(self.launcher_update_thread.deleteLater)
+        self.launcher_update_thread.start()
 
     def install_or_update(self, product: dict):
         if self.worker_thread and self.worker_thread.isRunning():
@@ -869,6 +1023,34 @@ class LauncherWindow(QMainWindow):
         self.worker_thread.finished.connect(self.worker.deleteLater)
         self.worker_thread.finished.connect(self.worker_thread.deleteLater)
         self.worker_thread.start()
+
+    @Slot(int, str)
+    def on_launcher_update_progress(self, percent: int, message: str):
+        widgets = self.product_widgets.get("launcher")
+        if widgets:
+            widgets["progress"].setValue(percent)
+            widgets["status"].setText(message)
+
+    @Slot()
+    def on_launcher_update_ready(self):
+        self.launcher_update_worker = None
+        self.launcher_update_thread = None
+        QMessageBox.information(
+            self,
+            "Launcher güncellemesi",
+            "Launcher güncellemesi indirildi. Uygulama kapanıp yeni sürümle tekrar açılacak.",
+        )
+        QApplication.quit()
+
+    @Slot(str)
+    def on_launcher_update_error(self, message: str):
+        widgets = self.product_widgets.get("launcher")
+        if widgets:
+            widgets["progress"].setVisible(False)
+            widgets["action"].setEnabled(True)
+        self.launcher_update_worker = None
+        self.launcher_update_thread = None
+        QMessageBox.critical(self, "Launcher güncelleme hatası", message)
 
     @Slot(str, int, str)
     def on_install_progress(self, slug: str, percent: int, message: str):
@@ -925,7 +1107,7 @@ class LauncherWindow(QMainWindow):
                 border: 1px solid #1f3859;
                 border-radius: 18px;
             }
-            QFrame#loginPanel, QFrame#card, QFrame#productCard {
+            QFrame#loginPanel, QFrame#card, QFrame#productCard, QFrame#carouselCard {
                 background: #10141d;
                 border: 1px solid #26344d;
                 border-radius: 14px;
@@ -1004,6 +1186,15 @@ class LauncherWindow(QMainWindow):
                 padding: 8px 16px;
                 color: white;
                 font-weight: 800;
+            }
+            QPushButton#roundButton {
+                min-width: 38px;
+                max-width: 38px;
+                min-height: 34px;
+                max-height: 34px;
+                border-radius: 17px;
+                padding: 0;
+                font-size: 18px;
             }
             QPushButton:hover {
                 background: #1d2a3d;

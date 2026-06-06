@@ -47,6 +47,7 @@ downloads/*.exe
 # desktop launcher build artifacts
 /desktop-launcher/build/
 /desktop-launcher/dist/
+/desktop-launcher/releases/
 /desktop-launcher/installer/output/
 /desktop-launcher/**/__pycache__/
 *.pyc
