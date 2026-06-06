@@ -151,6 +151,44 @@ function desktopDeviceLimit() {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 3;
 }
 
+function desktopDeviceAccountLimit() {
+  const parsed = Number.parseInt(process.env.FIS260_DEVICE_ACCOUNT_LIMIT ?? "2", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 2;
+}
+
+function getClientIp(request: Request) {
+  return (
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    request.headers.get("x-real-ip") ??
+    null
+  );
+}
+
+async function writeSecurityLog({
+  request,
+  userId,
+  reason,
+}: {
+  request: Request;
+  userId?: string;
+  reason: string;
+}) {
+  try {
+    await prisma.downloadLog.create({
+      data: {
+        userId,
+        productSlug: "fis260",
+        success: false,
+        reason,
+        ipAddress: getClientIp(request),
+        userAgent: request.headers.get("user-agent"),
+      },
+    });
+  } catch (error) {
+    console.error("[DESKTOP SECURITY LOG ERROR]", error);
+  }
+}
+
 function offlineTrustedUntil() {
   const days = Number.parseInt(process.env.FIS260_OFFLINE_GRACE_DAYS ?? "7", 10);
   const safeDays = Number.isFinite(days) && days > 0 ? days : 7;
@@ -239,6 +277,11 @@ export async function POST(request: Request) {
   });
 
   if (existingDevice?.status === DeviceStatus.REVOKED || existingDevice?.revokedAt) {
+    await writeSecurityLog({
+      request,
+      userId: user.id,
+      reason: "DEVICE_REVOKED_REGISTER_ATTEMPT",
+    });
     return jsonError("DEVICE_REVOKED", 403);
   }
 
@@ -257,7 +300,41 @@ export async function POST(request: Request) {
   });
 
   if (!entitlementIsActive(entitlement)) {
+    await writeSecurityLog({
+      request,
+      userId: user.id,
+      reason: "ENTITLEMENT_INACTIVE_REGISTER_ATTEMPT",
+    });
     return jsonError("ENTITLEMENT_INACTIVE", 403);
+  }
+
+  const accountLimit = desktopDeviceAccountLimit();
+  const otherAccountCount = await prisma.device.count({
+    where: {
+      productId: product.id,
+      fingerprintHash: deviceId,
+      userId: {
+        not: user.id,
+      },
+      status: DeviceStatus.ACTIVE,
+      revokedAt: null,
+    },
+  });
+
+  if (otherAccountCount >= accountLimit) {
+    await writeSecurityLog({
+      request,
+      userId: user.id,
+      reason: "DEVICE_SHARED_ACROSS_TOO_MANY_ACCOUNTS",
+    });
+    return Response.json(
+      {
+        ok: false,
+        error: "DEVICE_SHARED_SUSPICIOUS",
+        accountLimit,
+      },
+      { status: 403 },
+    );
   }
 
   const deviceLimit = desktopDeviceLimit();

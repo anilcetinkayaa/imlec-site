@@ -43,3 +43,10 @@ next-env.d.ts
 .vercel
 .env*.local
 downloads/*.exe 
+
+# desktop launcher build artifacts
+/desktop-launcher/build/
+/desktop-launcher/dist/
+/desktop-launcher/installer/output/
+/desktop-launcher/**/__pycache__/
+*.pyc

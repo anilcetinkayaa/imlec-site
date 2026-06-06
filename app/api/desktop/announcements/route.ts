@@ -2,11 +2,18 @@ import { prisma } from "@/src/db/prisma";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: Request) {
   const now = new Date();
+  const url = new URL(request.url);
+  const target = url.searchParams.get("target")?.trim().toLowerCase();
   const announcements = await prisma.announcement.findMany({
     where: {
       isPublished: true,
+      ...(target
+        ? {
+            productSlug: target,
+          }
+        : {}),
       AND: [
         {
           OR: [{ startsAt: null }, { startsAt: { lte: now } }],
@@ -25,6 +32,8 @@ export async function GET() {
       title: true,
       body: true,
       type: true,
+      imageUrl: true,
+      productSlug: true,
       createdAt: true,
     },
   });

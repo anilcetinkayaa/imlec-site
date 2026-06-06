@@ -71,6 +71,27 @@ function TypeSelect({
   );
 }
 
+function TargetSelect({
+  defaultValue,
+  id,
+}: {
+  defaultValue?: string | null;
+  id: string;
+}) {
+  return (
+    <select
+      id={id}
+      name="productSlug"
+      defaultValue={defaultValue || "launcher"}
+      className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none focus:border-blue-300/50"
+    >
+      <option value="launcher">Launcher / Genel</option>
+      <option value="fis260">FIS260</option>
+      <option value="cozver">Çözver</option>
+    </select>
+  );
+}
+
 export default async function AdminAnnouncementsPage() {
   const admin = await getAdminSession();
 
@@ -135,6 +156,18 @@ export default async function AdminAnnouncementsPage() {
               <TypeSelect id="create-type" />
             </label>
             <label className="grid gap-2 text-sm text-zinc-400">
+              Yayın hedefi
+              <TargetSelect id="create-target" />
+            </label>
+            <label className="grid gap-2 text-sm text-zinc-400">
+              Görsel URL
+              <input
+                name="imageUrl"
+                placeholder="https://..."
+                className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-blue-300/50"
+              />
+            </label>
+            <label className="grid gap-2 text-sm text-zinc-400">
               Başlangıç
               <input
                 name="startsAt"
@@ -176,9 +209,10 @@ export default async function AdminAnnouncementsPage() {
         </section>
 
         <section className="mt-6 overflow-hidden rounded-xl border border-white/[0.08]">
-          <div className="grid grid-cols-[1.5fr_0.9fr_0.7fr_1fr_1fr_1fr] bg-white/[0.035] px-4 py-3 text-xs uppercase tracking-[0.12em] text-zinc-500">
+          <div className="grid grid-cols-[1.5fr_0.9fr_0.9fr_0.7fr_1fr_1fr_1fr] bg-white/[0.035] px-4 py-3 text-xs uppercase tracking-[0.12em] text-zinc-500">
             <span>Başlık</span>
             <span>Tür</span>
+            <span>Hedef</span>
             <span>Yayın</span>
             <span>Başlangıç</span>
             <span>Bitiş</span>
@@ -191,11 +225,12 @@ export default async function AdminAnnouncementsPage() {
                 key={announcement.id}
                 className="border-t border-white/[0.07] px-4 py-3"
               >
-                <summary className="grid cursor-pointer grid-cols-[1.5fr_0.9fr_0.7fr_1fr_1fr_1fr] text-sm text-zinc-300">
+                <summary className="grid cursor-pointer grid-cols-[1.5fr_0.9fr_0.9fr_0.7fr_1fr_1fr_1fr] text-sm text-zinc-300">
                   <span className="truncate text-white">
                     {announcement.title}
                   </span>
                   <span>{announcement.type}</span>
+                  <span>{announcement.productSlug ?? "launcher"}</span>
                   <span>{announcement.isPublished ? "Evet" : "Hayır"}</span>
                   <span>{formatDate(announcement.startsAt)}</span>
                   <span>{formatDate(announcement.endsAt)}</span>
@@ -222,6 +257,22 @@ export default async function AdminAnnouncementsPage() {
                     <TypeSelect
                       id={`type-${announcement.id}`}
                       defaultValue={announcement.type}
+                    />
+                  </label>
+                  <label className="grid gap-2 text-sm text-zinc-400">
+                    Yayın hedefi
+                    <TargetSelect
+                      id={`target-${announcement.id}`}
+                      defaultValue={announcement.productSlug}
+                    />
+                  </label>
+                  <label className="grid gap-2 text-sm text-zinc-400">
+                    Görsel URL
+                    <input
+                      name="imageUrl"
+                      defaultValue={announcement.imageUrl ?? ""}
+                      placeholder="https://..."
+                      className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none focus:border-blue-300/50"
                     />
                   </label>
                   <label className="grid gap-2 text-sm text-zinc-400">

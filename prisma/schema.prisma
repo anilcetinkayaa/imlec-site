@@ -542,6 +542,8 @@ model Announcement {
   title       String
   body        String
   type        AnnouncementType
+  imageUrl    String?
+  productSlug String?
   isPublished Boolean          @default(false)
   startsAt    DateTime?
   endsAt      DateTime?
