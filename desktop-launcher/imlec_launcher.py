@@ -662,10 +662,11 @@ class LauncherWindow(QMainWindow):
             image = QLabel()
             image.setObjectName("newsImage")
             image.setFixedHeight(190)
-            image.setScaledContents(True)
+            image.setMinimumWidth(520)
+            image.setAlignment(Qt.AlignmentFlag.AlignCenter)
             pixmap = self.fetch_pixmap(image_url)
             if not pixmap.isNull():
-                image.setPixmap(pixmap)
+                image.setPixmap(self.fit_announcement_image(pixmap))
                 layout.addWidget(image)
         title = QLabel(str(announcement.get("title") or "Duyuru"))
         title.setObjectName("sectionTitle")
@@ -690,6 +691,19 @@ class LauncherWindow(QMainWindow):
             return pixmap
         except Exception:
             return QPixmap()
+
+    def fit_announcement_image(self, pixmap: QPixmap) -> QPixmap:
+        target_width = 760
+        target_height = 190
+        scaled = pixmap.scaled(
+            target_width,
+            target_height,
+            Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+            Qt.TransformationMode.SmoothTransformation,
+        )
+        x = max((scaled.width() - target_width) // 2, 0)
+        y = max((scaled.height() - target_height) // 2, 0)
+        return scaled.copy(x, y, target_width, target_height)
 
     def render_products(self, error: str = ""):
         clear_layout(self.products_layout)

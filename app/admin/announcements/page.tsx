@@ -2,6 +2,7 @@ import { AnnouncementType } from "@prisma/client";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AnnouncementPreview } from "@/components/admin/AnnouncementPreview";
 import { prisma } from "@/src/db/prisma";
 import { getAdminSession } from "@/src/server/admin";
 
@@ -141,70 +142,73 @@ export default async function AdminAnnouncementsPage() {
           <form
             action="/api/admin/announcements/create"
             method="post"
-            className="mt-4 grid gap-4 lg:grid-cols-2"
+            className="mt-4 grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]"
           >
-            <label className="grid gap-2 text-sm text-zinc-400">
-              Başlık
-              <input
-                name="title"
-                required
-                className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-blue-300/50"
-              />
-            </label>
-            <label className="grid gap-2 text-sm text-zinc-400">
-              Tür
-              <TypeSelect id="create-type" />
-            </label>
-            <label className="grid gap-2 text-sm text-zinc-400">
-              Yayın hedefi
-              <TargetSelect id="create-target" />
-            </label>
-            <label className="grid gap-2 text-sm text-zinc-400">
-              Görsel URL
-              <input
-                name="imageUrl"
-                placeholder="https://..."
-                className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-blue-300/50"
-              />
-            </label>
-            <label className="grid gap-2 text-sm text-zinc-400">
-              Başlangıç
-              <input
-                name="startsAt"
-                type="datetime-local"
-                className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none focus:border-blue-300/50"
-              />
-            </label>
-            <label className="grid gap-2 text-sm text-zinc-400">
-              Bitiş
-              <input
-                name="endsAt"
-                type="datetime-local"
-                className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none focus:border-blue-300/50"
-              />
-            </label>
-            <label className="grid gap-2 text-sm text-zinc-400 lg:col-span-2">
-              İçerik
-              <textarea
-                name="body"
-                required
-                rows={5}
-                className="rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 py-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-blue-300/50"
-              />
-            </label>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:col-span-2">
-              <label className="inline-flex items-center gap-2 text-sm text-zinc-300">
+            <div className="grid gap-4 lg:grid-cols-2">
+              <label className="grid gap-2 text-sm text-zinc-400">
+                Başlık
                 <input
-                  name="isPublished"
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-white/[0.2] bg-[#0c0d10]"
+                  name="title"
+                  required
+                  className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-blue-300/50"
                 />
-                Yayında
               </label>
-              <button className="h-11 rounded-lg bg-zinc-100 px-5 text-sm font-medium text-zinc-950 transition hover:bg-white">
-                Duyuru ekle
-              </button>
+              <label className="grid gap-2 text-sm text-zinc-400">
+                Tür
+                <TypeSelect id="create-type" />
+              </label>
+              <label className="grid gap-2 text-sm text-zinc-400">
+                Yayın hedefi
+                <TargetSelect id="create-target" />
+              </label>
+              <label className="grid gap-2 text-sm text-zinc-400">
+                Görsel URL
+                <input
+                  name="imageUrl"
+                  placeholder="https://..."
+                  className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-blue-300/50"
+                />
+              </label>
+              <label className="grid gap-2 text-sm text-zinc-400">
+                Başlangıç
+                <input
+                  name="startsAt"
+                  type="datetime-local"
+                  className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none focus:border-blue-300/50"
+                />
+              </label>
+              <label className="grid gap-2 text-sm text-zinc-400">
+                Bitiş
+                <input
+                  name="endsAt"
+                  type="datetime-local"
+                  className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none focus:border-blue-300/50"
+                />
+              </label>
+              <label className="grid gap-2 text-sm text-zinc-400 lg:col-span-2">
+                İçerik
+                <textarea
+                  name="body"
+                  required
+                  rows={7}
+                  className="rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 py-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-blue-300/50"
+                />
+              </label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:col-span-2">
+                <label className="inline-flex items-center gap-2 text-sm text-zinc-300">
+                  <input
+                    name="isPublished"
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-white/[0.2] bg-[#0c0d10]"
+                  />
+                  Yayında
+                </label>
+                <button className="h-11 rounded-lg bg-zinc-100 px-5 text-sm font-medium text-zinc-950 transition hover:bg-white">
+                  Duyuru ekle
+                </button>
+              </div>
             </div>
+            <AnnouncementPreview />
           </form>
         </section>
 
@@ -240,85 +244,95 @@ export default async function AdminAnnouncementsPage() {
                 <form
                   action="/api/admin/announcements/update"
                   method="post"
-                  className="mt-4 grid gap-4 rounded-lg border border-white/[0.07] bg-black/20 p-4 lg:grid-cols-2"
+                  className="mt-4 grid gap-6 rounded-lg border border-white/[0.07] bg-black/20 p-4 xl:grid-cols-[minmax(0,1fr)_420px]"
                 >
                   <input type="hidden" name="id" value={announcement.id} />
-                  <label className="grid gap-2 text-sm text-zinc-400">
-                    Başlık
-                    <input
-                      name="title"
-                      required
-                      defaultValue={announcement.title}
-                      className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none focus:border-blue-300/50"
-                    />
-                  </label>
-                  <label className="grid gap-2 text-sm text-zinc-400">
-                    Tür
-                    <TypeSelect
-                      id={`type-${announcement.id}`}
-                      defaultValue={announcement.type}
-                    />
-                  </label>
-                  <label className="grid gap-2 text-sm text-zinc-400">
-                    Yayın hedefi
-                    <TargetSelect
-                      id={`target-${announcement.id}`}
-                      defaultValue={announcement.productSlug}
-                    />
-                  </label>
-                  <label className="grid gap-2 text-sm text-zinc-400">
-                    Görsel URL
-                    <input
-                      name="imageUrl"
-                      defaultValue={announcement.imageUrl ?? ""}
-                      placeholder="https://..."
-                      className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none focus:border-blue-300/50"
-                    />
-                  </label>
-                  <label className="grid gap-2 text-sm text-zinc-400">
-                    Başlangıç
-                    <input
-                      name="startsAt"
-                      type="datetime-local"
-                      defaultValue={formatDateTimeInput(announcement.startsAt)}
-                      className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none focus:border-blue-300/50"
-                    />
-                  </label>
-                  <label className="grid gap-2 text-sm text-zinc-400">
-                    Bitiş
-                    <input
-                      name="endsAt"
-                      type="datetime-local"
-                      defaultValue={formatDateTimeInput(announcement.endsAt)}
-                      className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none focus:border-blue-300/50"
-                    />
-                  </label>
-                  <label className="grid gap-2 text-sm text-zinc-400 lg:col-span-2">
-                    İçerik
-                    <textarea
-                      name="body"
-                      required
-                      rows={4}
-                      defaultValue={announcement.body}
-                      className="rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 py-3 text-sm text-white outline-none focus:border-blue-300/50"
-                    />
-                  </label>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:col-span-2">
-                    <label className="inline-flex items-center gap-2 text-sm text-zinc-300">
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <label className="grid gap-2 text-sm text-zinc-400">
+                      Başlık
                       <input
-                        name="isPublished"
-                        type="checkbox"
-                        defaultChecked={announcement.isPublished}
-                        className="h-4 w-4 rounded border-white/[0.2] bg-[#0c0d10]"
+                        name="title"
+                        required
+                        defaultValue={announcement.title}
+                        className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none focus:border-blue-300/50"
                       />
-                      Yayında
                     </label>
-                    <div className="flex gap-3">
-                      <button className="h-10 rounded-lg bg-zinc-100 px-4 text-sm font-medium text-zinc-950 transition hover:bg-white">
-                        Kaydet
-                      </button>
+                    <label className="grid gap-2 text-sm text-zinc-400">
+                      Tür
+                      <TypeSelect
+                        id={`type-${announcement.id}`}
+                        defaultValue={announcement.type}
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm text-zinc-400">
+                      Yayın hedefi
+                      <TargetSelect
+                        id={`target-${announcement.id}`}
+                        defaultValue={announcement.productSlug}
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm text-zinc-400">
+                      Görsel URL
+                      <input
+                        name="imageUrl"
+                        defaultValue={announcement.imageUrl ?? ""}
+                        placeholder="https://..."
+                        className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none focus:border-blue-300/50"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm text-zinc-400">
+                      Başlangıç
+                      <input
+                        name="startsAt"
+                        type="datetime-local"
+                        defaultValue={formatDateTimeInput(
+                          announcement.startsAt,
+                        )}
+                        className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none focus:border-blue-300/50"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm text-zinc-400">
+                      Bitiş
+                      <input
+                        name="endsAt"
+                        type="datetime-local"
+                        defaultValue={formatDateTimeInput(announcement.endsAt)}
+                        className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none focus:border-blue-300/50"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm text-zinc-400 lg:col-span-2">
+                      İçerik
+                      <textarea
+                        name="body"
+                        required
+                        rows={6}
+                        defaultValue={announcement.body}
+                        className="rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 py-3 text-sm text-white outline-none focus:border-blue-300/50"
+                      />
+                    </label>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:col-span-2">
+                      <label className="inline-flex items-center gap-2 text-sm text-zinc-300">
+                        <input
+                          name="isPublished"
+                          type="checkbox"
+                          defaultChecked={announcement.isPublished}
+                          className="h-4 w-4 rounded border-white/[0.2] bg-[#0c0d10]"
+                        />
+                        Yayında
+                      </label>
+                      <div className="flex gap-3">
+                        <button className="h-10 rounded-lg bg-zinc-100 px-4 text-sm font-medium text-zinc-950 transition hover:bg-white">
+                          Kaydet
+                        </button>
+                      </div>
                     </div>
                   </div>
+                  <AnnouncementPreview
+                    defaultBody={announcement.body}
+                    defaultImageUrl={announcement.imageUrl}
+                    defaultProductSlug={announcement.productSlug}
+                    defaultTitle={announcement.title}
+                  />
                 </form>
                 <form
                   action="/api/admin/announcements/delete"
