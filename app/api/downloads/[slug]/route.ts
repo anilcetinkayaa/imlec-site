@@ -6,7 +6,7 @@ import { prisma } from "@/src/db/prisma";
 const DOWNLOAD_URLS: Record<string, string> = {
   launcher:
     process.env.LAUNCHER_DOWNLOAD_URL ??
-    "https://github.com/anilcetinkayaa/imlec-site/releases/download/launcher-v0.1.2/ImlecLauncher_Setup_v0.1.2.exe",
+    "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/ImlecLauncher_Setup_v0.1.2.exe",
   fis260:
     process.env.FIS260_DOWNLOAD_URL ??
     "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.0-beta/FIS260_Setup_v0.1.0.exe",
