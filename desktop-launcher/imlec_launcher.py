@@ -1,11 +1,16 @@
+import base64
+import ctypes
 import hashlib
 import json
 import os
+import platform
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
 import traceback
+import uuid
 import zipfile
 from pathlib import Path
 
@@ -34,7 +39,7 @@ from PySide6.QtWidgets import (
 
 
 AUTH_BASE_URL = os.environ.get("IMLEC_AUTH_BASE_URL", "https://imlecyazilim.com").rstrip("/")
-LAUNCHER_VERSION = "0.1.1"
+LAUNCHER_VERSION = "0.1.2"
 PRODUCT_EXE_NAMES = {
     "fis260": "FIS260.exe",
     "cozver": "Cozver.exe",
@@ -80,6 +85,93 @@ def product_exe_path(product: dict) -> Path:
 def resource_path(*parts: str) -> Path:
     base = Path(getattr(sys, "_MEIPASS", app_root()))
     return base.joinpath(*parts)
+
+
+def _dpapi_blob(data: bytes):
+    class DATA_BLOB(ctypes.Structure):
+        _fields_ = [
+            ("cbData", ctypes.c_ulong),
+            ("pbData", ctypes.POINTER(ctypes.c_ubyte)),
+        ]
+
+    buffer = ctypes.create_string_buffer(data)
+    return DATA_BLOB(len(data), ctypes.cast(buffer, ctypes.POINTER(ctypes.c_ubyte))), DATA_BLOB
+
+
+def _dpapi_protect(text: str) -> str:
+    if sys.platform != "win32" or not text:
+        return text
+    try:
+        in_blob, blob_type = _dpapi_blob(text.encode("utf-8"))
+        out_blob = blob_type()
+        if not ctypes.windll.crypt32.CryptProtectData(
+            ctypes.byref(in_blob),
+            None,
+            None,
+            None,
+            None,
+            0,
+            ctypes.byref(out_blob),
+        ):
+            return text
+        try:
+            encrypted = ctypes.string_at(out_blob.pbData, out_blob.cbData)
+            return "dpapi:v1:" + base64.b64encode(encrypted).decode("ascii")
+        finally:
+            ctypes.windll.kernel32.LocalFree(out_blob.pbData)
+    except Exception:
+        return text
+
+
+def _dpapi_unprotect(text: str) -> str:
+    if not text.startswith("dpapi:v1:"):
+        return text
+    if sys.platform != "win32":
+        return ""
+    try:
+        raw = base64.b64decode(text.split(":", 2)[2])
+        in_blob, blob_type = _dpapi_blob(raw)
+        out_blob = blob_type()
+        if not ctypes.windll.crypt32.CryptUnprotectData(
+            ctypes.byref(in_blob),
+            None,
+            None,
+            None,
+            None,
+            0,
+            ctypes.byref(out_blob),
+        ):
+            return ""
+        try:
+            return ctypes.string_at(out_blob.pbData, out_blob.cbData).decode("utf-8")
+        finally:
+            ctypes.windll.kernel32.LocalFree(out_blob.pbData)
+    except Exception:
+        return ""
+
+
+def stable_device_fingerprint(settings: QSettings) -> str:
+    parts: list[str] = []
+    if sys.platform == "win32":
+        try:
+            import winreg
+
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
+                machine_guid, _ = winreg.QueryValueEx(key, "MachineGuid")
+                parts.append(str(machine_guid))
+        except Exception:
+            pass
+    parts.extend([platform.node(), platform.machine(), platform.processor()])
+    material = "|".join(part.strip().lower() for part in parts if str(part).strip())
+    if material:
+        device_id = hashlib.sha256(f"fis260-device-v1|{material}".encode("utf-8")).hexdigest()
+    else:
+        device_id = str(settings.value("auth/device_id", "") or "").strip()
+        if not device_id:
+            device_id = str(uuid.uuid4())
+    settings.setValue("auth/device_id", device_id)
+    settings.sync()
+    return device_id
 
 
 def read_installed_version(slug: str) -> str:
@@ -139,11 +231,16 @@ class ApiClient:
         self.settings = settings
 
     def token(self) -> str:
-        return str(self.settings.value("auth/token", "") or "").strip()
+        stored = str(self.settings.value("auth/token", "") or "").strip()
+        token = _dpapi_unprotect(stored)
+        if token and stored and not stored.startswith("dpapi:v1:"):
+            self.settings.setValue("auth/token", _dpapi_protect(token))
+            self.settings.sync()
+        return token
 
     def set_token(self, token: str, email: str, remember: bool) -> None:
         if remember:
-            self.settings.setValue("auth/token", token)
+            self.settings.setValue("auth/token", _dpapi_protect(token))
             self.settings.setValue("auth/email", email)
             self.settings.setValue("auth/remember", True)
         else:
@@ -172,13 +269,41 @@ class ApiClient:
         payload["desktopToken"] = token
         return payload
 
+    def device_headers(self) -> dict[str, str]:
+        return {
+            "X-Imlec-Device-Id": stable_device_fingerprint(self.settings),
+            "X-Imlec-Device-Name": socket.gethostname(),
+            "X-Imlec-OS": platform.platform(),
+            "X-Imlec-App-Version": LAUNCHER_VERSION,
+        }
+
+    def register_fis260_device(self) -> None:
+        token = self.token()
+        if not token:
+            return
+        try:
+            requests.post(
+                f"{AUTH_BASE_URL}/api/desktop-auth/device/register",
+                json={
+                    "deviceId": stable_device_fingerprint(self.settings),
+                    "deviceName": socket.gethostname(),
+                    "os": platform.platform(),
+                    "appVersion": LAUNCHER_VERSION,
+                },
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=15,
+            )
+        except Exception:
+            pass
+
     def products(self) -> dict:
         token = self.token()
         if not token:
             raise RuntimeError("Oturum bulunamadı.")
+        self.register_fis260_device()
         response = requests.get(
             f"{AUTH_BASE_URL}/api/desktop/products",
-            headers={"Authorization": f"Bearer {token}"},
+            headers={"Authorization": f"Bearer {token}", **self.device_headers()},
             timeout=20,
         )
         response.raise_for_status()

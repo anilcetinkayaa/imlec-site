@@ -1,26 +1,26 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 const columns = [
   {
-    title: "Ürün",
+    title: "ÃœrÃ¼n",
     links: [
-      { href: "/fis260", label: "FİŞ260" },
-      { href: "/cozver", label: "ÇÖZVER" },
-      { href: "/api/downloads/fis260", label: "Windows için indir" },
+      { href: "/fis260", label: "FÄ°Å260" },
+      { href: "/cozver", label: "Ã‡Ã–ZVER" },
+      { href: "/api/downloads/launcher", label: "Windows iÃ§in indir" },
     ],
   },
   {
-    title: "Şirket",
+    title: "Åirket",
     links: [
       { href: "/", label: "Platform" },
-      { href: "/#updates", label: "Güncellemeler" },
-      { href: "/changelog", label: "Değişiklikler" },
+      { href: "/#updates", label: "GÃ¼ncellemeler" },
+      { href: "/changelog", label: "DeÄŸiÅŸiklikler" },
     ],
   },
   {
     title: "Yasal",
     links: [
-      { href: "/security", label: "Güvenlik" },
+      { href: "/security", label: "GÃ¼venlik" },
       { href: "/security#kvkk", label: "KVKK" },
       { href: "/account", label: "Hesap paneli" },
     ],
@@ -29,8 +29,8 @@ const columns = [
     title: "Destek",
     links: [
       { href: "mailto:info@imlecyazilim.com", label: "E-posta" },
-      { href: "/login", label: "Giriş" },
-      { href: "/register", label: "Hesap oluştur" },
+      { href: "/login", label: "GiriÅŸ" },
+      { href: "/register", label: "Hesap oluÅŸtur" },
     ],
   },
 ];
@@ -61,11 +61,11 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col gap-3 border-t border-[var(--border-subtle)] pt-6 text-sm text-[var(--text-tertiary)] sm:flex-row sm:items-center sm:justify-between">
-          <p>İmleç Yazılım © 2026</p>
+          <p>Ä°mleÃ§ YazÄ±lÄ±m Â© 2026</p>
           <div className="flex items-center gap-3 font-mono text-xs">
             <span className="text-[var(--text-secondary)]">TR</span>
             <span aria-disabled="true" className="text-[var(--text-tertiary)]">
-              EN yakında
+              EN yakÄ±nda
             </span>
           </div>
         </div>

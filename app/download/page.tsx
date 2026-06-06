@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Check,
@@ -25,15 +25,18 @@ import {
   FIS260_INSTALLER_SHA256,
   FIS260_INSTALLER_SIZE_BYTES,
   FIS260_INSTALLER_VERSION,
+  LAUNCHER_INSTALLER_SHA256,
+  LAUNCHER_INSTALLER_SIZE_BYTES,
+  LAUNCHER_INSTALLER_VERSION,
 } from "@/lib/config";
 import { prisma } from "@/src/db/prisma";
 import { getUserProductAccess } from "@/src/server/entitlements";
 import { requestFis260Access } from "./actions";
 
 export const metadata: Metadata = {
-  title: "İndir | İmleç Yazılım",
+  title: "Ä°ndir | Ä°mleÃ§ YazÄ±lÄ±m",
   description:
-    "İmleç Yazılım hesabınıza bağlı masaüstü ürünlerin Windows kurulum dosyalarını indirin.",
+    "Ä°mleÃ§ YazÄ±lÄ±m hesabÄ±nÄ±za baÄŸlÄ± masaÃ¼stÃ¼ Ã¼rÃ¼nlerin Windows kurulum dosyalarÄ±nÄ± indirin.",
 };
 
 const productDownloadMeta: Record<
@@ -46,11 +49,18 @@ const productDownloadMeta: Record<
     compatibility: string;
   }
 > = {
+  launcher: {
+    version: LAUNCHER_INSTALLER_VERSION,
+    sizeBytes: LAUNCHER_INSTALLER_SIZE_BYTES,
+    sha256: LAUNCHER_INSTALLER_SHA256,
+    href: "/api/downloads/launcher",
+    compatibility: "Windows 10/11",
+  },
   fis260: {
     version: FIS260_INSTALLER_VERSION,
     sizeBytes: FIS260_INSTALLER_SIZE_BYTES,
     sha256: FIS260_INSTALLER_SHA256,
-    href: "/api/downloads/fis260",
+    href: "/api/downloads/launcher",
     compatibility: "Windows 10/11",
   },
 };
@@ -69,19 +79,19 @@ function LoginGate() {
         <LockKeyhole className="size-6" strokeWidth={1.5} />
       </div>
       <Badge className="mt-6" variant="beta">
-        Korumalı indirme
+        KorumalÄ± indirme
       </Badge>
-      <h1 className="text-h2 mt-5">Önce giriş yapın.</h1>
+      <h1 className="text-h2 mt-5">Ã–nce giriÅŸ yapÄ±n.</h1>
       <p className="text-body mt-4 text-[var(--text-secondary)]">
-        Kurulum dosyaları ürün erişimi olan hesaplara açıktır. Giriş yaptıktan
-        sonra hesabınıza bağlı indirilebilir ürünleri burada görebilirsiniz.
+        Kurulum dosyalarÄ± Ã¼rÃ¼n eriÅŸimi olan hesaplara aÃ§Ä±ktÄ±r. GiriÅŸ yaptÄ±ktan
+        sonra hesabÄ±nÄ±za baÄŸlÄ± indirilebilir Ã¼rÃ¼nleri burada gÃ¶rebilirsiniz.
       </p>
       <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
         <Button asChild size="lg" variant="primary">
-          <Link href="/login?callbackUrl=/download">Giriş yap</Link>
+          <Link href="/login?callbackUrl=/download">GiriÅŸ yap</Link>
         </Button>
         <Button asChild size="lg" variant="outline">
-          <Link href="/register">Hesap oluştur</Link>
+          <Link href="/register">Hesap oluÅŸtur</Link>
         </Button>
       </div>
     </Card>
@@ -92,7 +102,7 @@ function AccessRequestButton({ disabled = false }: { disabled?: boolean }) {
   return (
     <form action={requestFis260Access}>
       <Button className="w-full" disabled={disabled} type="submit" variant="primary">
-        {disabled ? "Talep beklemede" : "Erişim talebinde bulun"}
+        {disabled ? "Talep beklemede" : "EriÅŸim talebinde bulun"}
       </Button>
     </form>
   );
@@ -107,16 +117,16 @@ function AccessRequiredNotice({ hasPendingRequest }: { hasPendingRequest: boolea
             <LockKeyhole className="size-6" strokeWidth={1.5} />
           </div>
           <div>
-            <Badge variant="beta">Ürün erişimi gerekli</Badge>
+            <Badge variant="beta">ÃœrÃ¼n eriÅŸimi gerekli</Badge>
             <h2 className="text-h3 mt-4">
-              Bu hesap için FİŞ260 erişimi henüz tanımlanmamış.
+              Bu hesap iÃ§in FÄ°Å260 eriÅŸimi henÃ¼z tanÄ±mlanmamÄ±ÅŸ.
             </h2>
             <p className="text-body mt-3 max-w-2xl text-[var(--text-secondary)]">
-              İndirme yapabilmek için hesabınıza deneme veya üyelik erişimi atanmalıdır.
+              Ä°ndirme yapabilmek iÃ§in hesabÄ±nÄ±za deneme veya Ã¼yelik eriÅŸimi atanmalÄ±dÄ±r.
             </p>
             <p className="text-body-s mt-3 max-w-2xl text-[var(--text-tertiary)]">
-              Hesap açmak oturum oluşturur; FİŞ260 kurulumu için ayrıca ürün erişimi
-              gerekir. Erişiminiz sonradan kaldırıldıysa da aynı kontrol uygulanır.
+              Hesap aÃ§mak oturum oluÅŸturur; FÄ°Å260 kurulumu iÃ§in ayrÄ±ca Ã¼rÃ¼n eriÅŸimi
+              gerekir. EriÅŸiminiz sonradan kaldÄ±rÄ±ldÄ±ysa da aynÄ± kontrol uygulanÄ±r.
             </p>
           </div>
         </div>
@@ -125,7 +135,7 @@ function AccessRequiredNotice({ hasPendingRequest }: { hasPendingRequest: boolea
           <Button asChild variant="outline">
             <Link href="mailto:info@imlecyazilim.com">
               <MessageCircle className="size-4" strokeWidth={1.5} />
-              Destek ile iletişime geç
+              Destek ile iletiÅŸime geÃ§
             </Link>
           </Button>
         </div>
@@ -137,11 +147,11 @@ function AccessRequiredNotice({ hasPendingRequest }: { hasPendingRequest: boolea
 function AccessRequestSentBanner() {
   return (
     <Card className="border-[var(--success)]/25 bg-[var(--success)]/8 p-5" variant="default">
-      <Badge variant="active">Talep gönderildi</Badge>
-      <h2 className="text-h4 mt-3">Erişim talebiniz gönderildi.</h2>
+      <Badge variant="active">Talep gÃ¶nderildi</Badge>
+      <h2 className="text-h4 mt-3">EriÅŸim talebiniz gÃ¶nderildi.</h2>
       <p className="text-body-s mt-2 max-w-2xl text-[var(--text-secondary)]">
-        İnceleme sonrası hesabınıza erişim tanımlanacaktır. Erişim onayı
-        verildiğinde bilgilendirme maili alacaksınız.
+        Ä°nceleme sonrasÄ± hesabÄ±nÄ±za eriÅŸim tanÄ±mlanacaktÄ±r. EriÅŸim onayÄ±
+        verildiÄŸinde bilgilendirme maili alacaksÄ±nÄ±z.
       </p>
     </Card>
   );
@@ -158,6 +168,8 @@ function DownloadCard({
   };
 }) {
   const meta = productDownloadMeta[product.slug];
+  const isLauncher = product.slug === "launcher";
+  const canDownload = product.hasAccess || isLauncher;
 
   if (!meta) {
     return null;
@@ -173,30 +185,32 @@ function DownloadCard({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-h3">{product.name}</h2>
-              <Badge variant={product.hasAccess ? "active" : "coming-soon"}>
-                {product.hasAccess ? "Erişim aktif" : "Erişim yok"}
+              <Badge variant={canDownload ? "active" : "coming-soon"}>
+                {canDownload ? "Indirilebilir" : "EriÅŸim yok"}
               </Badge>
             </div>
             <p className="text-body-s mt-2 text-[var(--text-secondary)]">
-              Windows masaüstü kurulum dosyası.
+              {isLauncher
+                ? "Uygulamalarinizi indirip guncelleyen masaustu merkez."
+                : "Bu urun Imlec Yazilim Merkezi uzerinden kurulur ve guncellenir."}
             </p>
           </div>
         </div>
-        <Button asChild={product.hasAccess} disabled={!product.hasAccess} size="lg">
-          {product.hasAccess ? (
+        <Button asChild={canDownload} disabled={!canDownload} size="lg">
+          {canDownload ? (
             <Link href={meta.href}>
               <Download className="size-4" strokeWidth={1.5} />
-              İndir
+              Ä°ndir
             </Link>
           ) : (
-            <span>İndirme kapalı</span>
+            <span>Ä°ndirme kapalÄ±</span>
           )}
         </Button>
       </div>
 
       <div className="mt-6 grid gap-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 sm:grid-cols-3">
         <div>
-          <p className="text-body-s text-[var(--text-tertiary)]">Sürüm</p>
+          <p className="text-body-s text-[var(--text-tertiary)]">SÃ¼rÃ¼m</p>
           <p className="text-mono mt-1 text-[var(--text-primary)]">{meta.version}</p>
         </div>
         <div>
@@ -225,9 +239,9 @@ function DownloadCard({
           className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-1)] px-4"
           value="previous-versions"
         >
-          <AccordionTrigger>Önceki sürümler</AccordionTrigger>
+          <AccordionTrigger>Ã–nceki sÃ¼rÃ¼mler</AccordionTrigger>
           <AccordionContent>
-            Şu anda yalnızca güncel test sürümü indirilebilir durumdadır.
+            Åu anda yalnÄ±zca gÃ¼ncel test sÃ¼rÃ¼mÃ¼ indirilebilir durumdadÄ±r.
           </AccordionContent>
         </AccordionItem>
       </Accordion>
@@ -263,7 +277,17 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
   const downloadableProducts = products.filter(
     (product) => product.slug in productDownloadMeta,
   );
-  const ownedProducts = downloadableProducts.filter((product) => product.hasAccess);
+  const launcherProduct = products.find((product) => product.slug === "launcher") ?? {
+    id: "launcher",
+    slug: "launcher",
+    name: "Ä°mleÃ§ YazÄ±lÄ±m Merkezi",
+    hasAccess: true,
+    entitlementStatus: "PUBLIC",
+  };
+  const ownedProducts = [
+    launcherProduct,
+    ...downloadableProducts.filter((product) => product.slug !== "launcher" && product.hasAccess),
+  ];
   const params = await searchParams;
   const showAccessRequiredNotice =
     params.reason === "access-required" && params.product === "fis260";
@@ -289,19 +313,19 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
 
       <section className="relative mx-auto max-w-6xl px-6 py-14 sm:px-8 lg:px-10 lg:py-20">
         <div className="max-w-3xl">
-          <p className="text-label text-[var(--accent-brand)]">İndirme merkezi</p>
-          <h1 className="text-h1 mt-4">Hesabınıza bağlı masaüstü uygulamalar.</h1>
+          <p className="text-label text-[var(--accent-brand)]">Ä°ndirme merkezi</p>
+          <h1 className="text-h1 mt-4">HesabÄ±nÄ±za baÄŸlÄ± masaÃ¼stÃ¼ uygulamalar.</h1>
           <p className="text-body-l mt-5 text-[var(--text-secondary)]">
-            İndirme butonları mevcut korumalı route üzerinden çalışır. Ürün
-            erişiminiz yoksa kurulum dosyası bu sayfadan veya API route&apos;undan
-            alınamaz.
+            Ä°ndirme butonlarÄ± mevcut korumalÄ± route Ã¼zerinden Ã§alÄ±ÅŸÄ±r. ÃœrÃ¼n
+            eriÅŸiminiz yoksa kurulum dosyasÄ± bu sayfadan veya API route&apos;undan
+            alÄ±namaz.
           </p>
         </div>
 
         <div className="mt-8 grid gap-3 rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--surface-2)] p-4 md:grid-cols-3">
           {[
-            "Oturum kontrolü",
-            "Ürün erişimi doğrulama",
+            "Oturum kontrolÃ¼",
+            "ÃœrÃ¼n eriÅŸimi doÄŸrulama",
             "GitHub release redirect",
           ].map((item) => (
             <div key={item} className="flex items-center gap-3 text-body-s text-[var(--text-secondary)]">
@@ -329,13 +353,13 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
                     <FileDown className="size-6" strokeWidth={1.5} />
                   </div>
                   <div>
-                    <Badge variant="coming-soon">Ürün erişimi gerekli</Badge>
+                    <Badge variant="coming-soon">ÃœrÃ¼n eriÅŸimi gerekli</Badge>
                     <h2 className="text-h3 mt-3">
-                      Bu hesap için FİŞ260 erişimi henüz tanımlanmamış.
+                      Bu hesap iÃ§in FÄ°Å260 eriÅŸimi henÃ¼z tanÄ±mlanmamÄ±ÅŸ.
                     </h2>
                     <p className="text-body-s mt-2 max-w-2xl text-[var(--text-secondary)]">
-                      İndirme yapabilmek için hesabınıza deneme veya üyelik erişimi
-                      atanmalıdır.
+                      Ä°ndirme yapabilmek iÃ§in hesabÄ±nÄ±za deneme veya Ã¼yelik eriÅŸimi
+                      atanmalÄ±dÄ±r.
                     </p>
                   </div>
                 </div>
@@ -344,7 +368,7 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
                   <Button asChild variant="outline">
                     <Link href="mailto:info@imlecyazilim.com">
                       <MessageCircle className="size-4" strokeWidth={1.5} />
-                      Destek ile iletişime geç
+                      Destek ile iletiÅŸime geÃ§
                     </Link>
                   </Button>
                 </div>
@@ -360,8 +384,8 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
               strokeWidth={1.5}
             />
             <p className="text-body-s text-[var(--text-secondary)]">
-              Bu sayfa dosyayı proxy&apos;lemez. Yetki kontrolü tamamlandığında mevcut
-              download route&apos;u GitHub release asset adresine yönlendirir.
+              Bu sayfa dosyayÄ± proxy&apos;lemez. Yetki kontrolÃ¼ tamamlandÄ±ÄŸÄ±nda mevcut
+              download route&apos;u GitHub release asset adresine yÃ¶nlendirir.
             </p>
           </div>
         </Card>

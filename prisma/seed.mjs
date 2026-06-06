@@ -5,17 +5,42 @@ const prisma = new PrismaClient();
 const products = [
   {
     slug: "launcher",
-    name: "İmleç Yazılım Merkezi",
+    name: "Imlec Yazilim Merkezi",
   },
   {
     slug: "fis260",
-    name: "FİŞ260",
+    name: "FIS260",
   },
   {
     slug: "cozver",
-    name: "ÇÖZVER",
+    name: "COZVER",
   },
 ];
+
+async function upsertVersion(product, version) {
+  await prisma.productVersion.upsert({
+    where: {
+      productId_version: {
+        productId: product.id,
+        version: version.version,
+      },
+    },
+    update: {
+      minimumVersion: version.minimumVersion,
+      releaseNotes: version.releaseNotes,
+      filePath: version.filePath,
+      sha256: version.sha256,
+    },
+    create: {
+      productId: product.id,
+      version: version.version,
+      minimumVersion: version.minimumVersion,
+      releaseNotes: version.releaseNotes,
+      filePath: version.filePath,
+      sha256: version.sha256,
+    },
+  });
+}
 
 async function main() {
   const seededProducts = new Map();
@@ -39,34 +64,28 @@ async function main() {
     seededProducts.set(product.slug, seededProduct);
   }
 
+  const launcher = seededProducts.get("launcher");
   const fis260 = seededProducts.get("fis260");
 
+  if (launcher) {
+    await upsertVersion(launcher, {
+      version: "0.1.2",
+      minimumVersion: "0.1.1",
+      releaseNotes:
+        "Launcher guncellemesi. Cihaz dogrulama basliklari, DPAPI token saklama, duyuru karuseli ve self-update akisi.",
+      filePath: "launcher/ImlecLauncher-0.1.2-windows-x64.zip",
+      sha256: "bcf563a2e42cc40a2878883f7dc40f6a03aee4b491f20479b00be0c7eaae73f7",
+    });
+  }
+
   if (fis260) {
-    await prisma.productVersion.upsert({
-      where: {
-        productId_version: {
-          productId: fis260.id,
-          version: "0.1.0",
-        },
-      },
-      update: {
-        minimumVersion: "0.1.0",
-        releaseNotes:
-          "FIS260 kullanıcı modu. Fiş yükleme, OCR işlemi, Excel aktarımı ve güncelleme kontrol akışı.",
-        filePath: "fis260/FIS260-0.1.0-windows-x64.zip",
-        sha256:
-          "155bdc30de5c82e70a31cc80be139d47783aa98fb47a914a75d4509a0e1ddfc7",
-      },
-      create: {
-        productId: fis260.id,
-        version: "0.1.0",
-        minimumVersion: "0.1.0",
-        releaseNotes:
-          "FIS260 kullanıcı modu. Fiş yükleme, OCR işlemi, Excel aktarımı ve güncelleme kontrol akışı.",
-        filePath: "fis260/FIS260-0.1.0-windows-x64.zip",
-        sha256:
-          "155bdc30de5c82e70a31cc80be139d47783aa98fb47a914a75d4509a0e1ddfc7",
-      },
+    await upsertVersion(fis260, {
+      version: "0.1.1",
+      minimumVersion: "0.1.0",
+      releaseNotes:
+        "FIS260 kullanici modu. Fis yukleme, OCR islemi, Excel aktarimi, masaustu lisans kontrolu ve guncelleme akisi.",
+      filePath: "fis260/FIS260-0.1.1-windows-x64.zip",
+      sha256: "72c008e9945e817dc3f3f829c341c857f4a9942a9ad625f5cea0b31a7db36f1e",
     });
   }
 
@@ -84,10 +103,10 @@ async function main() {
     });
 
     if (!user) {
-      throw new Error(`SEED_USER_EMAIL kullanıcısı bulunamadı: ${seedUserEmail}`);
+      throw new Error(`SEED_USER_EMAIL kullanicisi bulunamadi: ${seedUserEmail}`);
     }
 
-    const fis260 = await prisma.product.findUniqueOrThrow({
+    const fis260Product = await prisma.product.findUniqueOrThrow({
       where: {
         slug: "fis260",
       },
@@ -100,7 +119,7 @@ async function main() {
       where: {
         userId_productId: {
           userId: user.id,
-          productId: fis260.id,
+          productId: fis260Product.id,
         },
       },
       update: {
@@ -111,16 +130,16 @@ async function main() {
       },
       create: {
         userId: user.id,
-        productId: fis260.id,
+        productId: fis260Product.id,
         status: "ACTIVE",
         source: "MANUAL",
       },
     });
 
-    console.log(`Dev entitlement oluşturuldu: ${user.email} -> FİŞ260`);
+    console.log(`Dev entitlement olusturuldu: ${user.email} -> FIS260`);
   }
 
-  console.log("Product seed tamamlandı: FİŞ260, ÇÖZVER");
+  console.log("Product seed tamamlandi: launcher, FIS260, COZVER");
 }
 
 main()

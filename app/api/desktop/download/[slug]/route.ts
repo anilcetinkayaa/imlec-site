@@ -1,5 +1,5 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
-import { EntitlementStatus } from "@prisma/client";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { DeviceStatus, EntitlementStatus, SessionType } from "@prisma/client";
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/src/db/prisma";
 
@@ -9,6 +9,7 @@ type DesktopDownloadPayload = {
   sub: string;
   product: string;
   version: string;
+  device?: string;
   exp: number;
 };
 
@@ -45,6 +46,7 @@ function isDesktopDownloadPayload(value: unknown): value is DesktopDownloadPaylo
     typeof value.sub === "string" &&
     typeof value.product === "string" &&
     typeof value.version === "string" &&
+    (!("device" in value) || typeof value.device === "string") &&
     typeof value.exp === "number"
   );
 }
@@ -99,6 +101,80 @@ function entitlementIsActive(entitlement: {
     !entitlement.revokedAt &&
     (!entitlement.expiresAt || entitlement.expiresAt > new Date())
   );
+}
+
+async function desktopDeviceCanDownload({
+  token,
+  userId,
+  productId,
+  deviceId,
+}: {
+  token: string;
+  userId: string;
+  productId: string;
+  deviceId: string | null;
+}) {
+  if (!deviceId) {
+    return { allowed: false, status: "DEVICE_REQUIRED" };
+  }
+
+  const device = await prisma.device.findUnique({
+    where: {
+      userId_productId_fingerprintHash: {
+        userId,
+        productId,
+        fingerprintHash: deviceId,
+      },
+    },
+    select: {
+      id: true,
+      status: true,
+      revokedAt: true,
+    },
+  });
+
+  if (!device) {
+    return { allowed: false, status: "DEVICE_NOT_REGISTERED" };
+  }
+
+  if (device.status !== DeviceStatus.ACTIVE || device.revokedAt) {
+    return { allowed: false, status: "DEVICE_REVOKED" };
+  }
+
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const session = await prisma.session.findUnique({
+    where: { tokenHash },
+    select: {
+      id: true,
+      deviceId: true,
+      type: true,
+      expiresAt: true,
+      revokedAt: true,
+    },
+  });
+
+  if (
+    !session ||
+    session.type !== SessionType.DESKTOP ||
+    session.deviceId !== device.id ||
+    session.revokedAt ||
+    session.expiresAt <= new Date()
+  ) {
+    return { allowed: false, status: "SESSION_INVALID" };
+  }
+
+  await prisma.$transaction([
+    prisma.device.update({
+      where: { id: device.id },
+      data: { lastSeenAt: new Date() },
+    }),
+    prisma.session.update({
+      where: { id: session.id },
+      data: { lastUsedAt: new Date() },
+    }),
+  ]);
+
+  return { allowed: true, status: "ACTIVE" };
 }
 
 async function writeDownloadLog({
@@ -185,6 +261,26 @@ export async function GET(request: NextRequest, context: DesktopDownloadContext)
       reason: "DESKTOP_DOWNLOAD_ENTITLEMENT_INVALID",
     });
     return jsonError("ENTITLEMENT_INACTIVE", 403);
+  }
+
+  if (slug !== "launcher") {
+    const deviceGate = await desktopDeviceCanDownload({
+      token,
+      userId: payload.sub,
+      productId: product.id,
+      deviceId: payload.device?.trim() || null,
+    });
+
+    if (!deviceGate.allowed) {
+      await writeDownloadLog({
+        request,
+        userId: payload.sub,
+        productSlug: slug,
+        success: false,
+        reason: `DESKTOP_DOWNLOAD_${deviceGate.status}`,
+      });
+      return jsonError(deviceGate.status, 403);
+    }
   }
 
   const version = await prisma.productVersion.findUnique({

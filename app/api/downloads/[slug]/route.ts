@@ -4,6 +4,9 @@ import { auth } from "@/auth";
 import { prisma } from "@/src/db/prisma";
 
 const DOWNLOAD_URLS: Record<string, string> = {
+  launcher:
+    process.env.LAUNCHER_DOWNLOAD_URL ??
+    "https://github.com/anilcetinkayaa/imlec-site/releases/download/launcher-v0.1.1/ImlecLauncher_Setup_v0.1.1.exe",
   fis260:
     process.env.FIS260_DOWNLOAD_URL ??
     "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.0-beta/FIS260_Setup_v0.1.0.exe",
@@ -70,8 +73,9 @@ export async function GET(request: NextRequest, context: DownloadRouteContext) {
   const slug = rawSlug.toLowerCase();
   const session = await auth();
   const userId = session?.user?.id;
+  const isPublicLauncher = slug === "launcher";
 
-  if (!userId) {
+  if (!userId && !isPublicLauncher) {
     await writeDownloadLog({
       request,
       productSlug: slug,
@@ -121,10 +125,38 @@ export async function GET(request: NextRequest, context: DownloadRouteContext) {
     return NextResponse.json({ ok: false, error: "DOWNLOAD_URL_MISSING" }, { status: 404 });
   }
 
+  if (isPublicLauncher) {
+    await writeDownloadLog({
+      request,
+      userId,
+      productSlug: product.slug,
+      success: true,
+      reason: "PUBLIC_LAUNCHER_DOWNLOAD",
+    });
+
+    return NextResponse.redirect(downloadUrl);
+  }
+
+  const authenticatedUserId = userId;
+
+  if (!authenticatedUserId) {
+    await writeDownloadLog({
+      request,
+      productSlug: product.slug,
+      success: false,
+      reason: "UNAUTHENTICATED",
+    });
+
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
+
+    return NextResponse.redirect(loginUrl);
+  }
+
   const entitlement = await prisma.entitlement.findUnique({
     where: {
       userId_productId: {
-        userId,
+        userId: authenticatedUserId,
         productId: product.id,
       },
     },
@@ -138,7 +170,7 @@ export async function GET(request: NextRequest, context: DownloadRouteContext) {
   if (!entitlement || !isEntitlementValid(entitlement)) {
     await writeDownloadLog({
       request,
-      userId,
+      userId: authenticatedUserId,
       productSlug: product.slug,
       success: false,
       reason: entitlement ? "ENTITLEMENT_INVALID" : "ENTITLEMENT_NOT_FOUND",
@@ -153,7 +185,7 @@ export async function GET(request: NextRequest, context: DownloadRouteContext) {
 
   await writeDownloadLog({
     request,
-    userId,
+    userId: authenticatedUserId,
     productSlug: product.slug,
     success: true,
     reason: "ENTITLEMENT_VALID",

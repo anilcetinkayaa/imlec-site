@@ -1,4 +1,5 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { DeviceStatus, SessionType } from "@prisma/client";
 import { prisma } from "@/src/db/prisma";
 import { getUserProductAccess } from "@/src/server/entitlements";
 
@@ -111,10 +112,163 @@ function verifyDesktopToken(token: string) {
   }
 }
 
-function buildDownloadUrl(request: Request, filePath: string) {
-  return filePath.startsWith("http")
-    ? filePath
-    : new URL(`/downloads/${filePath}`, request.url).toString();
+function getClientIp(request: Request) {
+  return (
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    request.headers.get("x-real-ip") ??
+    null
+  );
+}
+
+async function writeSecurityLog({
+  request,
+  userId,
+  productSlug,
+  reason,
+}: {
+  request: Request;
+  userId?: string;
+  productSlug: string;
+  reason: string;
+}) {
+  try {
+    await prisma.downloadLog.create({
+      data: {
+        userId,
+        productSlug,
+        success: false,
+        reason,
+        ipAddress: getClientIp(request),
+        userAgent: request.headers.get("user-agent"),
+      },
+    });
+  } catch (error) {
+    console.error("[DESKTOP PRODUCT SECURITY LOG ERROR]", error);
+  }
+}
+
+async function desktopDeviceCanDownload({
+  request,
+  token,
+  userId,
+  productId,
+  deviceId,
+  tokenExpiresAt,
+}: {
+  request: Request;
+  token: string;
+  userId: string;
+  productId: string;
+  deviceId: string | null;
+  tokenExpiresAt: Date;
+}) {
+  if (!deviceId) {
+    return { allowed: false, status: "DEVICE_REQUIRED" };
+  }
+
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const deviceName = request.headers.get("x-imlec-device-name")?.trim() || null;
+  const os = request.headers.get("x-imlec-os")?.trim() || null;
+  const appVersion = request.headers.get("x-imlec-app-version")?.trim() || null;
+  let device = await prisma.device.findUnique({
+    where: {
+      userId_productId_fingerprintHash: {
+        userId,
+        productId,
+        fingerprintHash: deviceId,
+      },
+    },
+    select: {
+      id: true,
+      status: true,
+      revokedAt: true,
+    },
+  });
+
+  if (!device) {
+    const sharedAccountLimit = Number.parseInt(process.env.FIS260_DEVICE_ACCOUNT_LIMIT ?? "2", 10);
+    const safeSharedAccountLimit = Number.isFinite(sharedAccountLimit) && sharedAccountLimit > 0 ? sharedAccountLimit : 2;
+    const sharedAccountCount = await prisma.device.count({
+      where: {
+        productId,
+        fingerprintHash: deviceId,
+        userId: {
+          not: userId,
+        },
+        status: DeviceStatus.ACTIVE,
+        revokedAt: null,
+      },
+    });
+    if (sharedAccountCount >= safeSharedAccountLimit) {
+      return { allowed: false, status: "DEVICE_SHARED_SUSPICIOUS" };
+    }
+
+    const deviceLimit = Number.parseInt(process.env.FIS260_DESKTOP_DEVICE_LIMIT ?? "3", 10);
+    const safeDeviceLimit = Number.isFinite(deviceLimit) && deviceLimit > 0 ? deviceLimit : 3;
+    const activeDeviceCount = await prisma.device.count({
+      where: {
+        userId,
+        productId,
+        status: DeviceStatus.ACTIVE,
+        revokedAt: null,
+      },
+    });
+    if (activeDeviceCount >= safeDeviceLimit) {
+      return { allowed: false, status: "DEVICE_LIMIT_REACHED" };
+    }
+
+    device = await prisma.device.create({
+      data: {
+        userId,
+        productId,
+        fingerprintHash: deviceId,
+        deviceName,
+        os,
+        appVersion,
+        status: DeviceStatus.ACTIVE,
+        lastSeenAt: new Date(),
+      },
+      select: {
+        id: true,
+        status: true,
+        revokedAt: true,
+      },
+    });
+  }
+
+  if (device.status !== DeviceStatus.ACTIVE || device.revokedAt) {
+    return { allowed: false, status: "DEVICE_REVOKED" };
+  }
+
+  await prisma.$transaction([
+    prisma.device.update({
+      where: { id: device.id },
+      data: {
+        lastSeenAt: new Date(),
+      },
+    }),
+    prisma.session.upsert({
+      where: { tokenHash },
+      update: {
+        deviceId: device.id,
+        type: SessionType.DESKTOP,
+        expiresAt: tokenExpiresAt,
+        revokedAt: null,
+        lastUsedAt: new Date(),
+      },
+      create: {
+        userId,
+        productId,
+        deviceId: device.id,
+        type: SessionType.DESKTOP,
+        tokenHash,
+        expiresAt: tokenExpiresAt,
+        lastUsedAt: new Date(),
+      },
+    }),
+  ]);
+
+  return { allowed: true, status: "ACTIVE" };
 }
 
 function base64UrlEncode(value: string) {
@@ -125,6 +279,7 @@ function signedDownloadUrl(request: Request, params: {
   userId: string;
   productSlug: string;
   version: string;
+  deviceId: string;
 }) {
   const secret = process.env.DESKTOP_AUTH_SECRET;
 
@@ -136,6 +291,7 @@ function signedDownloadUrl(request: Request, params: {
     sub: params.userId,
     product: params.productSlug,
     version: params.version,
+    device: params.deviceId,
     exp: Math.floor(Date.now() / 1000) + 15 * 60,
   };
   const encodedPayload = base64UrlEncode(JSON.stringify(payload));
@@ -176,6 +332,7 @@ export async function GET(request: Request) {
   }
 
   const products = await getUserProductAccess(user.id);
+  const requestDeviceId = request.headers.get("x-imlec-device-id")?.trim() || null;
   const productIds = products.map((product) => product.id);
   const versions = await prisma.productVersion.findMany({
     where: {
@@ -212,10 +369,29 @@ export async function GET(request: Request) {
       email: user.email,
       name: user.name,
     },
-    products: products.map((product) => {
+    products: await Promise.all(products.map(async (product) => {
       const latest = latestByProductId.get(product.id);
       const isLauncher = product.slug === "launcher";
       const hasAccess = product.hasAccess || isLauncher;
+      const deviceGate = isLauncher || !hasAccess
+        ? { allowed: true, status: isLauncher ? "PUBLIC" : null }
+        : await desktopDeviceCanDownload({
+            request,
+            token,
+            userId: user.id,
+            productId: product.id,
+            deviceId: requestDeviceId,
+            tokenExpiresAt: new Date(tokenPayload.exp * 1000),
+          });
+
+      if (!isLauncher && hasAccess && !deviceGate.allowed) {
+        await writeSecurityLog({
+          request,
+          userId: user.id,
+          productSlug: product.slug,
+          reason: `DESKTOP_PRODUCTS_${deviceGate.status}`,
+        });
+      }
 
       return {
         slug: product.slug,
@@ -228,16 +404,18 @@ export async function GET(request: Request) {
         minimumVersion: latest?.minimumVersion ?? latest?.version ?? null,
         releaseNotes: latest?.releaseNotes ?? "",
         downloadUrl:
-          hasAccess && latest
+          hasAccess && deviceGate.allowed && latest
             ? signedDownloadUrl(request, {
                 userId: user.id,
                 productSlug: product.slug,
                 version: latest.version,
-              }) ?? buildDownloadUrl(request, latest.filePath)
+                deviceId: requestDeviceId ?? "launcher-public",
+              })
             : null,
         sha256: hasAccess ? latest?.sha256 ?? null : null,
+        deviceStatus: deviceGate.status,
         releasedAt: latest?.createdAt.toISOString() ?? null,
       };
-    }),
+    })),
   });
 }

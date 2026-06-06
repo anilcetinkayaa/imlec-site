@@ -50,7 +50,7 @@ export default async function AdminSupportDetailPage({
     where: { id: ticketId },
     include: {
       user: {
-        select: { email: true, name: true },
+        select: { id: true, email: true, name: true },
       },
       attachments: {
         select: {
@@ -71,6 +71,36 @@ export default async function AdminSupportDetailPage({
 
   const receiptImage = ticket.attachments.find((item) => item.kind === "receipt_image");
   const resultJson = ticket.attachments.find((item) => item.kind === "result_json");
+  const [devices, entitlements, recentSecurityLogs] = await Promise.all([
+    prisma.device.findMany({
+      where: { userId: ticket.userId },
+      orderBy: { lastSeenAt: "desc" },
+      take: 8,
+      include: {
+        product: {
+          select: { name: true, slug: true },
+        },
+      },
+    }),
+    prisma.entitlement.findMany({
+      where: { userId: ticket.userId },
+      orderBy: { updatedAt: "desc" },
+      take: 8,
+      include: {
+        product: {
+          select: { name: true, slug: true },
+        },
+      },
+    }),
+    prisma.downloadLog.findMany({
+      where: {
+        userId: ticket.userId,
+        success: false,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    }),
+  ]);
 
   return (
     <main className="min-h-screen bg-[#08090b] px-6 py-8 text-zinc-100">
@@ -128,6 +158,75 @@ export default async function AdminSupportDetailPage({
               <pre className="mt-4 max-h-[360px] overflow-auto rounded-lg border border-white/[0.07] bg-[#0c0d10] p-4 text-xs text-zinc-300">
                 {prettyJson(ticket.systemSummary)}
               </pre>
+            </div>
+
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-5">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-2xl font-semibold tracking-tight">
+                  Lisans ve güvenlik durumu
+                </h2>
+                <Link
+                  href={`/admin/users/${ticket.user.id}`}
+                  className="rounded-lg border border-white/[0.12] px-3 py-2 text-sm text-blue-200 transition hover:bg-white/[0.05]"
+                >
+                  Kullanıcıyı aç
+                </Link>
+              </div>
+
+              <div className="mt-4 grid gap-3">
+                <div className="rounded-lg border border-white/[0.07] bg-[#0c0d10] p-3">
+                  <p className="text-sm font-semibold text-zinc-200">Ürün erişimleri</p>
+                  <div className="mt-2 grid gap-2 text-sm text-zinc-400">
+                    {entitlements.length > 0 ? (
+                      entitlements.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between gap-3">
+                          <span>{item.product.name}</span>
+                          <span className="font-mono">
+                            {item.status} · bitiş {formatDate(item.expiresAt)} · revoke {formatDate(item.revokedAt)}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <span>Aktif veya geçmiş ürün erişimi yok.</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-white/[0.07] bg-[#0c0d10] p-3">
+                  <p className="text-sm font-semibold text-zinc-200">Cihazlar</p>
+                  <div className="mt-2 grid gap-2 text-sm text-zinc-400">
+                    {devices.length > 0 ? (
+                      devices.map((device) => (
+                        <div key={device.id} className="grid grid-cols-4 gap-2">
+                          <span className="truncate">{device.deviceName ?? "İsimsiz cihaz"}</span>
+                          <span>{device.product.name}</span>
+                          <span>{device.status}</span>
+                          <span>{formatDate(device.lastSeenAt)}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <span>Kayıtlı cihaz yok.</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-white/[0.07] bg-[#0c0d10] p-3">
+                  <p className="text-sm font-semibold text-zinc-200">Son başarısız güvenlik/indirme olayları</p>
+                  <div className="mt-2 grid gap-2 text-sm text-zinc-400">
+                    {recentSecurityLogs.length > 0 ? (
+                      recentSecurityLogs.map((log) => (
+                        <div key={log.id} className="grid grid-cols-3 gap-2">
+                          <span>{formatDate(log.createdAt)}</span>
+                          <span>{log.productSlug}</span>
+                          <span className="truncate text-red-200">{log.reason ?? "-"}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <span>Yakın zamanda başarısız güvenlik olayı yok.</span>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <form

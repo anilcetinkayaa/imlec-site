@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import {
   Check,
   CreditCard,
@@ -100,7 +100,7 @@ export function ProductAccessCard({
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-h4">{product.name}</h2>
               <Badge variant={product.hasAccess ? "active" : "coming-soon"}>
-                {product.hasAccess ? "Aktif" : "Erişim yok"}
+                {product.hasAccess ? "Aktif" : "EriÅŸim yok"}
               </Badge>
             </div>
             <p className="text-body-s mt-2 text-[var(--text-secondary)]">
@@ -108,7 +108,7 @@ export function ProductAccessCard({
               <span className="text-mono text-[var(--text-primary)]">
                 {product.entitlementStatus}
               </span>
-              {" · "}Bitiş:{" "}
+              {" Â· "}BitiÅŸ:{" "}
               <span className="text-mono text-[var(--text-primary)]">
                 {formatDate(product.expiresAt)}
               </span>
@@ -119,15 +119,15 @@ export function ProductAccessCard({
         <div className="flex flex-col gap-2 sm:min-w-44">
           {product.hasAccess && isFis260 ? (
             <Button asChild>
-              <Link href="/api/downloads/fis260">
+              <Link href="/api/downloads/launcher">
                 <Download className="size-4" strokeWidth={1.5} />
-                Windows için indir
+                Windows iÃ§in indir
               </Link>
             </Button>
           ) : (
             <Button asChild variant="outline">
               <Link href={isFis260 ? "/uyelik" : `/${product.slug}`}>
-                Ürünü incele
+                ÃœrÃ¼nÃ¼ incele
               </Link>
             </Button>
           )}
@@ -135,7 +135,7 @@ export function ProductAccessCard({
             <Button asChild variant="ghost">
               <Link href="/account/devices">
                 <MonitorCheck className="size-4" strokeWidth={1.5} />
-                Cihazlarım
+                CihazlarÄ±m
               </Link>
             </Button>
           ) : null}
@@ -164,11 +164,11 @@ export function DeviceTable({
     <Card className="overflow-hidden" variant="default">
       <div className="grid grid-cols-[1.3fr_0.9fr_0.8fr_0.8fr_0.8fr_0.7fr] gap-4 border-b border-[var(--border-subtle)] bg-[var(--surface-2)] px-4 py-3 text-body-s text-[var(--text-tertiary)]">
         <span>Cihaz</span>
-        <span>Ürün</span>
+        <span>ÃœrÃ¼n</span>
         <span>OS</span>
-        <span>Son görülme</span>
+        <span>Son gÃ¶rÃ¼lme</span>
         <span>Durum</span>
-        <span>İşlem</span>
+        <span>Ä°ÅŸlem</span>
       </div>
       {devices.length > 0 ? (
         devices.map((device) => (
@@ -177,7 +177,7 @@ export function DeviceTable({
             className="grid grid-cols-[1.3fr_0.9fr_0.8fr_0.8fr_0.8fr_0.7fr] gap-4 border-b border-[var(--border-subtle)] px-4 py-3 text-body-s last:border-b-0"
           >
             <span className="min-w-0 truncate text-[var(--text-primary)]">
-              {device.deviceName ?? "İsimsiz cihaz"}
+              {device.deviceName ?? "Ä°simsiz cihaz"}
             </span>
             <span className="text-[var(--text-secondary)]">{device.product.name}</span>
             <span className="text-mono text-[var(--text-secondary)]">
@@ -196,7 +196,7 @@ export function DeviceTable({
                 <form action="/api/account/devices/revoke" method="post">
                   <input type="hidden" name="deviceId" value={device.id} />
                   <Button size="sm" variant="ghost">
-                    Kaldır
+                    KaldÄ±r
                   </Button>
                 </form>
               ) : (
@@ -207,7 +207,7 @@ export function DeviceTable({
         ))
       ) : (
         <div className="px-4 py-5 text-body-s text-[var(--text-tertiary)]">
-          Kayıtlı cihaz yok.
+          KayÄ±tlÄ± cihaz yok.
         </div>
       )}
     </Card>
@@ -245,7 +245,7 @@ export function BillingTable({
       <Card className="overflow-hidden" variant="default">
         <div className="flex items-center gap-2 border-b border-[var(--border-subtle)] bg-[var(--surface-2)] px-4 py-3">
           <CreditCard className="size-4 text-[var(--text-tertiary)]" strokeWidth={1.5} />
-          <h2 className="text-body-s font-medium">Ödeme kayıtları</h2>
+          <h2 className="text-body-s font-medium">Ã–deme kayÄ±tlarÄ±</h2>
         </div>
         {payments.length > 0 ? (
           payments.map((payment) => (
@@ -258,7 +258,7 @@ export function BillingTable({
                   {payment.product.name}
                 </p>
                 <p className="text-mono mt-1 text-[var(--text-tertiary)]">
-                  {formatDate(payment.paidAt ?? payment.createdAt)} · {payment.status}
+                  {formatDate(payment.paidAt ?? payment.createdAt)} Â· {payment.status}
                 </p>
               </div>
               <span className="text-mono text-[var(--text-primary)]">
@@ -268,7 +268,7 @@ export function BillingTable({
           ))
         ) : (
           <div className="px-4 py-5 text-body-s text-[var(--text-tertiary)]">
-            Henüz ödeme kaydı yok.
+            HenÃ¼z Ã¶deme kaydÄ± yok.
           </div>
         )}
       </Card>
@@ -289,21 +289,21 @@ export function BillingTable({
                   {invoice.product.name}
                 </p>
                 <p className="text-mono mt-1 text-[var(--text-tertiary)]">
-                  {invoice.provider} · {formatDate(invoice.issuedAt)}
+                  {invoice.provider} Â· {formatDate(invoice.issuedAt)}
                 </p>
               </div>
               <div className="flex gap-2">
                 {invoice.invoiceUrl ? (
                   <Button asChild size="sm" variant="outline">
                     <Link href={invoice.invoiceUrl}>
-                      Görüntüle
+                      GÃ¶rÃ¼ntÃ¼le
                       <ExternalLink className="size-3.5" strokeWidth={1.5} />
                     </Link>
                   </Button>
                 ) : null}
                 {invoice.downloadUrl ? (
                   <Button asChild size="sm" variant="outline">
-                    <Link href={invoice.downloadUrl}>İndir</Link>
+                    <Link href={invoice.downloadUrl}>Ä°ndir</Link>
                   </Button>
                 ) : null}
               </div>
@@ -311,7 +311,7 @@ export function BillingTable({
           ))
         ) : (
           <div className="px-4 py-5 text-body-s text-[var(--text-tertiary)]">
-            Henüz fatura kaydı yok.
+            HenÃ¼z fatura kaydÄ± yok.
           </div>
         )}
       </Card>
