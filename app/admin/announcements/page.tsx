@@ -34,6 +34,44 @@ function formatDateTimeInput(date: Date | null) {
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
 
+function formatTarget(productSlug: string | null) {
+  if (productSlug === "launcher") {
+    return "Launcher";
+  }
+
+  if (productSlug === "fis260") {
+    return "FIS260";
+  }
+
+  if (productSlug === "cozver") {
+    return "Çözver";
+  }
+
+  return "Hedef yok / eski kayıt";
+}
+
+function publicationStatus(announcement: {
+  endsAt: Date | null;
+  isPublished: boolean;
+  startsAt: Date | null;
+}) {
+  const now = new Date();
+
+  if (!announcement.isPublished) {
+    return "Taslak";
+  }
+
+  if (announcement.startsAt && announcement.startsAt > now) {
+    return "Başlamadı";
+  }
+
+  if (announcement.endsAt && announcement.endsAt < now) {
+    return "Süresi dolmuş";
+  }
+
+  return "Aktif";
+}
+
 function ForbiddenView() {
   return (
     <main className="min-h-screen bg-[#08090b] px-6 py-10 text-zinc-100">
@@ -234,8 +272,8 @@ export default async function AdminAnnouncementsPage() {
                     {announcement.title}
                   </span>
                   <span>{announcement.type}</span>
-                  <span>{announcement.productSlug ?? "launcher"}</span>
-                  <span>{announcement.isPublished ? "Evet" : "Hayır"}</span>
+                  <span>{formatTarget(announcement.productSlug)}</span>
+                  <span>{publicationStatus(announcement)}</span>
                   <span>{formatDate(announcement.startsAt)}</span>
                   <span>{formatDate(announcement.endsAt)}</span>
                   <span>{formatDate(announcement.createdAt)}</span>
