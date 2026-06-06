@@ -1,4 +1,4 @@
-﻿import Image from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 import type * as React from "react";
 import {
@@ -22,59 +22,59 @@ import fis260Preview from "@/public/fis260-preview.png";
 const pillars = [
   {
     icon: KeyRound,
-    title: "ÃœrÃ¼n eriÅŸimi",
+    title: "Ürün erişimi",
     description:
-      "SatÄ±n alÄ±nan masaÃ¼stÃ¼ Ã¼rÃ¼nleri tek hesap altÄ±nda gÃ¶rÃ¼nÃ¼r ve yÃ¶netilir.",
-    chip: "Cihaz baÅŸÄ±na lisans",
+      "Satın alınan masaüstü ürünleri tek hesap altında görünür ve yönetilir.",
+    chip: "Cihaz başına lisans",
   },
   {
     icon: Download,
-    title: "GÃ¼venli indirme",
+    title: "Güvenli indirme",
     description:
-      "Kurulum dosyalarÄ± Ã¼yelik ve Ã¼rÃ¼n eriÅŸimi kontrolÃ¼nden sonra sunulur.",
-    chip: "256-bit imzalÄ± kurulum",
+      "Kurulum dosyaları üyelik ve ürün erişimi kontrolünden sonra sunulur.",
+    chip: "256-bit imzalı kurulum",
   },
   {
     icon: MonitorCheck,
-    title: "Cihaz yÃ¶netimi",
+    title: "Cihaz yönetimi",
     description:
-      "Desktop oturumlarÄ± Ã¼yelik durumunu ve cihaz doÄŸrulamasÄ±nÄ± web hesabÄ±yla eÅŸler.",
-    chip: "30 gÃ¼nde bir gÃ¼ncelleme",
+      "Desktop oturumları üyelik durumunu ve cihaz doğrulamasını web hesabıyla eşler.",
+    chip: "30 günde bir güncelleme",
   },
 ];
 
 const products = [
   {
-    name: "FÄ°Å260",
+    name: "FİŞ260",
     href: "/fis260",
     status: "active" as const,
     statusLabel: "Aktif",
     description:
-      "FiÅŸ gÃ¶rsellerinden alanlarÄ± Ã§Ä±karan, kontrol akÄ±ÅŸÄ±yla Excel Ã§Ä±ktÄ±sÄ± hazÄ±rlayan Windows uygulamasÄ±.",
-    tags: ["Muhasebe OCR", "Excel aktarÄ±m", "Windows 10/11"],
+      "Fiş görsellerinden alanları çıkaran, kontrol akışıyla Excel çıktısı hazırlayan Windows uygulaması.",
+    tags: ["Muhasebe OCR", "Excel aktarım", "Windows 10/11"],
     accent: "var(--accent-fis260)",
     mark: "F",
     featured: true,
   },
   {
-    name: "Ã‡Ã–ZVER",
+    name: "ÇÖZVER",
     href: "/cozver",
     status: "coming-soon" as const,
-    statusLabel: "GeliÅŸtiriliyor",
+    statusLabel: "Geliştiriliyor",
     description:
-      "Finansal analiz ve spread hazÄ±rlÄ±ÄŸÄ± iÃ§in geliÅŸtirilen ikinci masaÃ¼stÃ¼ Ã¼rÃ¼n.",
-    tags: ["Finansal analiz", "Spread", "YakÄ±nda"],
+      "Finansal analiz ve spread hazırlığı için geliştirilen ikinci masaüstü ürün.",
+    tags: ["Finansal analiz", "Spread", "Yakında"],
     accent: "var(--accent-cozver)",
-    mark: "Ã‡",
+    mark: "Ç",
     featured: false,
   },
 ];
 
 const steps = [
-  ["01", "YÃ¼kle", "FiÅŸ gÃ¶rsellerini FÄ°Å260 Ã§alÄ±ÅŸma alanÄ±na alÄ±n."],
-  ["02", "OCR", "AlanlarÄ± uygulama iÃ§inde otomatik olarak Ã§Ä±karÄ±n."],
-  ["03", "Kontrol", "Eksik veya hatalÄ± alanlarÄ± aktarÄ±m Ã¶ncesi gÃ¶zden geÃ§irin."],
-  ["04", "Excel", "Muhasebe akÄ±ÅŸÄ±na uygun Excel Ã§Ä±ktÄ±sÄ±nÄ± oluÅŸturun."],
+  ["01", "Yükle", "Fiş görsellerini FİŞ260 çalışma alanına alın."],
+  ["02", "OCR", "Alanları uygulama içinde otomatik olarak çıkarın."],
+  ["03", "Kontrol", "Eksik veya hatalı alanları aktarım öncesi gözden geçirin."],
+  ["04", "Excel", "Muhasebe akışına uygun Excel çıktısını oluşturun."],
 ];
 
 function WindowChrome({
@@ -113,27 +113,27 @@ function HeroSection() {
       <div className="pointer-events-none absolute right-[-160px] top-10 size-[600px] rounded-full bg-[var(--accent-brand)] opacity-[0.18] blur-[120px] motion-safe:animate-[spin_12s_linear_infinite]" />
       <div className="relative z-10 flex flex-col justify-center">
         <p className="text-label mb-6 font-mono text-[var(--accent-brand)]">
-          MasaÃ¼stÃ¼ finans araÃ§larÄ±
+          Masaüstü finans araçları
         </p>
         <h1 className="text-display max-w-4xl text-[var(--text-primary)]">
-          Muhasebe ve finans ekipleri iÃ§in TÃ¼rkiye&apos;nin masaÃ¼stÃ¼ yazÄ±lÄ±m
+          Muhasebe ve finans ekipleri için Türkiye&apos;nin masaüstü yazılım
           platformu.
         </h1>
         <p className="text-body-l mt-7 max-w-2xl text-[var(--text-secondary)]">
-          Ä°mleÃ§ YazÄ±lÄ±m; Ã¼rÃ¼n eriÅŸimi, gÃ¼venli indirme ve cihaz doÄŸrulama
-          akÄ±ÅŸlarÄ±nÄ± tek hesap altÄ±nda toplayan B2B masaÃ¼stÃ¼ yazÄ±lÄ±m
+          İmleç Yazılım; ürün erişimi, güvenli indirme ve cihaz doğrulama
+          akışlarını tek hesap altında toplayan B2B masaüstü yazılım
           platformudur.
         </p>
         <div className="mt-9 flex flex-col gap-3 sm:flex-row">
           <Button asChild size="lg">
             <Link href="/api/downloads/launcher">
               <Download aria-hidden="true" strokeWidth={1.5} />
-              Windows iÃ§in indir
+              Windows için indir
             </Link>
           </Button>
           <Button asChild variant="ghost" size="lg">
             <Link href="/products">
-              ÃœrÃ¼nleri incele
+              Ürünleri incele
               <ArrowRight aria-hidden="true" strokeWidth={1.5} />
             </Link>
           </Button>
@@ -141,10 +141,10 @@ function HeroSection() {
       </div>
 
       <div className="relative z-10 self-center">
-        <WindowChrome title="FÄ°Å260.exe" skew>
+        <WindowChrome title="FİŞ260.exe" skew>
           <Image
             src={fis260Preview}
-            alt="FÄ°Å260 masaÃ¼stÃ¼ uygulama ekran gÃ¶rÃ¼ntÃ¼sÃ¼"
+            alt="FİŞ260 masaüstü uygulama ekran görüntüsü"
             priority
             className="h-auto w-full"
           />
@@ -158,7 +158,7 @@ function TrustBar() {
   return (
     <section className="border-y border-[var(--border-subtle)] bg-[var(--surface-0)]/70 px-6 py-3 sm:px-8 lg:px-10">
       <div className="mx-auto max-w-7xl font-mono text-xs text-[var(--text-tertiary)]">
-        Beta v0.1.0 â€¢ TÃ¼rkiye merkezli â€¢ KVKK uyumlu â€¢ Windows 10/11 desteÄŸi
+        Beta v0.1.0 • Türkiye merkezli • KVKK uyumlu • Windows 10/11 desteği
       </div>
     </section>
   );
@@ -168,9 +168,9 @@ function PlatformPillars() {
   return (
     <section className="mx-auto max-w-7xl px-6 py-16 sm:px-8 lg:px-10">
       <SectionHeader
-        eyebrow="Platform yaklaÅŸÄ±mÄ±"
-        title="Ãœyelik, indirme ve cihaz doÄŸrulama aynÄ± hesapta birleÅŸir."
-        lead="Web platformu masaÃ¼stÃ¼ Ã¼rÃ¼nlerin daÄŸÄ±tÄ±m ve eriÅŸim katmanÄ±dÄ±r. KullanÄ±cÄ± uygulamayÄ± indirir, kurar ve aynÄ± hesapla masaÃ¼stÃ¼ oturumunu aÃ§ar."
+        eyebrow="Platform yaklaşımı"
+        title="Üyelik, indirme ve cihaz doğrulama aynı hesapta birleşir."
+        lead="Web platformu masaüstü ürünlerin dağıtım ve erişim katmanıdır. Kullanıcı uygulamayı indirir, kurar ve aynı hesapla masaüstü oturumunu açar."
       />
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {pillars.map((pillar) => {
@@ -204,9 +204,9 @@ function ProductEcosystem() {
       className="mx-auto max-w-7xl border-t border-[var(--border-subtle)] px-6 py-16 sm:px-8 lg:px-10"
     >
       <SectionHeader
-        eyebrow="ÃœrÃ¼n ekosistemi"
-        title="AynÄ± platformda ayrÄ± masaÃ¼stÃ¼ Ã¼rÃ¼nleri."
-        lead="Her Ã¼rÃ¼n kendi Ã¼yelik, eriÅŸim ve indirme akÄ±ÅŸÄ±na sahiptir. Hesap yapÄ±sÄ± ortaktÄ±r; Ã¼rÃ¼n sahipliÄŸi ayrÄ± yÃ¶netilir."
+        eyebrow="Ürün ekosistemi"
+        title="Aynı platformda ayrı masaüstü ürünleri."
+        lead="Her ürün kendi üyelik, erişim ve indirme akışına sahiptir. Hesap yapısı ortaktır; ürün sahipliği ayrı yönetilir."
       />
       <div className="mt-8 grid gap-4 lg:grid-cols-3">
         {products.map((product) => (
@@ -223,7 +223,7 @@ function ProductEcosystem() {
                 </span>
                 <div>
                   <p className="text-label font-mono text-[var(--product-accent)]">
-                    {product.name === "FÄ°Å260" ? "Muhasebe OCR" : "Finansal analiz"}
+                    {product.name === "FİŞ260" ? "Muhasebe OCR" : "Finansal analiz"}
                   </p>
                   <h3 className="text-h3 mt-1 text-[var(--text-primary)]">
                     {product.name}
@@ -247,7 +247,7 @@ function ProductEcosystem() {
             </div>
             <Button asChild variant="ghost" className="mt-7 px-0">
               <Link href={product.href}>
-                ÃœrÃ¼n sayfasÄ±
+                Ürün sayfası
                 <ArrowRight aria-hidden="true" strokeWidth={1.5} />
               </Link>
             </Button>
@@ -263,9 +263,9 @@ function ProductShowcase() {
     <section className="mx-auto grid max-w-7xl gap-10 border-t border-[var(--border-subtle)] px-6 py-16 sm:px-8 lg:grid-cols-[0.72fr_1.28fr] lg:px-10">
       <div>
         <SectionHeader
-          eyebrow="FÄ°Å260 akÄ±ÅŸÄ±"
-          title="FiÅŸten Excel'e kÄ±sa ve kontrollÃ¼ akÄ±ÅŸ."
-          lead="Uygulama masaÃ¼stÃ¼nde Ã§alÄ±ÅŸÄ±r. Web platformu Ã¼yelik, kurulum dosyasÄ± ve cihaz doÄŸrulama katmanÄ±nÄ± yÃ¶netir."
+          eyebrow="FİŞ260 akışı"
+          title="Fişten Excel'e kısa ve kontrollü akış."
+          lead="Uygulama masaüstünde çalışır. Web platformu üyelik, kurulum dosyası ve cihaz doğrulama katmanını yönetir."
         />
         <div className="mt-8 grid gap-0">
           {steps.map(([number, title, description], index) => (
@@ -290,7 +290,7 @@ function ProductShowcase() {
           ))}
         </div>
       </div>
-      <WindowChrome title="FÄ°Å260 demo">
+      <WindowChrome title="FİŞ260 demo">
         <ProductVideoOrPlaceholder
           placeholder={VIDEO_PLACEHOLDER}
           src={FIS260_DEMO_VIDEO_SRC}
@@ -308,10 +308,10 @@ function SecurityStrip() {
           <ShieldCheck aria-hidden="true" className="size-6" strokeWidth={1.5} />
         </span>
         <p className="text-body text-[var(--text-secondary)]">
-          Ä°mleÃ§ YazÄ±lÄ±m, Ã¼rÃ¼n eriÅŸimini web hesabÄ± Ã¼zerinden doÄŸrular. Cihaz
-          kayÄ±tlarÄ± Ã¼yelik durumuyla eÅŸlenir; kurulum dosyasÄ± indirme akÄ±ÅŸÄ±
-          yetkilendirilmiÅŸ route Ã¼zerinden Ã§alÄ±ÅŸÄ±r. KVKK kapsamÄ±nda hesap ve
-          cihaz verileri Ã¼rÃ¼n eriÅŸimi iÃ§in sÄ±nÄ±rlÄ± tutulur.
+          İmleç Yazılım, ürün erişimini web hesabı üzerinden doğrular. Cihaz
+          kayıtları üyelik durumuyla eşlenir; kurulum dosyası indirme akışı
+          yetkilendirilmiş route üzerinden çalışır. KVKK kapsamında hesap ve
+          cihaz verileri ürün erişimi için sınırlı tutulur.
         </p>
       </div>
     </section>
@@ -326,9 +326,9 @@ function ChangelogTeaser() {
     >
       <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
         <SectionHeader
-          eyebrow="DeÄŸiÅŸiklikler"
-          title="ÃœrÃ¼n ve platform deÄŸiÅŸiklikleri."
-          lead="Son daÄŸÄ±tÄ±m notlarÄ±, Ã¼rÃ¼n eriÅŸimi ve kurulum akÄ±ÅŸÄ±ndaki deÄŸiÅŸiklikleri izleyin."
+          eyebrow="Değişiklikler"
+          title="Ürün ve platform değişiklikleri."
+          lead="Son dağıtım notları, ürün erişimi ve kurulum akışındaki değişiklikleri izleyin."
         />
         <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--surface-1)]/70">
           {CHANGELOG_ENTRIES.map((entry) => (
@@ -357,7 +357,7 @@ function ChangelogTeaser() {
           <div className="border-t border-[var(--border-subtle)] p-5">
             <Button asChild variant="ghost" className="px-0">
               <Link href="/changelog">
-                TÃ¼m deÄŸiÅŸiklikleri gÃ¶rÃ¼ntÃ¼le
+                Tüm değişiklikleri görüntüle
                 <ArrowRight aria-hidden="true" strokeWidth={1.5} />
               </Link>
             </Button>
@@ -377,19 +377,19 @@ function CTAFooterStrip() {
             Beta v0.1.0
           </p>
           <h2 className="text-h2 mt-4 text-[var(--text-primary)]">
-            FÄ°Å260&apos;Ä± bugÃ¼n denemeye baÅŸlayÄ±n.
+            FİŞ260&apos;ı bugün denemeye başlayın.
           </h2>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button asChild size="lg">
             <Link href="/api/downloads/launcher">
               <Download aria-hidden="true" strokeWidth={1.5} />
-              Windows iÃ§in indir
+              Windows için indir
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">
             <Link href="/fis260">
-              ÃœrÃ¼n sayfasÄ±
+              Ürün sayfası
               <ArrowRight aria-hidden="true" strokeWidth={1.5} />
             </Link>
           </Button>

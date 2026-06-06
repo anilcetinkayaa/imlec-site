@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import fis260Preview from "@/public/fis260-preview.png";
 import {
   ProductPageLayout,
@@ -6,14 +6,14 @@ import {
 } from "@/components/products/ProductPageLayout";
 
 export const metadata: Metadata = {
-  title: "FÄ°Å260 | Ä°mleÃ§ YazÄ±lÄ±m",
+  title: "FİŞ260 | İmleç Yazılım",
   description:
-    "FÄ°Å260, muhasebe ekipleri iÃ§in geliÅŸtirilen Windows masaÃ¼stÃ¼ OCR ve Excel aktarÄ±m uygulamasÄ±dÄ±r.",
+    "FİŞ260, muhasebe ekipleri için geliştirilen Windows masaüstü OCR ve Excel aktarım uygulamasıdır.",
 };
 
 const fis260Config: ProductPageConfig = {
   slug: "fis260",
-  name: "FÄ°Å260",
+  name: "FİŞ260",
   accent: "var(--accent-fis260)",
   status: {
     label: "Beta v0.1.0",
@@ -21,159 +21,159 @@ const fis260Config: ProductPageConfig = {
   },
   hero: {
     eyebrow: "Windows OCR + Excel",
-    title: "FiÅŸten Excel'e kÄ±sa ve kontrollÃ¼ akÄ±ÅŸ.",
-    lead: "FÄ°Å260, muhasebe ekiplerinin fiÅŸ gÃ¶rsellerinden veri Ã§Ä±karmasÄ±, alanlarÄ± kontrol etmesi ve Excel Ã§Ä±ktÄ±sÄ±nÄ± denetlenebilir biÃ§imde hazÄ±rlamasÄ± iÃ§in geliÅŸtirilmiÅŸ masaÃ¼stÃ¼ uygulamadÄ±r.",
+    title: "Fişten Excel'e kısa ve kontrollü akış.",
+    lead: "FİŞ260, muhasebe ekiplerinin fiş görsellerinden veri çıkarması, alanları kontrol etmesi ve Excel çıktısını denetlenebilir biçimde hazırlaması için geliştirilmiş masaüstü uygulamadır.",
     primaryAction: {
       label: "Imlec Yazilim Merkezi'ni indir",
       href: "/api/downloads/launcher",
       variant: "primary",
     },
     secondaryAction: {
-      label: "AkÄ±ÅŸÄ± incele",
+      label: "Akışı incele",
       href: "#workflow",
       variant: "outline",
     },
   },
   audience: [
-    "Muhasebe fiÅŸlerini toplu iÅŸleyen ekipler iÃ§in tasarlandÄ±.",
-    "Web hesabÄ± Ã¼rÃ¼n eriÅŸimi, cihaz doÄŸrulama ve indirme akÄ±ÅŸÄ±nÄ± yÃ¶netir.",
-    "MasaÃ¼stÃ¼ uygulama Windows 10/11 Ã¼zerinde odaklÄ± bir Ã§alÄ±ÅŸma yÃ¼zeyi sunar.",
+    "Muhasebe fişlerini toplu işleyen ekipler için tasarlandı.",
+    "Web hesabı ürün erişimi, cihaz doğrulama ve indirme akışını yönetir.",
+    "Masaüstü uygulama Windows 10/11 üzerinde odaklı bir çalışma yüzeyi sunar.",
   ],
   steps: [
     {
-      title: "FiÅŸ yÃ¼kleyin",
+      title: "Fiş yükleyin",
       description:
-        "GÃ¶rsel dosyalarÄ±nÄ± masaÃ¼stÃ¼ uygulamasÄ±na ekleyin ve iÅŸlem sÄ±rasÄ±nÄ± tek ekrandan takip edin.",
+        "Görsel dosyalarını masaüstü uygulamasına ekleyin ve işlem sırasını tek ekrandan takip edin.",
     },
     {
-      title: "OCR iÅŸlemini baÅŸlatÄ±n",
+      title: "OCR işlemini başlatın",
       description:
-        "Firma, VKN, tarih, KDV ve toplam alanlarÄ± tanÄ±nÄ±r; sonuÃ§lar kontrol edilebilir hale gelir.",
+        "Firma, VKN, tarih, KDV ve toplam alanları tanınır; sonuçlar kontrol edilebilir hale gelir.",
     },
     {
-      title: "AlanlarÄ± kontrol edin",
+      title: "Alanları kontrol edin",
       description:
-        "AktarÄ±m Ã¶ncesinde eksik veya hatalÄ± alanlarÄ± dÃ¼zenleyerek muhasebe akÄ±ÅŸÄ±nÄ± gÃ¼venceye alÄ±n.",
+        "Aktarım öncesinde eksik veya hatalı alanları düzenleyerek muhasebe akışını güvenceye alın.",
     },
     {
-      title: "Excel Ã§Ä±ktÄ±sÄ± alÄ±n",
+      title: "Excel çıktısı alın",
       description:
-        "Kontrol edilen veriyi ekip iÃ§inde kullanÄ±labilir Excel dosyasÄ± olarak dÄ±ÅŸa aktarÄ±n.",
+        "Kontrol edilen veriyi ekip içinde kullanılabilir Excel dosyası olarak dışa aktarın.",
     },
   ],
   screenshots: [
     {
       id: "processing",
-      label: "Ä°ÅŸleme",
-      title: "FiÅŸ iÅŸleme ekranÄ±",
+      label: "İşleme",
+      title: "Fiş işleme ekranı",
       description:
-        "YÃ¼klenen fiÅŸler, OCR ilerlemesi ve durum bilgileri aynÄ± masaÃ¼stÃ¼ Ã§alÄ±ÅŸma yÃ¼zeyinde izlenir.",
+        "Yüklenen fişler, OCR ilerlemesi ve durum bilgileri aynı masaüstü çalışma yüzeyinde izlenir.",
       image: fis260Preview,
-      alt: "FÄ°Å260 fiÅŸ iÅŸleme ekran gÃ¶rÃ¼ntÃ¼sÃ¼",
+      alt: "FİŞ260 fiş işleme ekran görüntüsü",
     },
     {
       id: "control",
       label: "Kontrol",
-      title: "Alan kontrolÃ¼",
+      title: "Alan kontrolü",
       description:
-        "OCR sonucunda Ã§Ä±karÄ±lan alanlar Excel'e aktarÄ±lmadan Ã¶nce kullanÄ±cÄ± tarafÄ±ndan doÄŸrulanÄ±r.",
+        "OCR sonucunda çıkarılan alanlar Excel'e aktarılmadan önce kullanıcı tarafından doğrulanır.",
       image: fis260Preview,
-      alt: "FÄ°Å260 alan kontrol ekranÄ±",
+      alt: "FİŞ260 alan kontrol ekranı",
     },
     {
       id: "export",
       label: "Excel",
-      title: "Excel aktarÄ±mÄ±",
+      title: "Excel aktarımı",
       description:
-        "Onaylanan kayÄ±tlar muhasebe ekibinin kullanabileceÄŸi dÃ¼zenli Excel Ã§Ä±ktÄ±sÄ±na dÃ¶nÃ¼ÅŸtÃ¼rÃ¼lÃ¼r.",
+        "Onaylanan kayıtlar muhasebe ekibinin kullanabileceği düzenli Excel çıktısına dönüştürülür.",
       image: fis260Preview,
-      alt: "FÄ°Å260 Excel aktarÄ±m ekranÄ±",
+      alt: "FİŞ260 Excel aktarım ekranı",
     },
   ],
   specs: [
     ["Platform", "Windows 10/11"],
-    ["DaÄŸÄ±tÄ±m", "Yetkili web hesabÄ± Ã¼zerinden"],
+    ["Dağıtım", "Yetkili web hesabı üzerinden"],
     ["Kurulum", "Imlec Yazilim Merkezi uzerinden"],
-    ["Ã‡Ä±ktÄ±", "Excel dosyasÄ±"],
-    ["SÃ¼rÃ¼m", "v0.1.1"],
-    ["EriÅŸim", "ÃœrÃ¼n bazlÄ± Ã¼yelik"],
+    ["Çıktı", "Excel dosyası"],
+    ["Sürüm", "v0.1.1"],
+    ["Erişim", "Ürün bazlı üyelik"],
   ],
   membership: {
-    eyebrow: "FÄ°Å260 Ã¼yeliÄŸi",
-    title: "ÃœrÃ¼n eriÅŸimi hesabÄ±nÄ±za baÄŸlanÄ±r.",
+    eyebrow: "FİŞ260 üyeliği",
+    title: "Ürün erişimi hesabınıza bağlanır.",
     description:
-      "Yetkili kullanÄ±cÄ±lar kurulum dosyasÄ±nÄ± web hesabÄ±ndan indirir. MasaÃ¼stÃ¼ uygulama aÃ§Ä±ldÄ±ÄŸÄ±nda aynÄ± hesapla oturum aÃ§Ä±lÄ±r ve aktif Ã¼yelik kontrol edilir.",
+      "Yetkili kullanıcılar kurulum dosyasını web hesabından indirir. Masaüstü uygulama açıldığında aynı hesapla oturum açılır ve aktif üyelik kontrol edilir.",
     tiers: [
       {
-        name: "Tek KullanÄ±cÄ±",
-        price: "GÃ¶rÃ¼ÅŸme",
+        name: "Tek Kullanıcı",
+        price: "Görüşme",
         period: "ile",
-        description: "Bireysel kullanÄ±m ve dÃ¼ÅŸÃ¼k hacimli fiÅŸ iÅŸleme iÃ§in.",
+        description: "Bireysel kullanım ve düşük hacimli fiş işleme için.",
         features: [
-          "FÄ°Å260 Ã¼rÃ¼n eriÅŸimi",
-          "Windows kurulum dosyasÄ±",
-          "Hesaba baÄŸlÄ± cihaz doÄŸrulama",
+          "FİŞ260 ürün erişimi",
+          "Windows kurulum dosyası",
+          "Hesaba bağlı cihaz doğrulama",
         ],
-        ctaLabel: "ÃœyeliÄŸi baÅŸlat",
+        ctaLabel: "Üyeliği başlat",
         ctaHref: "/uyelik",
       },
       {
         name: "Ekip",
-        price: "GÃ¶rÃ¼ÅŸme",
+        price: "Görüşme",
         period: "ile",
-        description: "Birden fazla kullanÄ±cÄ± ve dÃ¼zenli operasyonlar iÃ§in.",
+        description: "Birden fazla kullanıcı ve düzenli operasyonlar için.",
         features: [
-          "Ekip bazlÄ± Ã¼rÃ¼n eriÅŸimi",
-          "Cihaz ve kullanÄ±cÄ± gÃ¶rÃ¼nÃ¼rlÃ¼ÄŸÃ¼",
-          "Ã–ncelikli kurulum desteÄŸi",
+          "Ekip bazlı ürün erişimi",
+          "Cihaz ve kullanıcı görünürlüğü",
+          "Öncelikli kurulum desteği",
         ],
-        ctaLabel: "Ekip Ã¼yeliÄŸi iste",
+        ctaLabel: "Ekip üyeliği iste",
         ctaHref: "/uyelik",
       },
       {
         name: "Kurumsal",
-        price: "PlanlÄ±",
+        price: "Planlı",
         period: "kurulum",
-        description: "Daha geniÅŸ daÄŸÄ±tÄ±m ve sÃ¼reÃ§ gereksinimleri iÃ§in.",
+        description: "Daha geniş dağıtım ve süreç gereksinimleri için.",
         features: [
-          "KullanÄ±m senaryosu deÄŸerlendirmesi",
-          "Kurumsal daÄŸÄ±tÄ±m planÄ±",
-          "ÃœrÃ¼n yol haritasÄ± gÃ¶rÃ¼ÅŸmesi",
+          "Kullanım senaryosu değerlendirmesi",
+          "Kurumsal dağıtım planı",
+          "Ürün yol haritası görüşmesi",
         ],
-        ctaLabel: "Kurumsal gÃ¶rÃ¼ÅŸme talep et",
-        ctaHref: "mailto:info@imlecyazilim.com?subject=FÄ°Å260 kurumsal gÃ¶rÃ¼ÅŸme",
+        ctaLabel: "Kurumsal görüşme talep et",
+        ctaHref: "mailto:info@imlecyazilim.com?subject=FİŞ260 kurumsal görüşme",
       },
     ],
   },
   faq: [
     {
-      question: "FÄ°Å260 web uygulamasÄ± mÄ±?",
+      question: "FİŞ260 web uygulaması mı?",
       answer:
-        "HayÄ±r. FÄ°Å260 Windows Ã¼zerinde Ã§alÄ±ÅŸan masaÃ¼stÃ¼ uygulamadÄ±r. Web platformu Ã¼yelik, Ã¼rÃ¼n eriÅŸimi, cihaz doÄŸrulama ve indirme akÄ±ÅŸÄ±nÄ± yÃ¶netir.",
+        "Hayır. FİŞ260 Windows üzerinde çalışan masaüstü uygulamadır. Web platformu üyelik, ürün erişimi, cihaz doğrulama ve indirme akışını yönetir.",
     },
     {
-      question: "Kurulum dosyasÄ± nereden indirilir?",
+      question: "Kurulum dosyası nereden indirilir?",
       answer:
-        "ÃœrÃ¼n eriÅŸimi olan kullanÄ±cÄ±lar giriÅŸ yaptÄ±ktan sonra hesap panelinden veya indirme CTA'larÄ±ndan korumalÄ± download akÄ±ÅŸÄ±na yÃ¶nlenir.",
+        "Ürün erişimi olan kullanıcılar giriş yaptıktan sonra hesap panelinden veya indirme CTA'larından korumalı download akışına yönlenir.",
     },
     {
-      question: "Yetkisiz kullanÄ±cÄ± kurulum dosyasÄ±nÄ± indirebilir mi?",
+      question: "Yetkisiz kullanıcı kurulum dosyasını indirebilir mi?",
       answer:
-        "HayÄ±r. Download route'u oturum ve FÄ°Å260 Ã¼rÃ¼n eriÅŸimi kontrolÃ¼nÃ¼ korur; yetkisiz kullanÄ±cÄ±lar dosyayÄ± alamaz.",
+        "Hayır. Download route'u oturum ve FİŞ260 ürün erişimi kontrolünü korur; yetkisiz kullanıcılar dosyayı alamaz.",
     },
     {
-      question: "Ã‡Ã–ZVER ile aynÄ± Ã¼yelik mi kullanÄ±lacak?",
+      question: "ÇÖZVER ile aynı üyelik mi kullanılacak?",
       answer:
-        "Ä°mleÃ§ hesabÄ± ortaktÄ±r, ancak Ã¼rÃ¼n eriÅŸimleri Ã¼rÃ¼n bazÄ±nda ayrÄ± yÃ¶netilir. Ã‡Ã–ZVER aktif olduÄŸunda kendi Ã¼rÃ¼n eriÅŸimiyle gÃ¶rÃ¼nÃ¼r.",
+        "İmleç hesabı ortaktır, ancak ürün erişimleri ürün bazında ayrı yönetilir. ÇÖZVER aktif olduğunda kendi ürün erişimiyle görünür.",
     },
   ],
   related: [
     {
-      name: "Ã‡Ã–ZVER",
+      name: "ÇÖZVER",
       href: "/cozver",
-      status: "YakÄ±nda",
+      status: "Yakında",
       description:
-        "Finansal analiz ve spread hazÄ±rlÄ±ÄŸÄ± iÃ§in geliÅŸtirme aÅŸamasÄ±ndaki masaÃ¼stÃ¼ Ã¼rÃ¼n.",
+        "Finansal analiz ve spread hazırlığı için geliştirme aşamasındaki masaüstü ürün.",
       accent: "var(--accent-cozver)",
     },
   ],

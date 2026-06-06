@@ -1,4 +1,4 @@
-﻿import Image from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 import { Download, Menu } from "lucide-react";
 import { auth } from "@/auth";
@@ -18,15 +18,15 @@ type SiteHeaderProps = {
 };
 
 const navItems = [
-  { href: "/#products", label: "ÃœrÃ¼nler" },
-  { href: "/changelog", label: "GÃ¼ncellemeler" },
-  { href: "/uyelik", label: "Ãœyelikler" },
+  { href: "/#products", label: "Ürünler" },
+  { href: "/changelog", label: "Güncellemeler" },
+  { href: "/uyelik", label: "Üyelikler" },
 ];
 
 export async function SiteHeader({ compact = false }: SiteHeaderProps) {
   const session = await auth();
   const userInitial =
-    session?.user?.name?.charAt(0) ?? session?.user?.email?.charAt(0) ?? "Ä°";
+    session?.user?.name?.charAt(0) ?? session?.user?.email?.charAt(0) ?? "İ";
 
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--border-subtle)] bg-[var(--surface-0)]/82 backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--surface-0)]/72">
@@ -49,10 +49,10 @@ export async function SiteHeader({ compact = false }: SiteHeaderProps) {
             </span>
             <span className="min-w-0 leading-none">
               <span className="block truncate text-[15px] font-semibold tracking-tight text-[var(--text-primary)]">
-                Ä°mleÃ§ YazÄ±lÄ±m
+                İmleç Yazılım
               </span>
               <span className="mt-1 hidden text-[11px] text-[var(--text-tertiary)] sm:block">
-                MasaÃ¼stÃ¼ yazÄ±lÄ±m platformu
+                Masaüstü yazılım platformu
               </span>
             </span>
           </Link>
@@ -75,7 +75,7 @@ export async function SiteHeader({ compact = false }: SiteHeaderProps) {
           <Button asChild variant="brand" size="md" className="hidden lg:inline-flex">
             <Link href="/api/downloads/launcher">
               <Download aria-hidden="true" strokeWidth={1.5} />
-              Windows iÃ§in indir
+              Windows için indir
             </Link>
           </Button>
 
@@ -94,13 +94,13 @@ export async function SiteHeader({ compact = false }: SiteHeaderProps) {
                   href="/account"
                   className="block rounded-[var(--radius-sm)] px-3 py-2 text-sm text-[var(--text-secondary)] transition hover:bg-white/[0.05] hover:text-[var(--text-primary)]"
                 >
-                  HesabÄ±m
+                  Hesabım
                 </Link>
                 <Link
                   href="/account/products"
                   className="block rounded-[var(--radius-sm)] px-3 py-2 text-sm text-[var(--text-secondary)] transition hover:bg-white/[0.05] hover:text-[var(--text-primary)]"
                 >
-                  ÃœrÃ¼nlerim
+                  Ürünlerim
                 </Link>
                 <Link
                   href="/account/devices"
@@ -112,14 +112,14 @@ export async function SiteHeader({ compact = false }: SiteHeaderProps) {
                   href="/account/billing"
                   className="block rounded-[var(--radius-sm)] px-3 py-2 text-sm text-[var(--text-secondary)] transition hover:bg-white/[0.05] hover:text-[var(--text-primary)]"
                 >
-                  Ã–demeler
+                  Ödemeler
                 </Link>
                 <form
                   action={logoutAction}
                   className="mt-1 border-t border-[var(--border-subtle)] pt-1"
                 >
                   <button className="block w-full rounded-[var(--radius-sm)] px-3 py-2 text-left text-sm text-[var(--text-tertiary)] transition hover:bg-white/[0.05] hover:text-[var(--text-primary)]">
-                    Ã‡Ä±kÄ±ÅŸ
+                    Çıkış
                   </button>
                 </form>
               </div>
@@ -130,10 +130,10 @@ export async function SiteHeader({ compact = false }: SiteHeaderProps) {
                 href="/login"
                 className="hidden text-sm text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] sm:block"
               >
-                GiriÅŸ
+                Giriş
               </Link>
               <Button asChild size="md" className="hidden sm:inline-flex">
-                <Link href="/register">Hesap oluÅŸtur</Link>
+                <Link href="/register">Hesap oluştur</Link>
               </Button>
             </>
           )}
@@ -142,12 +142,12 @@ export async function SiteHeader({ compact = false }: SiteHeaderProps) {
             <DialogTrigger asChild>
               <button className="inline-flex size-10 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border-default)] bg-white/[0.035] text-[var(--text-secondary)] transition hover:bg-white/[0.06] hover:text-[var(--text-primary)] md:hidden">
                 <Menu aria-hidden="true" className="size-5" strokeWidth={1.5} />
-                <span className="sr-only">MenÃ¼yÃ¼ aÃ§</span>
+                <span className="sr-only">Menüyü aç</span>
               </button>
             </DialogTrigger>
             <DialogContent className="left-auto right-0 top-0 h-dvh w-[min(88vw,360px)] max-w-none translate-x-0 translate-y-0 rounded-none border-y-0 border-l border-r-0 p-5">
               <DialogHeader>
-                <DialogTitle>MenÃ¼</DialogTitle>
+                <DialogTitle>Menü</DialogTitle>
               </DialogHeader>
               <div className="grid gap-2">
                 {navItems.map((item) => (
@@ -163,14 +163,14 @@ export async function SiteHeader({ compact = false }: SiteHeaderProps) {
                   href="/api/downloads/launcher"
                   className="rounded-[var(--radius-sm)] px-3 py-2 text-sm text-[var(--accent-brand)] hover:bg-[var(--accent-brand)]/10"
                 >
-                  Windows iÃ§in indir
+                  Windows için indir
                 </Link>
                 {session?.user ? (
                   <Link
                     href="/account"
                     className="rounded-[var(--radius-sm)] px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-white/[0.05] hover:text-[var(--text-primary)]"
                   >
-                    HesabÄ±m
+                    Hesabım
                   </Link>
                 ) : (
                   <>
@@ -178,13 +178,13 @@ export async function SiteHeader({ compact = false }: SiteHeaderProps) {
                       href="/login"
                       className="rounded-[var(--radius-sm)] px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-white/[0.05] hover:text-[var(--text-primary)]"
                     >
-                      GiriÅŸ
+                      Giriş
                     </Link>
                     <Link
                       href="/register"
                       className="rounded-[var(--radius-sm)] px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-white/[0.05]"
                     >
-                      Hesap oluÅŸtur
+                      Hesap oluştur
                     </Link>
                   </>
                 )}

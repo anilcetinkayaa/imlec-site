@@ -2,25 +2,25 @@
 
 const columns = [
   {
-    title: "ÃœrÃ¼n",
+    title: "Ürün",
     links: [
-      { href: "/fis260", label: "FÄ°Å260" },
-      { href: "/cozver", label: "Ã‡Ã–ZVER" },
-      { href: "/api/downloads/launcher", label: "Windows iÃ§in indir" },
+      { href: "/fis260", label: "FİŞ260" },
+      { href: "/cozver", label: "ÇÖZVER" },
+      { href: "/api/downloads/launcher", label: "Windows için indir" },
     ],
   },
   {
-    title: "Åirket",
+    title: "Şirket",
     links: [
       { href: "/", label: "Platform" },
-      { href: "/#updates", label: "GÃ¼ncellemeler" },
-      { href: "/changelog", label: "DeÄŸiÅŸiklikler" },
+      { href: "/#updates", label: "Güncellemeler" },
+      { href: "/changelog", label: "Değişiklikler" },
     ],
   },
   {
     title: "Yasal",
     links: [
-      { href: "/security", label: "GÃ¼venlik" },
+      { href: "/security", label: "Güvenlik" },
       { href: "/security#kvkk", label: "KVKK" },
       { href: "/account", label: "Hesap paneli" },
     ],
@@ -29,8 +29,8 @@ const columns = [
     title: "Destek",
     links: [
       { href: "mailto:info@imlecyazilim.com", label: "E-posta" },
-      { href: "/login", label: "GiriÅŸ" },
-      { href: "/register", label: "Hesap oluÅŸtur" },
+      { href: "/login", label: "Giriş" },
+      { href: "/register", label: "Hesap oluştur" },
     ],
   },
 ];
@@ -61,11 +61,11 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col gap-3 border-t border-[var(--border-subtle)] pt-6 text-sm text-[var(--text-tertiary)] sm:flex-row sm:items-center sm:justify-between">
-          <p>Ä°mleÃ§ YazÄ±lÄ±m Â© 2026</p>
+          <p>İmleç Yazılım © 2026</p>
           <div className="flex items-center gap-3 font-mono text-xs">
             <span className="text-[var(--text-secondary)]">TR</span>
             <span aria-disabled="true" className="text-[var(--text-tertiary)]">
-              EN yakÄ±nda
+              EN yakında
             </span>
           </div>
         </div>
