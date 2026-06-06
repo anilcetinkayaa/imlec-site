@@ -914,6 +914,9 @@ class LauncherWindow(QMainWindow):
                 font-family: Segoe UI;
                 font-size: 13px;
             }
+            QLabel {
+                background: transparent;
+            }
             QWidget#loginRoot {
                 background: #07090d;
             }
