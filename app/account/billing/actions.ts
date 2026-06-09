@@ -2,7 +2,11 @@
 
 import {
   BillingRequestReason,
+  BillingRequestStatus,
   BillingRequestType,
+  EntitlementSource,
+  EntitlementStatus,
+  SubscriptionStatus,
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -31,7 +35,10 @@ export async function createBillingRequest(formData: FormData) {
   const paymentId = cleanOptional(formData.get("paymentId"));
   const message = cleanOptional(formData.get("message"));
 
-  if (!requestTypes.has(rawType as BillingRequestType)) {
+  if (
+    !requestTypes.has(rawType as BillingRequestType) ||
+    rawType !== BillingRequestType.REFUND
+  ) {
     redirect("/account/billing?billingRequest=invalid");
   }
 
@@ -94,4 +101,104 @@ export async function createBillingRequest(formData: FormData) {
   revalidatePath("/account/billing");
   revalidatePath("/admin/accounting");
   redirect("/account/billing?billingRequest=sent");
+}
+
+export async function cancelSubscriptionNow(formData: FormData) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/login?callbackUrl=/account/billing");
+  }
+
+  const subscriptionId = String(formData.get("subscriptionId") ?? "").trim();
+  const rawReason = String(formData.get("reason") ?? "");
+  const message = cleanOptional(formData.get("message"));
+
+  if (!subscriptionId || !requestReasons.has(rawReason as BillingRequestReason)) {
+    redirect("/account/billing?billingRequest=invalid");
+  }
+
+  const subscription = await prisma.subscription.findFirst({
+    where: {
+      id: subscriptionId,
+      userId: session.user.id,
+    },
+    select: {
+      id: true,
+      productId: true,
+      status: true,
+      renewsAt: true,
+      endsAt: true,
+      trialEndsAt: true,
+    },
+  });
+
+  if (!subscription) {
+    redirect("/account/billing?billingRequest=invalid");
+  }
+
+  const now = new Date();
+  const isTrial =
+    subscription.status === SubscriptionStatus.TRIALING &&
+    (!subscription.trialEndsAt || subscription.trialEndsAt > now);
+  const accessEndsAt = isTrial
+    ? now
+    : subscription.endsAt ?? subscription.renewsAt ?? now;
+  const keepAccessUntilPeriodEnd = accessEndsAt > now;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.subscription.update({
+      where: {
+        id: subscription.id,
+      },
+      data: {
+        status: SubscriptionStatus.CANCELED,
+        endsAt: accessEndsAt,
+      },
+    });
+
+    await tx.entitlement.updateMany({
+      where: {
+        userId: session.user.id,
+        productId: subscription.productId,
+        subscriptionId: subscription.id,
+        source: EntitlementSource.LEMON_SQUEEZY,
+      },
+      data: keepAccessUntilPeriodEnd
+        ? {
+            status: EntitlementStatus.ACTIVE,
+            expiresAt: accessEndsAt,
+            revokedAt: null,
+          }
+        : {
+            status: EntitlementStatus.REVOKED,
+            expiresAt: now,
+            revokedAt: now,
+          },
+    });
+
+    await tx.billingRequest.create({
+      data: {
+        userId: session.user.id,
+        productId: subscription.productId,
+        subscriptionId: subscription.id,
+        type: isTrial
+          ? BillingRequestType.CANCEL_TRIAL
+          : BillingRequestType.CANCEL_SUBSCRIPTION,
+        status: BillingRequestStatus.COMPLETED,
+        reason: rawReason as BillingRequestReason,
+        message:
+          message ??
+          "Kullanıcı panelinden onay beklemeden abonelik iptali yapıldı.",
+        reviewedAt: now,
+      },
+    });
+  });
+
+  revalidatePath("/account/billing");
+  revalidatePath("/admin/accounting");
+  revalidatePath("/admin");
+  redirect(
+    `/account/billing?billingRequest=${keepAccessUntilPeriodEnd ? "canceled_period" : "canceled"}`,
+  );
 }
