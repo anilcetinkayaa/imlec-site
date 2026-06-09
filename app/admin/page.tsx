@@ -185,6 +185,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     manualActiveEntitlements,
     activeDevices,
     openSupportCount,
+    openBillingRequestCount,
     suspiciousLogCount,
     monthPayments,
     yearPayments,
@@ -286,6 +287,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       where: {
         status: {
           in: ["OPEN", "IN_PROGRESS"],
+        },
+      },
+    }),
+    prisma.billingRequest.count({
+      where: {
+        status: {
+          in: ["OPEN", "REVIEWING"],
         },
       },
     }),
@@ -425,8 +433,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           />
           <StatCard
             title="Açık iş"
-            value={pendingAccessRequests.length + openSupportCount}
-            note={`${pendingAccessRequests.length} erişim talebi, ${openSupportCount} destek bildirimi.`}
+            value={pendingAccessRequests.length + openSupportCount + openBillingRequestCount}
+            note={`${pendingAccessRequests.length} erişim, ${openSupportCount} destek, ${openBillingRequestCount} iptal/iade talebi.`}
             tone="amber"
           />
         </section>
@@ -614,6 +622,15 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 <p className="text-sm text-zinc-500">Bu ay şüpheli güvenlik olayı</p>
                 <p className="mt-2 text-2xl font-semibold text-white">
                   {suspiciousLogCount}
+                </p>
+              </Link>
+              <Link
+                href="/admin/accounting"
+                className="rounded-lg border border-white/[0.07] bg-[#0c0d10] p-4 transition hover:bg-white/[0.04]"
+              >
+                <p className="text-sm text-zinc-500">Açık iptal/iade talebi</p>
+                <p className="mt-2 text-2xl font-semibold text-white">
+                  {openBillingRequestCount}
                 </p>
               </Link>
               <Link

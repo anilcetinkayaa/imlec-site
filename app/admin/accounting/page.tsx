@@ -1,4 +1,6 @@
 import {
+  BillingRequestReason,
+  BillingRequestType,
   BillingProfileStatus,
   PaymentStatus,
 } from "@prisma/client";
@@ -52,6 +54,40 @@ function statusLabel(status: BillingProfileStatus | null | undefined) {
   }
 }
 
+const requestTypeLabels: Record<BillingRequestType, string> = {
+  CANCEL_TRIAL: "Deneme iptali",
+  CANCEL_SUBSCRIPTION: "Abonelik iptali",
+  REFUND: "İade talebi",
+};
+
+const requestReasonLabels: Record<BillingRequestReason, string> = {
+  TRIAL_NOT_NEEDED: "İhtiyacım kalmadı",
+  PRICE_TOO_HIGH: "Fiyat uygun değil",
+  OCR_NOT_ENOUGH: "OCR sonucu yeterli değil",
+  TECHNICAL_PROBLEM: "Teknik sorun",
+  BOUGHT_BY_MISTAKE: "Yanlışlıkla satın aldım",
+  DUPLICATE_PAYMENT: "Çift ödeme",
+  CUSTOMER_SERVICE: "Destek/iletişim",
+  OTHER: "Diğer",
+};
+
+function billingRequestStatusLabel(status: string) {
+  switch (status) {
+    case "OPEN":
+      return "Yeni";
+    case "REVIEWING":
+      return "İnceleniyor";
+    case "APPROVED":
+      return "Onaylandı";
+    case "REJECTED":
+      return "Reddedildi";
+    case "COMPLETED":
+      return "Tamamlandı";
+    default:
+      return status;
+  }
+}
+
 export default async function AdminAccountingPage() {
   const admin = await getAdminSession();
 
@@ -68,6 +104,7 @@ export default async function AdminAccountingPage() {
     invoiceWaitingPayments,
     missingBillingProfiles,
     refundedPayments,
+    billingRequests,
     recentInvoices,
   ] = await Promise.all([
     prisma.payment.aggregate({
@@ -151,6 +188,36 @@ export default async function AdminAccountingPage() {
         },
       },
     }),
+    prisma.billingRequest.findMany({
+      where: {
+        status: {
+          in: ["OPEN", "REVIEWING"],
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 50,
+      include: {
+        user: {
+          select: {
+            email: true,
+            name: true,
+          },
+        },
+        product: {
+          select: {
+            name: true,
+          },
+        },
+        payment: {
+          select: {
+            amount: true,
+            currency: true,
+          },
+        },
+      },
+    }),
     prisma.invoice.findMany({
       orderBy: {
         issuedAt: "desc",
@@ -173,6 +240,7 @@ export default async function AdminAccountingPage() {
 
   const waitingCount = invoiceWaitingPayments.length;
   const missingCount = missingBillingProfiles.length;
+  const openBillingRequestCount = billingRequests.length;
 
   return (
     <main className="min-h-screen bg-[#08090b] px-6 py-8 text-zinc-100">
@@ -220,13 +288,67 @@ export default async function AdminAccountingPage() {
             </p>
           </div>
           <div className="rounded-xl border border-purple-300/20 bg-purple-300/[0.06] p-5">
-            <p className="text-sm text-zinc-400">İade/iptal</p>
+            <p className="text-sm text-zinc-400">Açık iptal/iade</p>
             <p className="mt-2 text-3xl font-semibold text-white">
-              {refundedPayments.length}
+              {openBillingRequestCount}
             </p>
             <p className="mt-2 text-xs text-zinc-500">
-              Muhasebe kontrolüne alınmalı.
+              Müşteri talebi incelenmeli.
             </p>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-xl border border-purple-300/20 bg-purple-300/[0.035] p-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.18em] text-purple-200/80">
+                Müşteri talebi
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                Açık iptal ve iade talepleri
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm text-zinc-400">
+                Deneme iptali, abonelik iptali ve iade istekleri burada görünür.
+                İşlem Lemon panelinde tamamlandığında durum güncelleme ekranı eklenebilir.
+              </p>
+            </div>
+            <span className="rounded-lg border border-purple-300/25 bg-purple-300/10 px-3 py-2 text-sm text-purple-100">
+              {openBillingRequestCount} açık talep
+            </span>
+          </div>
+          <div className="mt-5 overflow-hidden rounded-lg border border-white/[0.07]">
+            <div className="grid grid-cols-[0.9fr_1.1fr_0.9fr_0.9fr_0.9fr_1.4fr] bg-white/[0.035] px-4 py-3 text-xs uppercase tracking-[0.12em] text-zinc-500">
+              <span>Tarih</span>
+              <span>Kullanıcı</span>
+              <span>Tür</span>
+              <span>Neden</span>
+              <span>Durum</span>
+              <span>Açıklama</span>
+            </div>
+            {billingRequests.length > 0 ? (
+              billingRequests.map((request) => (
+                <div
+                  key={request.id}
+                  className="grid grid-cols-[0.9fr_1.1fr_0.9fr_0.9fr_0.9fr_1.4fr] border-t border-white/[0.07] px-4 py-3 text-sm text-zinc-300"
+                >
+                  <span>{formatDate(request.createdAt)}</span>
+                  <span className="truncate text-white">{request.user.email}</span>
+                  <span>{requestTypeLabels[request.type]}</span>
+                  <span>{requestReasonLabels[request.reason]}</span>
+                  <span>{billingRequestStatusLabel(request.status)}</span>
+                  <span className="truncate text-zinc-500">
+                    {request.message ??
+                      (request.payment
+                        ? formatMoney(request.payment.amount, request.payment.currency)
+                        : request.product.name)}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="border-t border-white/[0.07] px-4 py-5 text-sm text-zinc-500">
+                Açık iptal veya iade talebi yok.
+              </div>
+            )}
           </div>
         </section>
 

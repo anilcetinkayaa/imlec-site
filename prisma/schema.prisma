@@ -78,6 +78,31 @@ enum BillingProfileStatus {
   NEEDS_REVIEW
 }
 
+enum BillingRequestType {
+  CANCEL_TRIAL
+  CANCEL_SUBSCRIPTION
+  REFUND
+}
+
+enum BillingRequestStatus {
+  OPEN
+  REVIEWING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum BillingRequestReason {
+  TRIAL_NOT_NEEDED
+  PRICE_TOO_HIGH
+  OCR_NOT_ENOUGH
+  TECHNICAL_PROBLEM
+  BOUGHT_BY_MISTAKE
+  DUPLICATE_PAYMENT
+  CUSTOMER_SERVICE
+  OTHER
+}
+
 enum WebhookEventStatus {
   PENDING
   PROCESSED
@@ -141,6 +166,7 @@ model User {
   payments       Payment[]
   invoices       Invoice[]
   billingProfiles BillingProfile[]
+  billingRequests BillingRequest[]
   accessRequests AccessRequest[]
   supportTickets SupportTicket[]
   memberships    Membership[]
@@ -191,6 +217,7 @@ model Product {
   sessions      Session[]
   payments      Payment[]
   invoices      Invoice[]
+  billingRequests BillingRequest[]
   versions      ProductVersion[]
   accessRequests AccessRequest[]
 
@@ -253,6 +280,7 @@ model Subscription {
   entitlements Entitlement[]
   payments     Payment[]
   invoices     Invoice[]
+  billingRequests BillingRequest[]
   lemonSqueezyLicenses LemonSqueezyLicense[]
 
   @@unique([provider, providerSubscriptionId])
@@ -392,6 +420,7 @@ model Payment {
   subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   billingProfile BillingProfile? @relation(fields: [billingProfileId], references: [id], onDelete: SetNull)
   invoices     Invoice[]
+  billingRequests BillingRequest[]
 
   @@unique([provider, providerOrderId])
   @@index([userId, productId])
@@ -459,6 +488,35 @@ model BillingProfile {
   @@index([status])
   @@index([vkn])
   @@index([tckn])
+}
+
+model BillingRequest {
+  id             String               @id @default(cuid())
+  userId         String
+  productId      String
+  subscriptionId String?
+  paymentId      String?
+  type           BillingRequestType
+  status         BillingRequestStatus @default(OPEN)
+  reason         BillingRequestReason
+  message        String?
+  adminNote      String?
+  reviewedById   String?
+  reviewedAt     DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  product      Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  payment      Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@index([productId, status])
+  @@index([subscriptionId])
+  @@index([paymentId])
+  @@index([type, status])
+  @@index([createdAt])
 }
 
 model WebhookEvent {
