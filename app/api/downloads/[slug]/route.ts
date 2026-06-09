@@ -1,7 +1,10 @@
-import { EntitlementStatus } from "@prisma/client";
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/src/db/prisma";
+import {
+  isEntitlementUsable,
+  selectBestEntitlement,
+} from "@/src/server/entitlement-helpers";
 
 const DOWNLOAD_URLS: Record<string, string> = {
   launcher:
@@ -53,19 +56,6 @@ async function writeDownloadLog({
   } catch (error) {
     console.error("[DOWNLOAD LOG ERROR]", error);
   }
-}
-
-function isEntitlementValid(entitlement: {
-  status: EntitlementStatus;
-  expiresAt: Date | null;
-  revokedAt: Date | null;
-}) {
-  return (
-    (entitlement.status === EntitlementStatus.ACTIVE ||
-      entitlement.status === EntitlementStatus.GRACE_PERIOD) &&
-    !entitlement.revokedAt &&
-    (!entitlement.expiresAt || entitlement.expiresAt > new Date())
-  );
 }
 
 export async function GET(request: NextRequest, context: DownloadRouteContext) {
@@ -153,12 +143,10 @@ export async function GET(request: NextRequest, context: DownloadRouteContext) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const entitlement = await prisma.entitlement.findUnique({
+  const entitlements = await prisma.entitlement.findMany({
     where: {
-      userId_productId: {
-        userId: authenticatedUserId,
-        productId: product.id,
-      },
+      userId: authenticatedUserId,
+      productId: product.id,
     },
     select: {
       status: true,
@@ -167,7 +155,9 @@ export async function GET(request: NextRequest, context: DownloadRouteContext) {
     },
   });
 
-  if (!entitlement || !isEntitlementValid(entitlement)) {
+  const entitlement = selectBestEntitlement(entitlements);
+
+  if (!entitlement || !isEntitlementUsable(entitlement)) {
     await writeDownloadLog({
       request,
       userId: authenticatedUserId,

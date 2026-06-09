@@ -4,6 +4,10 @@ import { createElement } from "react";
 import { NewDeviceActivatedEmail } from "@/emails/NewDeviceActivatedEmail";
 import { sendMail } from "@/lib/mail";
 import { prisma } from "@/src/db/prisma";
+import {
+  isEntitlementUsable,
+  selectBestEntitlement,
+} from "@/src/server/entitlement-helpers";
 
 export const runtime = "nodejs";
 
@@ -200,12 +204,7 @@ function entitlementIsActive(entitlement: {
   expiresAt: Date | null;
   revokedAt: Date | null;
 } | null) {
-  return (
-    (entitlement?.status === EntitlementStatus.ACTIVE ||
-      entitlement?.status === EntitlementStatus.GRACE_PERIOD) &&
-    !entitlement.revokedAt &&
-    (!entitlement.expiresAt || entitlement.expiresAt > new Date())
-  );
+  return entitlement ? isEntitlementUsable(entitlement) : false;
 }
 
 export async function POST(request: Request) {
@@ -285,12 +284,10 @@ export async function POST(request: Request) {
     return jsonError("DEVICE_REVOKED", 403);
   }
 
-  const entitlement = await prisma.entitlement.findUnique({
+  const entitlements = await prisma.entitlement.findMany({
     where: {
-      userId_productId: {
-        userId: user.id,
-        productId: product.id,
-      },
+      userId: user.id,
+      productId: product.id,
     },
     select: {
       status: true,
@@ -298,6 +295,7 @@ export async function POST(request: Request) {
       revokedAt: true,
     },
   });
+  const entitlement = selectBestEntitlement(entitlements);
 
   if (!entitlementIsActive(entitlement)) {
     await writeSecurityLog({

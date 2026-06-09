@@ -12,6 +12,7 @@ import {
   requireAdminSession,
   toJsonValue,
 } from "@/src/server/admin-action-log";
+import { upsertEntitlementBySource } from "@/src/server/entitlement-helpers";
 
 export async function approveAccessRequest(formData: FormData) {
   const admin = await requireAdminSession({ write: true });
@@ -61,29 +62,14 @@ export async function approveAccessRequest(formData: FormData) {
       return null;
     }
 
-    const entitlement = await tx.entitlement.upsert({
-      where: {
-        userId_productId: {
-          userId: before.userId,
-          productId: product.id,
-        },
-      },
-      update: {
-        status: EntitlementStatus.ACTIVE,
-        source: EntitlementSource.MANUAL,
-        startsAt: new Date(),
-        expiresAt: null,
-        revokedAt: null,
-      },
-      create: {
+    const entitlement = await upsertEntitlementBySource(tx, {
         userId: before.userId,
         productId: product.id,
-        status: EntitlementStatus.ACTIVE,
         source: EntitlementSource.MANUAL,
+        status: EntitlementStatus.ACTIVE,
         startsAt: new Date(),
         expiresAt: null,
         revokedAt: null,
-      },
     });
 
     const after = await tx.accessRequest.update({

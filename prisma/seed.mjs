@@ -117,26 +117,35 @@ async function main() {
       },
     });
 
-    await prisma.entitlement.upsert({
+    const existingEntitlement = await prisma.entitlement.findFirst({
       where: {
-        userId_productId: {
-          userId: user.id,
-          productId: fis260Product.id,
-        },
-      },
-      update: {
-        status: "ACTIVE",
-        source: "MANUAL",
-        revokedAt: null,
-        expiresAt: null,
-      },
-      create: {
         userId: user.id,
         productId: fis260Product.id,
-        status: "ACTIVE",
         source: "MANUAL",
       },
     });
+
+    if (existingEntitlement) {
+      await prisma.entitlement.update({
+        where: {
+          id: existingEntitlement.id,
+        },
+        data: {
+          status: "ACTIVE",
+          revokedAt: null,
+          expiresAt: null,
+        },
+      });
+    } else {
+      await prisma.entitlement.create({
+        data: {
+          userId: user.id,
+          productId: fis260Product.id,
+          status: "ACTIVE",
+          source: "MANUAL",
+        },
+      });
+    }
 
     console.log(`Dev entitlement olusturuldu: ${user.email} -> FIS260`);
   }

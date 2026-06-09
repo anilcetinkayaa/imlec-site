@@ -1,5 +1,9 @@
 import { EntitlementStatus, ProductStatus } from "@prisma/client";
 import { prisma } from "@/src/db/prisma";
+import {
+  isEntitlementUsable,
+  selectBestEntitlement,
+} from "@/src/server/entitlement-helpers";
 
 export async function getUserProductAccess(userId: string) {
   const products = await prisma.product.findMany({
@@ -14,24 +18,27 @@ export async function getUserProductAccess(userId: string) {
         where: {
           userId,
         },
+        orderBy: [
+          {
+            expiresAt: "desc",
+          },
+          {
+            updatedAt: "desc",
+          },
+        ],
         select: {
           status: true,
           source: true,
           expiresAt: true,
           revokedAt: true,
         },
-        take: 1,
       },
     },
   });
 
   return products.map((product) => {
-    const entitlement = product.entitlements[0];
-    const hasAccess =
-      (entitlement?.status === EntitlementStatus.ACTIVE ||
-        entitlement?.status === EntitlementStatus.GRACE_PERIOD) &&
-      !entitlement.revokedAt &&
-      (!entitlement.expiresAt || entitlement.expiresAt > new Date());
+    const entitlement = selectBestEntitlement(product.entitlements);
+    const hasAccess = entitlement ? isEntitlementUsable(entitlement) : false;
 
     return {
       id: product.id,

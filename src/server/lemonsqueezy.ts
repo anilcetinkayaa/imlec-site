@@ -1,6 +1,7 @@
 import {
   EntitlementSource,
   EntitlementStatus,
+  PaymentStatus,
   SubscriptionStatus,
 } from "@prisma/client";
 import { createElement } from "react";
@@ -9,6 +10,7 @@ import { PaymentSuccessEmail } from "@/emails/PaymentSuccessEmail";
 import { TrialStartedEmail } from "@/emails/TrialStartedEmail";
 import { sendMail } from "@/lib/mail";
 import { prisma } from "@/src/db/prisma";
+import { upsertEntitlementBySource } from "@/src/server/entitlement-helpers";
 
 type LemonSqueezyPayload = {
   meta?: {
@@ -16,6 +18,7 @@ type LemonSqueezyPayload = {
     custom_data?: {
       user_id?: string;
       product_slug?: string;
+      source?: string;
     };
   };
   data?: {
@@ -28,6 +31,7 @@ type LemonSqueezyPayload = {
 
 const handledEvents = new Set([
   "order_created",
+  "order_refunded",
   "subscription_created",
   "subscription_updated",
   "subscription_cancelled",
@@ -55,7 +59,16 @@ function asProviderString(value: unknown) {
 }
 
 function asNumber(value: unknown) {
-  return typeof value === "number" ? value : null;
+  if (typeof value === "number") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
 }
 
 function parseDate(value: unknown) {
@@ -123,40 +136,36 @@ async function getProduct(payload: LemonSqueezyPayload) {
   });
 }
 
+function paymentGraceEndsAt() {
+  const days = Number.parseInt(process.env.LEMONSQUEEZY_PAYMENT_GRACE_DAYS ?? "7", 10);
+  const safeDays = Number.isFinite(days) && days > 0 ? days : 7;
+  return new Date(Date.now() + safeDays * 24 * 60 * 60 * 1000);
+}
+
 async function ensureEntitlement({
   userId,
   productId,
   subscriptionId,
+  status = EntitlementStatus.ACTIVE,
   expiresAt,
 }: {
   userId: string;
   productId: string;
   subscriptionId?: string | null;
+  status?: EntitlementStatus;
   expiresAt?: Date | null;
 }) {
-  return prisma.entitlement.upsert({
-    where: {
-      userId_productId: {
-        userId,
-        productId,
-      },
-    },
-    update: {
-      status: EntitlementStatus.ACTIVE,
-      source: EntitlementSource.LEMON_SQUEEZY,
-      subscriptionId: subscriptionId ?? undefined,
-      expiresAt: expiresAt ?? null,
-      revokedAt: null,
-    },
-    create: {
+  return prisma.$transaction((tx) =>
+    upsertEntitlementBySource(tx, {
       userId,
       productId,
       subscriptionId,
-      status: EntitlementStatus.ACTIVE,
+      status,
       source: EntitlementSource.LEMON_SQUEEZY,
       expiresAt: expiresAt ?? null,
-    },
-  });
+      revokedAt: null,
+    }),
+  );
 }
 
 async function revokeEntitlement({
@@ -175,6 +184,100 @@ async function revokeEntitlement({
     data: {
       status: EntitlementStatus.REVOKED,
       revokedAt: new Date(),
+    },
+  });
+}
+
+function paymentStatusForEvent(eventName: string) {
+  if (eventName === "order_refunded") {
+    return PaymentStatus.REFUNDED;
+  }
+  if (eventName === "subscription_payment_failed") {
+    return PaymentStatus.FAILED;
+  }
+  if (eventName === "order_created" || eventName === "subscription_payment_success") {
+    return PaymentStatus.PAID;
+  }
+  return PaymentStatus.PENDING;
+}
+
+function paymentIdForPayload(eventName: string, payload: LemonSqueezyPayload) {
+  const attributes = payload.data?.attributes ?? {};
+  return (
+    asProviderString(attributes.order_id) ??
+    asProviderString(attributes.order_number) ??
+    asProviderString(attributes.invoice_id) ??
+    asProviderString(attributes.subscription_invoice_id) ??
+    (payload.data?.id ? `${eventName}:${payload.data.id}` : null)
+  );
+}
+
+async function upsertPayment({
+  eventName,
+  payload,
+  userId,
+  productId,
+  subscriptionId,
+}: {
+  eventName: string;
+  payload: LemonSqueezyPayload;
+  userId: string;
+  productId: string;
+  subscriptionId?: string | null;
+}) {
+  const status = paymentStatusForEvent(eventName);
+
+  if (status === PaymentStatus.PENDING) {
+    return null;
+  }
+
+  const attributes = payload.data?.attributes ?? {};
+  const providerOrderId = paymentIdForPayload(eventName, payload);
+
+  if (!providerOrderId) {
+    return null;
+  }
+
+  const amount =
+    asNumber(attributes.total) ??
+    asNumber(attributes.amount) ??
+    asNumber(attributes.subtotal) ??
+    0;
+  const currency =
+    asString(attributes.currency) ??
+    asString(attributes.currency_code) ??
+    "TRY";
+  const paidAt =
+    status === PaymentStatus.PAID
+      ? parseDate(attributes.created_at) ?? new Date()
+      : null;
+
+  return prisma.payment.upsert({
+    where: {
+      provider_providerOrderId: {
+        provider: "lemonsqueezy",
+        providerOrderId,
+      },
+    },
+    update: {
+      userId,
+      productId,
+      subscriptionId,
+      amount,
+      currency,
+      status,
+      paidAt,
+    },
+    create: {
+      userId,
+      productId,
+      subscriptionId,
+      provider: "lemonsqueezy",
+      providerOrderId,
+      amount,
+      currency,
+      status,
+      paidAt,
     },
   });
 }
@@ -355,21 +458,76 @@ export async function processLemonSqueezyEvent(payload: LemonSqueezyPayload) {
     productId: product.id,
   });
 
+  await upsertPayment({
+    eventName,
+    payload,
+    userId: user.id,
+    productId: product.id,
+    subscriptionId: subscription?.id,
+  });
+
   if (
     eventName === "order_created" ||
     eventName === "subscription_created" ||
-    eventName === "subscription_updated" ||
     eventName === "subscription_payment_success"
   ) {
     await ensureEntitlement({
       userId: user.id,
       productId: product.id,
       subscriptionId: subscription?.id,
-      expiresAt: subscription?.endsAt,
+      expiresAt: subscription?.endsAt ?? subscription?.trialEndsAt,
     });
   }
 
-  if (eventName === "subscription_cancelled" || eventName === "subscription_expired") {
+  if (eventName === "subscription_updated" && subscription) {
+    if (
+      subscription.status === SubscriptionStatus.ACTIVE ||
+      subscription.status === SubscriptionStatus.TRIALING
+    ) {
+      await ensureEntitlement({
+        userId: user.id,
+        productId: product.id,
+        subscriptionId: subscription.id,
+        expiresAt: subscription.endsAt ?? subscription.trialEndsAt,
+      });
+    } else if (subscription.status === SubscriptionStatus.PAST_DUE) {
+      await ensureEntitlement({
+        userId: user.id,
+        productId: product.id,
+        subscriptionId: subscription.id,
+        status: EntitlementStatus.GRACE_PERIOD,
+        expiresAt: paymentGraceEndsAt(),
+      });
+    }
+  }
+
+  if (eventName === "subscription_payment_failed") {
+    await ensureEntitlement({
+      userId: user.id,
+      productId: product.id,
+      subscriptionId: subscription?.id,
+      status: EntitlementStatus.GRACE_PERIOD,
+      expiresAt: paymentGraceEndsAt(),
+    });
+  }
+
+  if (eventName === "subscription_cancelled") {
+    if (subscription?.endsAt && subscription.endsAt > new Date()) {
+      await ensureEntitlement({
+        userId: user.id,
+        productId: product.id,
+        subscriptionId: subscription.id,
+        expiresAt: subscription.endsAt,
+      });
+    } else {
+      await revokeEntitlement({
+        userId: user.id,
+        productId: product.id,
+      });
+    }
+  }
+
+  if (eventName === "subscription_expired" || eventName === "order_refunded") {
     await revokeEntitlement({
       userId: user.id,
       productId: product.id,

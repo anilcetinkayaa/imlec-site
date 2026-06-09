@@ -6,6 +6,7 @@ import {
   toJsonValue,
 } from "@/src/server/admin-action-log";
 import { sendAdminActionAlert } from "@/src/server/admin-email";
+import { upsertEntitlementBySource } from "@/src/server/entitlement-helpers";
 
 export const runtime = "nodejs";
 
@@ -91,37 +92,22 @@ export async function POST(request: Request) {
   }
 
   const entitlement = await prisma.$transaction(async (tx) => {
-    const before = await tx.entitlement.findUnique({
+    const before = await tx.entitlement.findFirst({
       where: {
-        userId_productId: {
-          userId: user.id,
-          productId: product.id,
-        },
-      },
-    });
-    const after = await tx.entitlement.upsert({
-      where: {
-        userId_productId: {
-          userId: user.id,
-          productId: product.id,
-        },
-      },
-      update: {
-        status: EntitlementStatus.ACTIVE,
-        source: EntitlementSource.MANUAL,
-        startsAt: new Date(),
-        expiresAt,
-        revokedAt: null,
-      },
-      create: {
         userId: user.id,
         productId: product.id,
-        status: EntitlementStatus.ACTIVE,
         source: EntitlementSource.MANUAL,
-        startsAt: new Date(),
-        expiresAt,
-        revokedAt: null,
       },
+      orderBy: { createdAt: "desc" },
+    });
+    const after = await upsertEntitlementBySource(tx, {
+      userId: user.id,
+      productId: product.id,
+      source: EntitlementSource.MANUAL,
+      status: EntitlementStatus.ACTIVE,
+      startsAt: new Date(),
+      expiresAt,
+      revokedAt: null,
     });
 
     await tx.adminActionLog.create({

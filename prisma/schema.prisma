@@ -67,6 +67,17 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum BillingProfileType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum BillingProfileStatus {
+  COMPLETE
+  MISSING_INFO
+  NEEDS_REVIEW
+}
+
 enum WebhookEventStatus {
   PENDING
   PROCESSED
@@ -129,6 +140,7 @@ model User {
   devices        Device[]
   payments       Payment[]
   invoices       Invoice[]
+  billingProfiles BillingProfile[]
   accessRequests AccessRequest[]
   supportTickets SupportTicket[]
   memberships    Membership[]
@@ -312,7 +324,8 @@ model Entitlement {
   product      Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
   subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
 
-  @@unique([userId, productId])
+  @@index([userId, productId])
+  @@index([userId, productId, source])
   @@index([productId, status])
   @@index([subscriptionId])
   @@index([expiresAt])
@@ -365,6 +378,7 @@ model Payment {
   userId          String
   productId       String
   subscriptionId  String?
+  billingProfileId String?
   provider        String
   providerOrderId String
   amount          Int
@@ -376,10 +390,13 @@ model Payment {
   user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
   product      Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
   subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  billingProfile BillingProfile? @relation(fields: [billingProfileId], references: [id], onDelete: SetNull)
+  invoices     Invoice[]
 
   @@unique([provider, providerOrderId])
   @@index([userId, productId])
   @@index([subscriptionId])
+  @@index([billingProfileId])
   @@index([status])
   @@index([paidAt])
 }
@@ -389,6 +406,8 @@ model Invoice {
   userId            String
   productId         String
   subscriptionId    String?
+  billingProfileId  String?
+  paymentId         String?
   provider          String
   providerInvoiceId String
   invoiceUrl        String?
@@ -399,11 +418,47 @@ model Invoice {
   user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
   product      Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
   subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  billingProfile BillingProfile? @relation(fields: [billingProfileId], references: [id], onDelete: SetNull)
+  payment      Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
 
   @@unique([provider, providerInvoiceId])
   @@index([userId, productId])
   @@index([subscriptionId])
+  @@index([billingProfileId])
+  @@index([paymentId])
   @@index([issuedAt])
+}
+
+model BillingProfile {
+  id           String               @id @default(cuid())
+  userId       String
+  type         BillingProfileType
+  status       BillingProfileStatus @default(MISSING_INFO)
+  fullName     String?
+  companyTitle String?
+  email        String?
+  phone        String?
+  country      String?              @default("TR")
+  city         String?
+  district     String?
+  postalCode   String?
+  addressLine  String?
+  tckn         String?
+  vkn          String?
+  taxOffice    String?
+  isDefault    Boolean              @default(false)
+  verifiedAt   DateTime?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  payments Payment[]
+  invoices Invoice[]
+
+  @@index([userId, isDefault])
+  @@index([status])
+  @@index([vkn])
+  @@index([tckn])
 }
 
 model WebhookEvent {

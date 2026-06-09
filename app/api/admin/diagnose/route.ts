@@ -1,20 +1,10 @@
-import { EntitlementStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/src/db/prisma";
 import { requireAdminApi } from "@/src/server/admin";
-
-function isEntitlementValid(entitlement: {
-  status: EntitlementStatus;
-  expiresAt: Date | null;
-  revokedAt: Date | null;
-}) {
-  return (
-    (entitlement.status === EntitlementStatus.ACTIVE ||
-      entitlement.status === EntitlementStatus.GRACE_PERIOD) &&
-    !entitlement.revokedAt &&
-    (!entitlement.expiresAt || entitlement.expiresAt > new Date())
-  );
-}
+import {
+  isEntitlementUsable,
+  selectBestEntitlement,
+} from "@/src/server/entitlement-helpers";
 
 export async function GET(request: Request) {
   const unauthorized = await requireAdminApi();
@@ -77,12 +67,10 @@ export async function GET(request: Request) {
 
   const entitlement =
     user && product
-      ? await prisma.entitlement.findUnique({
+      ? await prisma.entitlement.findMany({
           where: {
-            userId_productId: {
-              userId: user.id,
-              productId: product.id,
-            },
+            userId: user.id,
+            productId: product.id,
           },
           select: {
             status: true,
@@ -91,6 +79,10 @@ export async function GET(request: Request) {
           },
         })
       : null;
+
+  const bestEntitlement = entitlement
+    ? selectBestEntitlement(entitlement)
+    : null;
 
   return Response.json({
     user: {
@@ -102,10 +94,10 @@ export async function GET(request: Request) {
       slug: product?.slug ?? productSlug,
     },
     entitlement: {
-      exists: Boolean(entitlement),
-      status: entitlement?.status ?? null,
-      endsAt: entitlement?.expiresAt ?? null,
-      valid: entitlement ? isEntitlementValid(entitlement) : false,
+      exists: Boolean(bestEntitlement),
+      status: bestEntitlement?.status ?? null,
+      endsAt: bestEntitlement?.expiresAt ?? null,
+      valid: bestEntitlement ? isEntitlementUsable(bestEntitlement) : false,
     },
     sessionTest: {
       idPresent: Boolean(session?.user?.id),

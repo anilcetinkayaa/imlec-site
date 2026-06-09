@@ -24,40 +24,40 @@ import { requestFis260AccessFromMembershipPage } from "@/app/download/actions";
 export const metadata: Metadata = {
   title: "Üyelikler | İmleç Yazılım",
   description:
-    "İmleç Yazılım test aşaması üyelik bilgileri ve FİŞ260 ürün erişimi talep akışı.",
+    "İmleç Yazılım üyelik bilgileri, FİŞ260 abonelik ve ürün erişimi akışı.",
 };
 
 const includedItems = [
   {
     icon: Check,
     title: "FİŞ260 erişimi",
-    description: "Test sürecinde onaylanan hesaplara FİŞ260 ürün erişimi tanımlanır.",
+    description: "Aktif abonelik veya tanımlı kullanım hakkı ile FİŞ260 kullanılabilir.",
   },
   {
     icon: Download,
     title: "Güvenli indirme",
-    description: "Kurulum dosyası mevcut korumalı download akışı üzerinden sunulur.",
+    description: "Kurulum ve güncelleme dosyaları İmleç hesabı ve cihaz kontrolüyle sunulur.",
   },
   {
     icon: MonitorCheck,
     title: "Cihaz doğrulama",
-    description: "Masaüstü uygulama, web hesabına bağlı ürün erişimini kontrol eder.",
+    description: "Masaüstü uygulama, web hesabınıza bağlı ürün erişimini kontrol eder.",
   },
   {
     icon: ShieldCheck,
     title: "Güncellemeler dahil",
-    description: "Test sürümü boyunca uygun güncellemeler aynı ürün erişimiyle izlenir.",
+    description: "Abonelik süresince uygun sürümler launcher üzerinden alınır.",
   },
 ];
 
-function plannedPriceLabel() {
+function priceLabel() {
   const formattedPrice = new Intl.NumberFormat("tr-TR", {
     maximumFractionDigits: 0,
     style: "currency",
     currency: MEMBERSHIP_CURRENCY,
   }).format(MEMBERSHIP_PRICE_TRY);
 
-  return `Ticari sürümde aylık ${formattedPrice} olarak planlanmaktadır.`;
+  return `${formattedPrice} / ay`;
 }
 
 type MembershipPageProps = {
@@ -73,8 +73,8 @@ function AccessRequestSuccessBanner() {
       <Badge variant="active">Talep gönderildi</Badge>
       <h2 className="text-h4 mt-3">Erişim talebiniz gönderildi.</h2>
       <p className="text-body-s mt-2 max-w-2xl text-[var(--text-secondary)]">
-        İnceleme sonrası hesabınıza erişim tanımlanacaktır. Erişim onayı
-        verildiğinde bilgilendirme maili alacaksınız.
+        İnceleme sonrasında hesabınıza manuel erişim tanımlanabilir. Erişim
+        onaylandığında bilgilendirme maili alırsınız.
       </p>
     </div>
   );
@@ -118,20 +118,20 @@ export default async function MembershipPage({ searchParams }: MembershipPagePro
         {showAccessRequestSent ? <AccessRequestSuccessBanner /> : null}
 
         <div className="mb-8 flex flex-col gap-3 rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--surface-2)] px-4 py-3 sm:flex-row sm:items-center">
-          <Badge variant="beta">Test Aşaması</Badge>
+          <Badge variant="beta">Test Mode</Badge>
           <p className="text-body-s text-[var(--text-secondary)]">
-            Bu ürün şu an test aşamasındadır. Üyelikler davet ve onay ile verilmektedir.
+            Şu an Lemon Squeezy test ödeme akışı aktiftir. Live mode bilgileri ayrıca girilecektir.
           </p>
         </div>
 
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-label text-[var(--accent-brand)]">Üyelikler</p>
           <h1 className="text-h1 mt-4">
-            FİŞ260 test erişimi için üyelik talebi oluşturun.
+            FİŞ260 aboneliğinizi İmleç hesabınızla başlatın.
           </h1>
           <p className="text-body-l mx-auto mt-5 max-w-2xl text-[var(--text-secondary)]">
-            İmleç Yazılım şu anda kontrollü test sürecindedir. Hesap oluşturduktan
-            sonra ürün erişimi davet ve onay akışıyla tanımlanır.
+            Ödeme Lemon Squeezy üzerinden alınır, uygulama erişimi ise İmleç
+            hesabınızdaki ürün hakkı ve cihaz doğrulamasıyla yönetilir.
           </p>
         </div>
 
@@ -144,7 +144,7 @@ export default async function MembershipPage({ searchParams }: MembershipPagePro
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-h3">FİŞ260</h2>
-                  <Badge variant="beta">Test Aşaması</Badge>
+                  <Badge variant="active">7 gün deneme</Badge>
                 </div>
                 <p className="text-body-s mt-2 text-[var(--text-secondary)]">
                   Windows masaüstü OCR ve Excel aktarım uygulaması.
@@ -156,10 +156,10 @@ export default async function MembershipPage({ searchParams }: MembershipPagePro
           <div className="mt-8 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5">
             <p className="text-body-s text-[var(--text-tertiary)]">Fiyat</p>
             <p className="mt-2 text-2xl font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
-              Şu an ücretsiz — test süreci
+              {priceLabel()}
             </p>
             <p className="text-mono mt-3 text-[var(--text-tertiary)]">
-              {plannedPriceLabel()}
+              İlk sürümde 7 günlük ücretsiz deneme tanımlıdır.
             </p>
           </div>
 
@@ -190,29 +190,28 @@ export default async function MembershipPage({ searchParams }: MembershipPagePro
 
           <div className="mt-8 flex flex-col gap-3 border-t border-[var(--border-subtle)] pt-6 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-body-s max-w-md text-[var(--text-tertiary)]">
-              Ödeme formu bulunmaz. Ticari ödeme akışı hazır olduğunda ayrıca duyurulur.
+              Abonelik başarılı olunca FİŞ260 erişimi hesabınıza otomatik tanımlanır.
             </p>
-            {session?.user?.id ? (
+            {checkoutUrl ? (
+              <Button asChild size="lg" variant="primary">
+                <Link href={checkoutUrl}>Aboneliği başlat</Link>
+              </Button>
+            ) : session?.user?.id ? (
               <form action={requestFis260AccessFromMembershipPage}>
                 <Button
                   disabled={hasPendingRequest}
                   size="lg"
                   type="submit"
-                  variant="primary"
+                  variant="outline"
                 >
-                  {hasPendingRequest ? "Talep beklemede" : "Erişim talebinde bulun"}
+                  {hasPendingRequest ? "Talep beklemede" : "Manuel erişim talebi"}
                 </Button>
               </form>
             ) : (
               <Button asChild size="lg" variant="primary">
-                <Link href="/login?callbackUrl=/uyelik">Erişim talebinde bulun</Link>
+                <Link href="/login?callbackUrl=/uyelik">Giriş yap ve aboneliği başlat</Link>
               </Button>
             )}
-            {checkoutUrl ? (
-              <Button asChild size="lg" variant="outline">
-                <Link href={checkoutUrl}>Test checkout</Link>
-              </Button>
-            ) : null}
           </div>
         </Card>
       </section>

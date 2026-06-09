@@ -2,6 +2,10 @@ import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { DeviceStatus, EntitlementStatus, SessionType } from "@prisma/client";
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/src/db/prisma";
+import {
+  isEntitlementUsable,
+  selectBestEntitlement,
+} from "@/src/server/entitlement-helpers";
 
 export const runtime = "nodejs";
 
@@ -95,12 +99,7 @@ function entitlementIsActive(entitlement: {
   expiresAt: Date | null;
   revokedAt: Date | null;
 } | null) {
-  return (
-    (entitlement?.status === EntitlementStatus.ACTIVE ||
-      entitlement?.status === EntitlementStatus.GRACE_PERIOD) &&
-    !entitlement.revokedAt &&
-    (!entitlement.expiresAt || entitlement.expiresAt > new Date())
-  );
+  return entitlement ? isEntitlementUsable(entitlement) : false;
 }
 
 async function desktopDeviceCanDownload({
@@ -238,12 +237,10 @@ export async function GET(request: NextRequest, context: DesktopDownloadContext)
     return jsonError("PRODUCT_NOT_FOUND", 404);
   }
 
-  const entitlement = await prisma.entitlement.findUnique({
+  const entitlements = await prisma.entitlement.findMany({
     where: {
-      userId_productId: {
-        userId: payload.sub,
-        productId: product.id,
-      },
+      userId: payload.sub,
+      productId: product.id,
     },
     select: {
       status: true,
@@ -251,6 +248,7 @@ export async function GET(request: NextRequest, context: DesktopDownloadContext)
       revokedAt: true,
     },
   });
+  const entitlement = selectBestEntitlement(entitlements);
 
   if (slug !== "launcher" && !entitlementIsActive(entitlement)) {
     await writeDownloadLog({

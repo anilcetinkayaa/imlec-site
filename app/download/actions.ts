@@ -1,10 +1,14 @@
 "use server";
 
-import { AccessRequestStatus, EntitlementStatus } from "@prisma/client";
+import { AccessRequestStatus } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/src/db/prisma";
 import { sendAccessRequestNotification } from "@/src/server/access-request-email";
+import {
+  isEntitlementUsable,
+  selectBestEntitlement,
+} from "@/src/server/entitlement-helpers";
 
 export async function requestFis260Access() {
   const session = await auth();
@@ -30,12 +34,10 @@ export async function requestFis260Access() {
   }
 
   const [entitlement, existingRequest] = await Promise.all([
-    prisma.entitlement.findUnique({
+    prisma.entitlement.findMany({
       where: {
-        userId_productId: {
-          userId: session.user.id,
-          productId: product.id,
-        },
+        userId: session.user.id,
+        productId: product.id,
       },
       select: {
         status: true,
@@ -56,10 +58,8 @@ export async function requestFis260Access() {
     }),
   ]);
 
-  const hasAccess =
-    entitlement?.status === EntitlementStatus.ACTIVE &&
-    !entitlement.revokedAt &&
-    (!entitlement.expiresAt || entitlement.expiresAt > new Date());
+  const bestEntitlement = selectBestEntitlement(entitlement);
+  const hasAccess = bestEntitlement ? isEntitlementUsable(bestEntitlement) : false;
 
   if (hasAccess) {
     redirect("/download");
@@ -124,12 +124,10 @@ export async function requestFis260AccessFromMembershipPage() {
   }
 
   const [entitlement, existingRequest] = await Promise.all([
-    prisma.entitlement.findUnique({
+    prisma.entitlement.findMany({
       where: {
-        userId_productId: {
-          userId: session.user.id,
-          productId: product.id,
-        },
+        userId: session.user.id,
+        productId: product.id,
       },
       select: {
         status: true,
@@ -150,10 +148,8 @@ export async function requestFis260AccessFromMembershipPage() {
     }),
   ]);
 
-  const hasAccess =
-    entitlement?.status === EntitlementStatus.ACTIVE &&
-    !entitlement.revokedAt &&
-    (!entitlement.expiresAt || entitlement.expiresAt > new Date());
+  const bestEntitlement = selectBestEntitlement(entitlement);
+  const hasAccess = bestEntitlement ? isEntitlementUsable(bestEntitlement) : false;
 
   if (hasAccess) {
     redirect("/download");
