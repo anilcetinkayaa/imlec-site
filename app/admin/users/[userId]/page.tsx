@@ -7,8 +7,12 @@ import { getAdminSession } from "@/src/server/admin";
 import { AdminUserDetailTabs } from "./admin-user-detail-tabs";
 import {
   resetUserPassword,
-  updateUserRoleAndTitle,
+  updateStaffPermissions,
 } from "../actions";
+import {
+  ADMIN_PERMISSIONS,
+  roleLabel,
+} from "@/src/server/admin-permissions";
 
 export const metadata: Metadata = {
   title: "Kullanıcı Detayı | İmleç Yazılım Admin",
@@ -33,13 +37,6 @@ function formatDate(date: Date | null) {
     minute: "2-digit",
   }).format(date);
 }
-
-const roleLabels: Record<UserRole, string> = {
-  OWNER: "Sahip",
-  ADMIN: "Yonetici",
-  SUPPORT: "Destek",
-  USER: "Kullanici",
-};
 
 function ForbiddenView() {
   return (
@@ -182,7 +179,9 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
     notFound();
   }
 
-  const isOwner = admin.session.user.role === UserRole.OWNER;
+  const canManageStaff =
+    admin.session.user.role === UserRole.OWNER ||
+    admin.session.user.role === UserRole.ADMIN;
 
   return (
     <main className="min-h-screen bg-[#08090b] px-6 py-8 text-zinc-100">
@@ -219,7 +218,7 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
                 </div>
                 <div>
                   <p className="text-zinc-500">Rol</p>
-                  <p className="mt-1 text-white">{roleLabels[user.role]}</p>
+                  <p className="mt-1 text-white">{roleLabel(user.role)}</p>
                 </div>
                 <div>
                   <p className="text-zinc-500">Unvan</p>
@@ -313,32 +312,44 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
           </section>
 
           <aside className="grid gap-5">
-            {isOwner ? (
+            {canManageStaff ? (
               <article className="rounded-xl border border-blue-300/15 bg-blue-300/[0.045] p-5">
                 <h2 className="text-xl font-semibold tracking-tight">
                   Yetki ve sifre
                 </h2>
-                <form action={updateUserRoleAndTitle} className="mt-4 grid gap-3">
+                <form action={updateStaffPermissions} className="mt-4 grid gap-3">
                   <input type="hidden" name="userId" value={user.id} />
-                  <select
-                    name="role"
-                    defaultValue={user.role}
-                    className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none"
-                  >
-                    {Object.values(UserRole).map((role) => (
-                      <option key={role} value={role}>
-                        {roleLabels[role]}
-                      </option>
-                    ))}
-                  </select>
                   <input
                     name="staffTitle"
                     defaultValue={user.staffTitle ?? ""}
                     placeholder="Unvan: Muhasebe, Destek..."
                     className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none placeholder:text-zinc-600"
                   />
+                  <div className="grid gap-2">
+                    {ADMIN_PERMISSIONS.map((permission) => (
+                      <label
+                        key={permission.key}
+                        className="flex items-start gap-2 rounded-lg border border-white/[0.08] bg-[#0c0d10] px-3 py-2 text-sm text-zinc-300"
+                      >
+                        <input
+                          name="permissions"
+                          type="checkbox"
+                          value={permission.key}
+                          defaultChecked={user.staffPermissions.includes(
+                            permission.key,
+                          )}
+                          disabled={
+                            user.role === UserRole.OWNER ||
+                            user.role === UserRole.ADMIN
+                          }
+                          className="mt-1 size-4 accent-blue-400"
+                        />
+                        <span>{permission.label}</span>
+                      </label>
+                    ))}
+                  </div>
                   <button className="h-11 rounded-lg bg-blue-400 px-5 text-sm font-semibold text-blue-950 transition hover:bg-blue-300">
-                    Yetkiyi kaydet
+                    Yetkileri kaydet
                   </button>
                 </form>
 

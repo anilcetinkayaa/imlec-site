@@ -2,6 +2,12 @@
 
 import { UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import {
+  ALL_ADMIN_PERMISSION_KEYS,
+  generateTemporaryPassword,
+  makeStaffUsername,
+  normalizeStaffUsername,
+} from "@/src/server/admin-permissions";
 import { prisma } from "@/src/db/prisma";
 import { normalizeEmail, hashPassword } from "@/src/server/auth/password";
 import {
@@ -9,89 +15,155 @@ import {
   toJsonValue,
 } from "@/src/server/admin-action-log";
 
-const roles = new Set(Object.values(UserRole));
-
 function cleanText(value: FormDataEntryValue | null, max = 160) {
   const text = String(value ?? "").trim();
   return text ? text.slice(0, max) : null;
 }
 
-function cleanPassword(value: FormDataEntryValue | null) {
-  const password = String(value ?? "");
-  return password.length >= 8 ? password : null;
+function selectedPermissions(formData: FormData) {
+  const selected = new Set(
+    formData.getAll("permissions").map((value) => String(value)),
+  );
+  return ALL_ADMIN_PERMISSION_KEYS.filter((permission) =>
+    selected.has(permission),
+  );
 }
 
-async function requireOwner() {
+async function requireStaffManager() {
   const admin = await requireAdminSession({ write: true });
 
-  if (admin.error || admin.session.user.role !== UserRole.OWNER) {
+  if (admin.error) {
+    return null;
+  }
+
+  if (
+    admin.session.user.role !== UserRole.OWNER &&
+    admin.session.user.role !== UserRole.ADMIN
+  ) {
     return null;
   }
 
   return admin.session.user;
 }
 
-export async function createStaffUser(formData: FormData) {
-  const owner = await requireOwner();
+export type StaffCreateState = {
+  ok?: boolean;
+  message?: string;
+  username?: string;
+  temporaryPassword?: string;
+};
 
-  if (!owner) {
-    return;
+export async function createStaffUser(
+  _previousState: StaffCreateState,
+  formData: FormData,
+): Promise<StaffCreateState> {
+  const admin = await requireStaffManager();
+
+  if (!admin) {
+    return { ok: false, message: "Bu islem icin yetkiniz yok." };
   }
 
-  const email = normalizeEmail(String(formData.get("email") ?? ""));
   const name = cleanText(formData.get("name"));
+  const requestedUsername = cleanText(formData.get("username"));
+  const username = normalizeStaffUsername(
+    requestedUsername || (name ? makeStaffUsername(name) : ""),
+  );
+  const emailText = cleanText(formData.get("email"));
+  const email = emailText ? normalizeEmail(emailText) : null;
   const staffTitle = cleanText(formData.get("staffTitle"));
-  const password = cleanPassword(formData.get("password"));
-  const rawRole = String(formData.get("role") ?? UserRole.SUPPORT);
-  const role = roles.has(rawRole as UserRole) ? (rawRole as UserRole) : UserRole.SUPPORT;
+  const permissions = selectedPermissions(formData);
+  const temporaryPassword = generateTemporaryPassword();
 
-  if (!email || !password) {
-    return;
+  if (!username || username.length < 3) {
+    return {
+      ok: false,
+      message: "Kullanici adi en az 3 karakter olmali. Ornek: GVARDARLI.",
+    };
   }
 
-  await prisma.$transaction(async (tx) => {
-    const existing = await tx.user.findUnique({ where: { email } });
-    const passwordHash = await hashPassword(password);
-    const user = existing
-      ? await tx.user.update({
-          where: { id: existing.id },
-          data: { name, staffTitle, role, passwordHash, disabledAt: null },
-        })
-      : await tx.user.create({
-          data: { email, name, staffTitle, role, passwordHash },
-        });
+  if (!name) {
+    return { ok: false, message: "Ad soyad zorunlu." };
+  }
+
+  const passwordHash = await hashPassword(temporaryPassword);
+
+  const result = await prisma.$transaction(async (tx) => {
+    const existing = await tx.user.findFirst({
+      where: {
+        OR: [
+          { username },
+          ...(email ? [{ email }] : []),
+        ],
+      },
+    });
+
+    if (existing) {
+      return { duplicate: true };
+    }
+
+    const user = await tx.user.create({
+      data: {
+        email: email ?? `${username.toLowerCase()}@staff.imlecyazilim.local`,
+        username,
+        name,
+        staffTitle,
+        role: UserRole.SUPPORT,
+        staffPermissions: permissions,
+        passwordHash,
+      },
+    });
 
     await tx.adminActionLog.create({
       data: {
-        adminId: owner.id,
+        adminId: admin.id,
         targetUserId: user.id,
-        action: existing ? "STAFF_USER_UPDATE_ON_CREATE" : "STAFF_USER_CREATE",
-        before: toJsonValue(existing),
-        after: toJsonValue({ id: user.id, email, name, staffTitle, role }),
+        action: "STAFF_ACCOUNT_CREATE",
+        before: toJsonValue(null),
+        after: toJsonValue({
+          id: user.id,
+          username,
+          email: user.email,
+          name,
+          staffTitle,
+          role: UserRole.SUPPORT,
+          staffPermissions: permissions,
+        }),
       },
     });
+
+    return { duplicate: false };
   });
+
+  if (result.duplicate) {
+    return {
+      ok: false,
+      message: "Bu kullanici adi veya email zaten kayitli.",
+    };
+  }
 
   revalidatePath("/admin");
   revalidatePath("/admin/users");
+
+  return {
+    ok: true,
+    message: "Personel hesabi olusturuldu. Gecici sifreyi personele iletin.",
+    username,
+    temporaryPassword,
+  };
 }
 
-export async function updateUserRoleAndTitle(formData: FormData) {
-  const owner = await requireOwner();
+export async function updateStaffPermissions(formData: FormData) {
+  const admin = await requireStaffManager();
 
-  if (!owner) {
+  if (!admin) {
     return;
   }
 
   const userId = String(formData.get("userId") ?? "");
-  const rawRole = String(formData.get("role") ?? "");
   const staffTitle = cleanText(formData.get("staffTitle"));
+  const permissions = selectedPermissions(formData);
 
-  if (!userId || !roles.has(rawRole as UserRole)) {
-    return;
-  }
-
-  if (userId === owner.id && rawRole !== UserRole.OWNER) {
+  if (!userId) {
     return;
   }
 
@@ -105,23 +177,27 @@ export async function updateUserRoleAndTitle(formData: FormData) {
     const after = await tx.user.update({
       where: { id: userId },
       data: {
-        role: rawRole as UserRole,
+        role:
+          before.role === UserRole.OWNER || before.role === UserRole.ADMIN
+            ? before.role
+            : UserRole.SUPPORT,
         staffTitle,
+        staffPermissions: permissions,
       },
     });
 
     await tx.adminActionLog.create({
       data: {
-        adminId: owner.id,
+        adminId: admin.id,
         targetUserId: userId,
-        action: "USER_ROLE_TITLE_UPDATE",
+        action: "STAFF_PERMISSIONS_UPDATE",
         before: toJsonValue({
-          role: before.role,
           staffTitle: before.staffTitle,
+          staffPermissions: before.staffPermissions,
         }),
         after: toJsonValue({
-          role: after.role,
           staffTitle: after.staffTitle,
+          staffPermissions: after.staffPermissions,
         }),
       },
     });
@@ -133,16 +209,16 @@ export async function updateUserRoleAndTitle(formData: FormData) {
 }
 
 export async function resetUserPassword(formData: FormData) {
-  const owner = await requireOwner();
+  const admin = await requireStaffManager();
 
-  if (!owner) {
+  if (!admin) {
     return;
   }
 
   const userId = String(formData.get("userId") ?? "");
-  const password = cleanPassword(formData.get("password"));
+  const password = cleanText(formData.get("password"), 80);
 
-  if (!userId || !password) {
+  if (!userId || !password || password.length < 8) {
     return;
   }
 
@@ -151,7 +227,7 @@ export async function resetUserPassword(formData: FormData) {
   await prisma.$transaction(async (tx) => {
     const before = await tx.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true },
+      select: { id: true, email: true, username: true },
     });
 
     if (!before) {
@@ -165,11 +241,11 @@ export async function resetUserPassword(formData: FormData) {
 
     await tx.adminActionLog.create({
       data: {
-        adminId: owner.id,
+        adminId: admin.id,
         targetUserId: userId,
         action: "USER_PASSWORD_RESET",
-        before: toJsonValue({ email: before.email }),
-        after: toJsonValue({ resetByOwner: true }),
+        before: toJsonValue({ email: before.email, username: before.username }),
+        after: toJsonValue({ resetByAdmin: true }),
       },
     });
   });

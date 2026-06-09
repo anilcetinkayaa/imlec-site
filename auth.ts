@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/src/db/prisma";
 import { normalizeEmail, verifyPassword } from "@/src/server/auth/password";
+import { normalizeStaffUsername } from "@/src/server/admin-permissions";
 
 export const authConfig = {
   adapter: PrismaAdapter(prisma),
@@ -18,31 +19,35 @@ export const authConfig = {
     Credentials({
       name: "Email and password",
       credentials: {
-        email: { label: "Email", type: "email" },
+        email: { label: "Email or username", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const email =
+        const identifier =
           typeof credentials?.email === "string"
-            ? normalizeEmail(credentials.email)
+            ? credentials.email.trim()
             : "";
+        const email = identifier.includes("@")
+          ? normalizeEmail(identifier)
+          : "";
+        const username = identifier.includes("@")
+          ? ""
+          : normalizeStaffUsername(identifier);
         const password =
           typeof credentials?.password === "string"
             ? credentials.password
             : "";
 
-        console.log("[AUTH DEBUG] normalized email:", email);
-
-        if (!email || !password) {
-          console.log("[AUTH DEBUG] missing credentials");
+        if ((!email && !username) || !password) {
           return null;
         }
 
         const user = await prisma.user.findUnique({
-          where: { email },
+          where: email ? { email } : { username },
           select: {
             id: true,
             email: true,
+            username: true,
             name: true,
             passwordHash: true,
             role: true,
@@ -50,10 +55,6 @@ export const authConfig = {
             disabledAt: true,
           },
         });
-
-        console.log("[AUTH DEBUG] user found:", !!user);
-        console.log("[AUTH DEBUG] passwordHash exists:", !!user?.passwordHash);
-        console.log("[AUTH DEBUG] disabledAt:", user?.disabledAt);
 
         if (!user?.passwordHash || user.disabledAt) {
           return null;
@@ -63,8 +64,6 @@ export const authConfig = {
           password,
           user.passwordHash,
         );
-
-        console.log("[AUTH DEBUG] password matches:", passwordMatches);
 
         if (!passwordMatches) {
           return null;

@@ -16,18 +16,28 @@ import {
 import { auth } from "@/auth";
 import { prisma } from "@/src/db/prisma";
 import { getAdminSession } from "@/src/server/admin";
+import {
+  canUsePermission,
+  roleLabel,
+  type AdminPermissionKey,
+} from "@/src/server/admin-permissions";
 
-const adminLinks = [
-  { href: "/admin", label: "Genel Bakis", icon: BarChart3 },
-  { href: "/admin/users", label: "Kullanicilar ve Yetkiler", icon: UsersRound },
-  { href: "/admin/accounting", label: "Muhasebe", icon: CreditCard },
-  { href: "/admin/support", label: "Destek Bildirimleri", icon: Headphones },
-  { href: "/admin/security", label: "Guvenlik", icon: ShieldCheck },
-  { href: "/admin/campaigns", label: "Kampanyalar", icon: Megaphone },
-  { href: "/admin/organizations", label: "Sirketler", icon: Building2 },
-  { href: "/admin/versions", label: "Surumler", icon: Package },
-  { href: "/admin/announcements", label: "Duyurular", icon: Bell },
-  { href: "/admin/lemonsqueezy", label: "Lemon Squeezy", icon: FileText },
+const adminLinks: Array<{
+  href: string;
+  label: string;
+  icon: typeof BarChart3;
+  permission?: AdminPermissionKey;
+}> = [
+  { href: "/admin", label: "Genel Bakis", icon: BarChart3, permission: "DASHBOARD_VIEW" },
+  { href: "/admin/users", label: "Personel Yetkileri", icon: UsersRound, permission: "STAFF_MANAGE" },
+  { href: "/admin/accounting", label: "Muhasebe", icon: CreditCard, permission: "BILLING_VIEW" },
+  { href: "/admin/support", label: "Destek Bildirimleri", icon: Headphones, permission: "SUPPORT_VIEW" },
+  { href: "/admin/security", label: "Guvenlik", icon: ShieldCheck, permission: "SECURITY_VIEW" },
+  { href: "/admin/campaigns", label: "Kampanyalar", icon: Megaphone, permission: "CAMPAIGN_MANAGE" },
+  { href: "/admin/organizations", label: "Sirketler", icon: Building2, permission: "ORGANIZATION_MANAGE" },
+  { href: "/admin/versions", label: "Surumler", icon: Package, permission: "RELEASE_MANAGE" },
+  { href: "/admin/announcements", label: "Duyurular", icon: Bell, permission: "RELEASE_MANAGE" },
+  { href: "/admin/lemonsqueezy", label: "Lemon Squeezy", icon: FileText, permission: "LEMONSQUEEZY_VIEW" },
   { href: "/account/security", label: "Sifre ve Guvenlik", icon: KeyRound },
 ];
 
@@ -71,10 +81,25 @@ export default async function AdminLayout({
   const user = session?.user?.id
     ? await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { email: true, name: true, role: true, staffTitle: true },
+        select: {
+          email: true,
+          name: true,
+          role: true,
+          staffTitle: true,
+          staffPermissions: true,
+        },
       })
     : null;
   const initial = user?.name?.charAt(0) ?? user?.email?.charAt(0) ?? "I";
+  const visibleLinks = adminLinks.filter((item) =>
+    item.permission && user
+      ? canUsePermission({
+          role: user.role,
+          staffPermissions: user.staffPermissions,
+          permission: item.permission,
+        })
+      : true,
+  );
 
   return (
     <div className="min-h-screen bg-[#08090b] text-zinc-100">
@@ -100,14 +125,14 @@ export default async function AdminLayout({
                   {user?.name ?? user?.email ?? "Yetkili hesap"}
                 </p>
                 <p className="truncate text-xs text-zinc-500">
-                  {user?.staffTitle ?? user?.role ?? "Ekip"}
+                  {user?.staffTitle ?? (user ? roleLabel(user.role) : "Ekip")}
                 </p>
               </div>
             </div>
           </div>
 
           <nav className="mt-4 grid gap-1">
-            {adminLinks.map((item) => {
+            {visibleLinks.map((item) => {
               const Icon = item.icon;
 
               return (
@@ -126,8 +151,8 @@ export default async function AdminLayout({
           </nav>
 
           <div className="mt-5 rounded-xl border border-amber-300/15 bg-amber-300/[0.06] p-3 text-xs leading-5 text-amber-100/80">
-            Roller: OWNER tum yetkiler, ADMIN operasyon ve finans, SUPPORT
-            destek ve hata takip ekranlari icindir.
+            Yetkiler personel bazinda verilir. Firma Sahibi tum ekranlari
+            gorur; personel sadece tiklenen alanlara erisir.
           </div>
         </aside>
 

@@ -149,8 +149,10 @@ enum AccessRequestStatus {
 model User {
   id              String    @id @default(cuid())
   email           String    @unique
+  username        String?   @unique
   name            String?
   staffTitle      String?
+  staffPermissions String[] @default([])
   passwordHash    String?
   role            UserRole  @default(USER)
   twoFactorEnabled Boolean  @default(false)
@@ -178,6 +180,7 @@ model User {
   targetedEvents AuditLog[]    @relation("AuditTarget")
 
   @@index([role])
+  @@index([username])
   @@index([disabledAt])
 }
 

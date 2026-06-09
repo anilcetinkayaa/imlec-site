@@ -51,14 +51,14 @@ export function LoginForm({
 
       <form onSubmit={handleSubmit} className="mt-7 grid gap-4">
         <label className="grid gap-2 text-sm">
-          <span className="text-zinc-400">Email</span>
+          <span className="text-zinc-400">Email veya kullanici adi</span>
           <input
             name="email"
-            type="email"
-            autoComplete="email"
+            type="text"
+            autoComplete="username"
             required
             className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-blue-300/50"
-            placeholder="demo@imlecyazilim.com"
+            placeholder="GVARDARLI veya email@firma.com"
           />
         </label>
 
