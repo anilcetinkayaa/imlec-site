@@ -389,7 +389,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               gösterilir.
             </p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="hidden">
             {[
               ["/admin/security", "Güvenlik"],
               ["/admin/support", "Destek"],

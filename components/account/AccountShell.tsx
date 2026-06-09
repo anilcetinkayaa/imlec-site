@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   LogOut,
   MonitorCheck,
+  KeyRound,
   Settings,
   UserRound,
 } from "lucide-react";
@@ -46,6 +47,11 @@ const accountLinks = [
     href: "/account/profile",
     label: "Hesap",
     icon: Settings,
+  },
+  {
+    href: "/account/security",
+    label: "Sifre ve Guvenlik",
+    icon: KeyRound,
   },
 ];
 

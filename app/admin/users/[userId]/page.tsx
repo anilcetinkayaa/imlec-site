@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
+import { UserRole } from "@prisma/client";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/src/db/prisma";
 import { getAdminSession } from "@/src/server/admin";
 import { AdminUserDetailTabs } from "./admin-user-detail-tabs";
+import {
+  resetUserPassword,
+  updateUserRoleAndTitle,
+} from "../actions";
 
 export const metadata: Metadata = {
   title: "Kullanıcı Detayı | İmleç Yazılım Admin",
@@ -28,6 +33,13 @@ function formatDate(date: Date | null) {
     minute: "2-digit",
   }).format(date);
 }
+
+const roleLabels: Record<UserRole, string> = {
+  OWNER: "Sahip",
+  ADMIN: "Yonetici",
+  SUPPORT: "Destek",
+  USER: "Kullanici",
+};
 
 function ForbiddenView() {
   return (
@@ -170,6 +182,8 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
     notFound();
   }
 
+  const isOwner = admin.session.user.role === UserRole.OWNER;
+
   return (
     <main className="min-h-screen bg-[#08090b] px-6 py-8 text-zinc-100">
       <div className="mx-auto max-w-7xl">
@@ -205,7 +219,11 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
                 </div>
                 <div>
                   <p className="text-zinc-500">Rol</p>
-                  <p className="mt-1 text-white">{user.role}</p>
+                  <p className="mt-1 text-white">{roleLabels[user.role]}</p>
+                </div>
+                <div>
+                  <p className="text-zinc-500">Unvan</p>
+                  <p className="mt-1 text-white">{user.staffTitle ?? "-"}</p>
                 </div>
                 <div>
                   <p className="text-zinc-500">Kayıt tarihi</p>
@@ -294,56 +312,103 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
             </article>
           </section>
 
-          <AdminUserDetailTabs
-            userId={user.id}
-            products={products}
-            entitlements={user.entitlements.map((entitlement) => ({
-              id: entitlement.id,
-              productName: entitlement.product.name,
-              productSlug: entitlement.product.slug,
-              status: entitlement.status,
-              source: entitlement.source,
-              startsAt: formatDate(entitlement.startsAt),
-              expiresAt: formatDate(entitlement.expiresAt),
-              revokedAt: formatDate(entitlement.revokedAt),
-            }))}
-            devices={user.devices.map((device) => ({
-              id: device.id,
-              productName: device.product.name,
-              deviceName: device.deviceName ?? "-",
-              os: device.os ?? "-",
-              appVersion: device.appVersion ?? "-",
-              status: device.status,
-              lastSeenAt: formatDate(device.lastSeenAt),
-              revokedAt: formatDate(device.revokedAt),
-            }))}
-            downloadLogs={recentDownloadLogs.map((log) => ({
-              id: log.id,
-              success: log.success,
-              reason: log.reason ?? "-",
-              createdAt: formatDate(log.createdAt),
-            }))}
-            actionLogs={actionLogs.map((log) => ({
-              id: log.id,
-              adminId: log.adminId,
-              action: log.action,
-              before: log.before,
-              after: log.after,
-              ipAddress: log.ipAddress ?? "-",
-              createdAt: formatDate(log.createdAt),
-            }))}
-            notes={notes.map((note) => ({
-              id: note.id,
-              adminId: note.adminId,
-              body: note.body,
-              createdAt: formatDate(note.createdAt),
-            }))}
-            diagnostic={{
-              productExists: Boolean(fis260Product),
-              latestReason: recentDownloadLogs[0]?.reason ?? "Log yok",
-              endpoint: `/api/admin/diagnose?userId=${user.id}&productSlug=fis260`,
-            }}
-          />
+          <aside className="grid gap-5">
+            {isOwner ? (
+              <article className="rounded-xl border border-blue-300/15 bg-blue-300/[0.045] p-5">
+                <h2 className="text-xl font-semibold tracking-tight">
+                  Yetki ve sifre
+                </h2>
+                <form action={updateUserRoleAndTitle} className="mt-4 grid gap-3">
+                  <input type="hidden" name="userId" value={user.id} />
+                  <select
+                    name="role"
+                    defaultValue={user.role}
+                    className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none"
+                  >
+                    {Object.values(UserRole).map((role) => (
+                      <option key={role} value={role}>
+                        {roleLabels[role]}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    name="staffTitle"
+                    defaultValue={user.staffTitle ?? ""}
+                    placeholder="Unvan: Muhasebe, Destek..."
+                    className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none placeholder:text-zinc-600"
+                  />
+                  <button className="h-11 rounded-lg bg-blue-400 px-5 text-sm font-semibold text-blue-950 transition hover:bg-blue-300">
+                    Yetkiyi kaydet
+                  </button>
+                </form>
+
+                <form action={resetUserPassword} className="mt-5 grid gap-3 border-t border-white/[0.08] pt-5">
+                  <input type="hidden" name="userId" value={user.id} />
+                  <input
+                    name="password"
+                    type="text"
+                    minLength={8}
+                    placeholder="Yeni gecici sifre"
+                    className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none placeholder:text-zinc-600"
+                  />
+                  <button className="h-11 rounded-lg border border-amber-300/25 bg-amber-300/10 px-5 text-sm font-semibold text-amber-100 transition hover:bg-amber-300/15">
+                    Sifre sifirla
+                  </button>
+                </form>
+              </article>
+            ) : null}
+
+            <AdminUserDetailTabs
+              userId={user.id}
+              products={products}
+              entitlements={user.entitlements.map((entitlement) => ({
+                id: entitlement.id,
+                productName: entitlement.product.name,
+                productSlug: entitlement.product.slug,
+                status: entitlement.status,
+                source: entitlement.source,
+                startsAt: formatDate(entitlement.startsAt),
+                expiresAt: formatDate(entitlement.expiresAt),
+                revokedAt: formatDate(entitlement.revokedAt),
+              }))}
+              devices={user.devices.map((device) => ({
+                id: device.id,
+                productName: device.product.name,
+                deviceName: device.deviceName ?? "-",
+                os: device.os ?? "-",
+                appVersion: device.appVersion ?? "-",
+                status: device.status,
+                lastSeenAt: formatDate(device.lastSeenAt),
+                revokedAt: formatDate(device.revokedAt),
+              }))}
+              downloadLogs={recentDownloadLogs.map((log) => ({
+                id: log.id,
+                success: log.success,
+                reason: log.reason ?? "-",
+                createdAt: formatDate(log.createdAt),
+              }))}
+              actionLogs={actionLogs.map((log) => ({
+                id: log.id,
+                adminId: log.adminId,
+                action: log.action,
+                before: log.before,
+                after: log.after,
+                ipAddress: log.ipAddress ?? "-",
+                createdAt: formatDate(log.createdAt),
+              }))}
+              notes={notes.map((note) => ({
+                id: note.id,
+                adminId: note.adminId,
+                body: note.body,
+                createdAt: formatDate(note.createdAt),
+              }))}
+              diagnostic={{
+                productExists: Boolean(fis260Product),
+                latestReason: recentDownloadLogs[0]?.reason ?? "Log yok",
+                endpoint: `/api/admin/diagnose?userId=${user.id}&productSlug=fis260`,
+              }}
+            />
+          </aside>
         </div>
       </div>
     </main>

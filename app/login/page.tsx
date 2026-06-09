@@ -3,8 +3,8 @@ import Link from "next/link";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = {
-  title: "Giriş | İmleç Yazılım",
-  description: "İmleç Yazılım platform hesabınıza giriş yapın.",
+  title: "Giris | Imlec Yazilim",
+  description: "Imlec Yazilim platform hesabiniza giris yapin.",
 };
 
 type LoginPageProps = {
@@ -34,6 +34,7 @@ function getSafeCallbackUrl(value?: string) {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const callbackUrl = getSafeCallbackUrl(params.callbackUrl);
+  const isAdminLogin = callbackUrl.startsWith("/admin");
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#08090b] text-zinc-100">
@@ -45,32 +46,34 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             href="/"
             className="text-[15px] font-semibold tracking-tight text-white"
           >
-            İmleç Yazılım
+            Imlec Yazilim
           </Link>
           <Link
             href="/register"
             className="text-sm text-zinc-400 transition hover:text-white"
           >
-            Kayıt ol
+            Kayit ol
           </Link>
         </nav>
 
         <section className="flex flex-1 items-center py-16">
           <div className="w-full rounded-xl border border-white/[0.08] bg-white/[0.025] p-6 sm:p-8">
             <p className="font-mono text-xs uppercase tracking-[0.22em] text-blue-300/75">
-              Platform hesabı
+              {isAdminLogin ? "Yonetim hesabi" : "Platform hesabi"}
             </p>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white">
-              Giriş yap
+              {isAdminLogin ? "Admin kanalina giris" : "Giris yap"}
             </h1>
             <p className="mt-3 text-sm leading-6 text-zinc-400">
-              Web üyelik paneline erişmek için platform hesabınızla giriş yapın.
+              {isAdminLogin
+                ? "Yonetim paneline erismek icin size tanimlanan yetkili hesapla giris yapin."
+                : "Web uyelik paneline erismek icin platform hesabinizla giris yapin."}
             </p>
 
             <LoginForm
               callbackUrl={callbackUrl}
               initialError={
-                params.error ? "Email veya şifre hatalı." : undefined
+                params.error ? "Email veya sifre hatali." : undefined
               }
               registered={Boolean(params.registered)}
             />
