@@ -27,6 +27,11 @@ export const ADMIN_PERMISSIONS = [
     group: "Destek",
   },
   {
+    key: "FEATURE_SUGGESTION_MANAGE",
+    label: "Ozellik onerilerini onayla ve yonet",
+    group: "Urun",
+  },
+  {
     key: "SECURITY_VIEW",
     label: "Guvenlik ve cihaz olaylarini gor",
     group: "Guvenlik",
