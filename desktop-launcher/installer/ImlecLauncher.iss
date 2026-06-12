@@ -52,4 +52,5 @@ Name: "{group}\Imlec Yazilim Launcher"; Filename: "{app}\{#MyAppExeName}"; Worki
 Name: "{commondesktop}\Imlec Yazilim Launcher"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; IconFilename: "{app}\assets\branding\imlec-yazilim.ico"; Tasks: desktopicon
 
 [Run]
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""Get-ChildItem -LiteralPath '{app}' -Recurse -Force | Unblock-File -ErrorAction SilentlyContinue"""; Flags: runhidden waituntilterminated
 Filename: "{app}\{#MyAppExeName}"; Description: "Imlec Yazilim Launcher'i baslat"; Flags: nowait postinstall skipifsilent
