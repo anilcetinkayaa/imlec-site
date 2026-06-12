@@ -75,7 +75,7 @@ async function main() {
         "Launcher guncellemesi. Cihaz dogrulama basliklari, DPAPI token saklama, duyuru karuseli ve self-update akisi.",
       filePath:
         "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/ImlecLauncher-0.1.2-windows-x64.zip",
-      sha256: "bcf563a2e42cc40a2878883f7dc40f6a03aee4b491f20479b00be0c7eaae73f7",
+      sha256: "bca5abb547e97638bbc289959c2b4108cc6b964f6fc68d9fb054edd26daaba6b",
     });
   }
 

@@ -12,6 +12,7 @@ import tempfile
 import traceback
 import uuid
 import zipfile
+from datetime import datetime
 from pathlib import Path
 
 import requests
@@ -55,6 +56,21 @@ def app_root() -> Path:
 
 def data_root() -> Path:
     return Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "ImlecYazilim"
+
+
+def launcher_log_path() -> Path:
+    return data_root() / "launcher_debug.log"
+
+
+def log_debug(message: str) -> None:
+    try:
+        path = launcher_log_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now().isoformat(timespec="seconds")
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(f"[{timestamp}] {message}\n")
+    except Exception:
+        pass
 
 
 def safe_slug(slug: str) -> str:
@@ -338,6 +354,10 @@ class ProductInstallWorker(QObject):
             download_url = str(self.product.get("downloadUrl") or "").strip()
             sha256 = str(self.product.get("sha256") or "").strip().lower()
             version = str(self.product.get("latestVersion") or "").strip()
+            log_debug(
+                f"product_install_start slug={self.slug} version={version or '-'} "
+                f"download_url={download_url or '-'}"
+            )
             if not download_url or not sha256 or not version:
                 raise RuntimeError("İndirme paketi bilgisi eksik.")
 
@@ -346,10 +366,18 @@ class ProductInstallWorker(QObject):
             package_path = work_dir / f"{self.slug}-{version}.zip"
             temp_path = package_path.with_suffix(".zip.part")
             digest = hashlib.sha256()
+            log_debug(f"product_install_paths slug={self.slug} package_path={package_path} temp_path={temp_path}")
 
             self.progress.emit(self.slug, 3, "Paket indiriliyor")
             response = requests.get(download_url, stream=True, timeout=(10, 90))
-            response.raise_for_status()
+            log_debug(
+                f"product_download_response slug={self.slug} status={response.status_code} "
+                f"final_url={response.url} content_length={response.headers.get('content-length') or '-'}"
+            )
+            try:
+                response.raise_for_status()
+            except requests.HTTPError as exc:
+                raise RuntimeError(f"İndirme başarısız. HTTP {response.status_code}: {response.url}") from exc
             total = int(response.headers.get("content-length") or 0)
             done = 0
             with temp_path.open("wb") as handle:
@@ -362,14 +390,21 @@ class ProductInstallWorker(QObject):
                     if total:
                         percent = 3 + int(done * 62 / total)
                         self.progress.emit(self.slug, min(percent, 65), "Paket indiriliyor")
+            if not total:
+                self.progress.emit(self.slug, 65, "Paket indirildi")
 
             actual = digest.hexdigest().lower()
             if actual != sha256:
                 temp_path.unlink(missing_ok=True)
+                log_debug(
+                    f"product_download_sha_mismatch slug={self.slug} expected={sha256} "
+                    f"actual={actual} path={temp_path}"
+                )
                 raise RuntimeError("İndirilen paket doğrulanamadı.")
             if package_path.exists():
                 package_path.unlink()
             temp_path.replace(package_path)
+            log_debug(f"product_download_complete slug={self.slug} path={package_path} sha256={actual}")
 
             install_dir = product_install_dir(self.slug)
             backup_dir = install_dir.with_name(f"{install_dir.name}_backup")
@@ -413,6 +448,7 @@ class ProductInstallWorker(QObject):
                     encoding="utf-8",
                 )
                 shutil.rmtree(backup_dir, ignore_errors=True)
+                log_debug(f"product_install_complete slug={self.slug} install_dir={install_dir} exe={exe_name}")
             except Exception:
                 if install_dir.exists():
                     shutil.rmtree(install_dir, ignore_errors=True)
@@ -425,6 +461,7 @@ class ProductInstallWorker(QObject):
             self.progress.emit(self.slug, 100, "Hazır")
             self.finished.emit(self.slug, {"version": version})
         except Exception as exc:
+            log_debug(f"product_install_error slug={self.slug} error={exc}\n{traceback.format_exc()}")
             self.error.emit(self.slug, str(exc))
 
 
@@ -989,6 +1026,8 @@ class LauncherWindow(QMainWindow):
         release.setWordWrap(True)
         progress = QProgressBar()
         progress.setRange(0, 100)
+        progress.setTextVisible(True)
+        progress.setFormat("%p%")
         progress.setVisible(False)
         action = QPushButton()
         action.clicked.connect(lambda _checked=False, item=product: self.handle_product_action(item))
@@ -1034,31 +1073,37 @@ class LauncherWindow(QMainWindow):
             action.setText("Erişim Yok")
             action.setEnabled(False)
             action.setObjectName("disabledAction")
+            action.setProperty("actionMode", "disabled")
         elif slug == "launcher" and latest and is_newer_version(latest, LAUNCHER_VERSION):
             status.setText("Launcher için yeni sürüm hazır.")
             action.setText("Launcher'ı Güncelle")
             action.setEnabled(True)
             action.setObjectName("warningButton")
+            action.setProperty("actionMode", "launcher_update")
         elif slug == "launcher":
             status.setText("Launcher güncel.")
             action.setText("Güncel")
             action.setEnabled(False)
             action.setObjectName("disabledAction")
+            action.setProperty("actionMode", "disabled")
         elif not exe.is_file():
             status.setText("Bu bilgisayarda kurulu değil.")
             action.setText("İndir")
             action.setEnabled(True)
             action.setObjectName("primaryButton")
+            action.setProperty("actionMode", "install")
         elif latest and installed and is_newer_version(latest, installed):
             status.setText("Yeni sürüm hazır.")
             action.setText("Güncelle")
             action.setEnabled(True)
             action.setObjectName("warningButton")
+            action.setProperty("actionMode", "update")
         else:
             status.setText("Kullanıma hazır.")
             action.setText("Başlat")
             action.setEnabled(True)
             action.setObjectName("primaryButton")
+            action.setProperty("actionMode", "launch")
         action.style().unpolish(action)
         action.style().polish(action)
 
@@ -1085,14 +1130,21 @@ class LauncherWindow(QMainWindow):
         widgets = self.product_widgets.get(slug)
         if not widgets:
             return
-        text = widgets["action"].text().lower()
-        if slug == "launcher" and widgets["action"].isEnabled():
+        mode = str(widgets["action"].property("actionMode") or "")
+        log_debug(f"product_action slug={slug} mode={mode} enabled={widgets['action'].isEnabled()}")
+        if mode == "launcher_update":
             self.install_launcher_update(product)
             return
-        if "başlat" in text:
+        if mode == "launch":
             self.launch_product(product)
-        elif "indir" in text or "güncelle" in text:
+        elif mode in {"install", "update"}:
             self.install_or_update(product)
+        elif widgets["action"].isEnabled():
+            QMessageBox.warning(
+                self,
+                str(product.get("name") or "Uygulama"),
+                "Bu işlem başlatılamadı. Lütfen Yenile'ye basıp tekrar deneyin.",
+            )
 
     def launch_product(self, product: dict):
         exe = product_exe_path(product)
@@ -1134,8 +1186,10 @@ class LauncherWindow(QMainWindow):
         widgets = self.product_widgets.get(slug)
         if widgets:
             widgets["action"].setEnabled(False)
+            widgets["action"].setText("İndiriliyor")
             widgets["progress"].setVisible(True)
             widgets["progress"].setValue(0)
+            widgets["status"].setText("İndirme hazırlanıyor")
         self.worker_thread = QThread(self)
         self.worker = ProductInstallWorker(product)
         self.worker.moveToThread(self.worker_thread)
@@ -1182,6 +1236,7 @@ class LauncherWindow(QMainWindow):
         widgets = self.product_widgets.get(slug)
         if widgets:
             widgets["progress"].setValue(percent)
+            widgets["progress"].setFormat(f"{percent}%")
             widgets["status"].setText(message)
 
     @Slot(str, dict)
@@ -1189,6 +1244,7 @@ class LauncherWindow(QMainWindow):
         widgets = self.product_widgets.get(slug)
         if widgets:
             widgets["progress"].setVisible(False)
+            widgets["progress"].setFormat("%p%")
         self.worker = None
         self.worker_thread = None
         for product in self.products:
@@ -1203,10 +1259,15 @@ class LauncherWindow(QMainWindow):
         widgets = self.product_widgets.get(slug)
         if widgets:
             widgets["progress"].setVisible(False)
+            widgets["progress"].setFormat("%p%")
             widgets["action"].setEnabled(True)
         self.worker = None
         self.worker_thread = None
-        QMessageBox.critical(self, "Kurulum hatası", message)
+        QMessageBox.critical(
+            self,
+            "Kurulum hatası",
+            f"{message}\n\nAyrıntılı kayıt: {launcher_log_path()}",
+        )
         for product in self.products:
             if safe_slug(str(product.get("slug") or "")) == slug:
                 self.update_product_state(product)
