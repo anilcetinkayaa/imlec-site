@@ -1,7 +1,7 @@
 param(
     [string]$Root = "",
     [string[]]$Paths = @(),
-    [string]$ReleaseVersion = $(if ($env:IMLEC_LAUNCHER_VERSION) { $env:IMLEC_LAUNCHER_VERSION } else { "0.1.2" }),
+    [string]$ReleaseVersion = $(if ($env:IMLEC_LAUNCHER_VERSION) { $env:IMLEC_LAUNCHER_VERSION } else { "0.1.3" }),
     [ValidateSet("CodeSignTool", "SignTool")]
     [string]$Backend = $(if ($env:IMLEC_SIGN_BACKEND) { $env:IMLEC_SIGN_BACKEND } else { "CodeSignTool" }),
     [string]$CodeSignToolRoot = $env:IMLEC_CODESIGNTOOL_ROOT,

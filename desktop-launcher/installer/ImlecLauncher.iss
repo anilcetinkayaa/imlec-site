@@ -1,5 +1,5 @@
 #define MyAppName "Imlec Yazilim Launcher"
-#define MyAppVersion "0.1.2"
+#define MyAppVersion "0.1.3"
 #define MyAppPublisher "Imlec Yazilim"
 #define MyAppExeName "ImlecLauncher.exe"
 #define SourceDir "..\dist\ImlecLauncher"
@@ -15,7 +15,7 @@ DefaultGroupName=Imlec Yazilim
 DisableProgramGroupPage=yes
 AllowNoIcons=yes
 OutputDir=output
-OutputBaseFilename=ImlecLauncher_Setup_v0.1.2
+OutputBaseFilename=ImlecLauncher_Setup_v0.1.3
 SetupIconFile={#IconFile}
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2/ultra64

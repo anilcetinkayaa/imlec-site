@@ -40,7 +40,7 @@ from PySide6.QtWidgets import (
 
 
 AUTH_BASE_URL = os.environ.get("IMLEC_AUTH_BASE_URL", "https://imlecyazilim.com").rstrip("/")
-LAUNCHER_VERSION = "0.1.2"
+LAUNCHER_VERSION = "0.1.3"
 PRODUCT_EXE_NAMES = {
     "fis260": "FIS260.exe",
     "cozver": "Cozver.exe",
@@ -233,6 +233,8 @@ def friendly_error(exc: Exception) -> str:
     if isinstance(exc, requests.HTTPError) and exc.response is not None:
         status = exc.response.status_code
         url = exc.response.url
+        if status == 401:
+            return "Oturum süreniz doldu. Lütfen yeniden giriş yapın."
         if status == 404 and "/api/desktop/products" in url:
             return (
                 "Canlı site henüz launcher ürün endpoint'ini içermiyor.\n\n"
@@ -240,6 +242,14 @@ def friendly_error(exc: Exception) -> str:
             )
         return f"Sunucu {status} yanıtı verdi.\n{url}"
     return str(exc)
+
+
+def is_authentication_error(exc: Exception) -> bool:
+    return (
+        isinstance(exc, requests.HTTPError)
+        and exc.response is not None
+        and exc.response.status_code == 401
+    )
 
 
 class ApiClient:
@@ -269,6 +279,10 @@ class ApiClient:
         self.settings.remove("auth/token")
         self.settings.remove("auth/email")
         self.settings.remove("auth/remember")
+        self.settings.sync()
+
+    def expire_token(self) -> None:
+        self.settings.remove("auth/token")
         self.settings.sync()
 
     def login(self, email: str, password: str) -> dict:
@@ -890,6 +904,16 @@ class LauncherWindow(QMainWindow):
             self.render_updates()
             self.refresh_announcements()
         except Exception as exc:
+            if is_authentication_error(exc):
+                self.api.expire_token()
+                remembered_email = str(self.settings.value("auth/email", "") or "").strip()
+                self.email_input.setText(remembered_email)
+                self.password_input.clear()
+                self.remember_check.setChecked(bool(self.settings.value("auth/remember", False, type=bool)))
+                self.stack.setCurrentWidget(self.login_page)
+                self.login_status.setText("Oturum süreniz doldu. Lütfen yeniden giriş yapın.")
+                self.password_input.setFocus()
+                return
             message = friendly_error(exc)
             self.connection_label.setText("Bağlantı: Kontrol gerekli")
             self.render_products(error=message)

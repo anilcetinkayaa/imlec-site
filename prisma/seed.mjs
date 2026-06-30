@@ -69,13 +69,13 @@ async function main() {
 
   if (launcher) {
     await upsertVersion(launcher, {
-      version: "0.1.2",
-      minimumVersion: "0.1.1",
+      version: "0.1.3",
+      minimumVersion: "0.1.2",
       releaseNotes:
-        "Imzali launcher guncellemesi. Cihaz dogrulama, guvenli token saklama, duyuru karuseli ve self-update akisi.",
+        "Suresi dolan oturumlarda otomatik giris ekranina donus ve anlasilir yeniden giris bildirimi.",
       filePath:
-        "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/ImlecLauncher-0.1.2-windows-x64.zip",
-      sha256: "52ac23d7601eb2bbabcdbee7b94307b005b0ab0621a76fa6ef201f49403e8385",
+        "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/ImlecLauncher-0.1.3-windows-x64.zip",
+      sha256: "3bb07fe62292f3569016a623ac17780461d3d574027d02c19027127f4e789dc8",
     });
   }
 

@@ -1,7 +1,7 @@
 param(
     [string]$Root = "",
     [string[]]$Paths = @(),
-    [string]$ReleaseVersion = $(if ($env:IMLEC_LAUNCHER_VERSION) { $env:IMLEC_LAUNCHER_VERSION } else { "0.1.2" }),
+    [string]$ReleaseVersion = $(if ($env:IMLEC_LAUNCHER_VERSION) { $env:IMLEC_LAUNCHER_VERSION } else { "0.1.3" }),
     [string]$SignToolPath = $env:SIGNTOOL_PATH
 )
 
