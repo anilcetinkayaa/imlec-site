@@ -1,6 +1,7 @@
 param(
     [string]$Root = "",
     [string[]]$Paths = @(),
+    [string]$ReleaseVersion = $(if ($env:IMLEC_LAUNCHER_VERSION) { $env:IMLEC_LAUNCHER_VERSION } else { "0.1.2" }),
     [string]$SignToolPath = $env:SIGNTOOL_PATH
 )
 
@@ -33,29 +34,17 @@ function Resolve-SignTool {
 }
 
 function Get-DefaultArtifactPaths {
-    param([string]$RootPath)
+    param(
+        [string]$RootPath,
+        [string]$Version
+    )
 
     $resolvedRoot = if ($RootPath) { Resolve-Path -LiteralPath $RootPath } else { Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..") }
-    $items = New-Object System.Collections.Generic.List[string]
-
-    $launcherDist = Join-Path $resolvedRoot "dist\ImlecLauncher"
-    if (Test-Path -LiteralPath $launcherDist) {
-        Get-ChildItem -Path $launcherDist -Recurse -File -Include *.exe,*.dll |
-            ForEach-Object { $items.Add($_.FullName) }
-    }
-
-    $installerOutput = Join-Path $resolvedRoot "installer\output"
-    if (Test-Path -LiteralPath $installerOutput) {
-        Get-ChildItem -Path $installerOutput -File -Include *.exe,*.msi |
-            ForEach-Object { $items.Add($_.FullName) }
-    }
-
-    if ($env:FIS260_RELEASE_ROOT -and (Test-Path -LiteralPath $env:FIS260_RELEASE_ROOT)) {
-        Get-ChildItem -Path $env:FIS260_RELEASE_ROOT -Recurse -File -Include *.exe,*.dll |
-            ForEach-Object { $items.Add($_.FullName) }
-    }
-
-    return $items | Sort-Object -Unique
+    return @(
+        (Join-Path $resolvedRoot "dist\ImlecLauncher\ImlecLauncher.exe"),
+        (Join-Path $resolvedRoot "dist\ImlecLauncher\ImlecLauncherUpdater.exe"),
+        (Join-Path $resolvedRoot "installer\output\ImlecLauncher_Setup_v$Version.exe")
+    )
 }
 
 $targets = @()
@@ -67,7 +56,7 @@ if ($Paths.Count -gt 0) {
         $targets += (Resolve-Path -LiteralPath $path).Path
     }
 } else {
-    $targets = @(Get-DefaultArtifactPaths -RootPath $Root)
+    $targets = @(Get-DefaultArtifactPaths -RootPath $Root -Version $ReleaseVersion)
 }
 
 if ($targets.Count -eq 0) {

@@ -72,10 +72,10 @@ async function main() {
       version: "0.1.2",
       minimumVersion: "0.1.1",
       releaseNotes:
-        "Launcher guncellemesi. Cihaz dogrulama basliklari, DPAPI token saklama, duyuru karuseli ve self-update akisi.",
+        "Imzali launcher guncellemesi. Cihaz dogrulama, guvenli token saklama, duyuru karuseli ve self-update akisi.",
       filePath:
         "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/ImlecLauncher-0.1.2-windows-x64.zip",
-      sha256: "be492385104b3cc9fdda19d29ac7bbc26863a8f7694eed6609fd28e7bac7a214",
+      sha256: "52ac23d7601eb2bbabcdbee7b94307b005b0ab0621a76fa6ef201f49403e8385",
     });
   }
 
@@ -84,10 +84,10 @@ async function main() {
       version: "0.1.1",
       minimumVersion: "0.1.0",
       releaseNotes:
-        "FIS260 kullanici modu. Fis yukleme, OCR islemi, Excel aktarimi, masaustu lisans kontrolu ve guncelleme akisi.",
+        "Guncel kullanici arayuzu, imzali Windows uygulamasi, guvenli guncelleme ve PDF tarayici destegi.",
       filePath:
         "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/FIS260-0.1.1-windows-x64.zip",
-      sha256: "72c008e9945e817dc3f3f829c341c857f4a9942a9ad625f5cea0b31a7db36f1e",
+      sha256: "9cbf2b96b51e1cec9b15835889911ffdc27b808855557504b9c800fcaa6e2e7c",
     });
   }
 
