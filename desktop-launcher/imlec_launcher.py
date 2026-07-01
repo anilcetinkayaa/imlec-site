@@ -40,7 +40,7 @@ from PySide6.QtWidgets import (
 
 
 AUTH_BASE_URL = os.environ.get("IMLEC_AUTH_BASE_URL", "https://imlecyazilim.com").rstrip("/")
-LAUNCHER_VERSION = "0.1.3"
+LAUNCHER_VERSION = "0.1.4"
 PRODUCT_EXE_NAMES = {
     "fis260": "FIS260.exe",
     "cozver": "Cozver.exe",
@@ -98,9 +98,70 @@ def product_exe_path(product: dict) -> Path:
     return product_install_dir(str(product.get("slug") or "")) / product_exe_name(product)
 
 
+def product_display_shortcut_name(product: dict) -> str:
+    slug = safe_slug(str(product.get("slug") or ""))
+    if slug == "fis260":
+        return "FIS260"
+    return str(product.get("name") or slug.upper()).strip() or slug.upper()
+
+
 def resource_path(*parts: str) -> Path:
     base = Path(getattr(sys, "_MEIPASS", app_root()))
     return base.joinpath(*parts)
+
+
+def create_windows_shortcut(shortcut_path: Path, target_path: Path, working_dir: Path, icon_path: Path | None = None) -> None:
+    if sys.platform != "win32":
+        return
+    try:
+        shortcut_path.parent.mkdir(parents=True, exist_ok=True)
+        import win32com.client
+
+        shell = win32com.client.Dispatch("WScript.Shell")
+        shortcut = shell.CreateShortCut(str(shortcut_path))
+        shortcut.Targetpath = str(target_path)
+        shortcut.WorkingDirectory = str(working_dir)
+        if icon_path and icon_path.exists():
+            shortcut.IconLocation = str(icon_path)
+        shortcut.save()
+        log_debug(f"shortcut_created path={shortcut_path} target={target_path}")
+    except Exception as exc:
+        log_debug(f"shortcut_create_error path={shortcut_path} error={exc}")
+
+
+def create_product_shortcuts(product: dict) -> None:
+    if sys.platform != "win32":
+        return
+    slug = safe_slug(str(product.get("slug") or ""))
+    exe = product_exe_path(product)
+    if not exe.is_file():
+        return
+    name = product_display_shortcut_name(product)
+    icon = exe
+    desktop_root = Path(os.environ.get("USERPROFILE", str(Path.home()))) / "Desktop"
+    start_menu_root = (
+        Path(os.environ.get("APPDATA", str(Path.home())))
+        / "Microsoft"
+        / "Windows"
+        / "Start Menu"
+        / "Programs"
+    )
+    try:
+        import winreg
+
+        with winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders",
+        ) as key:
+            desktop_root = Path(os.path.expandvars(str(winreg.QueryValueEx(key, "Desktop")[0])))
+            start_menu_root = Path(os.path.expandvars(str(winreg.QueryValueEx(key, "Programs")[0])))
+    except Exception as exc:
+        log_debug(f"shortcut_shell_folder_fallback error={exc}")
+    desktop = desktop_root / f"{name}.lnk"
+    start_menu = start_menu_root / "İmleç Yazılım" / f"{name}.lnk"
+    create_windows_shortcut(desktop, exe, exe.parent, icon)
+    create_windows_shortcut(start_menu, exe, exe.parent, icon)
+    log_debug(f"product_shortcuts_ready slug={slug} desktop={desktop} start_menu={start_menu}")
 
 
 def _dpapi_blob(data: bytes):
@@ -461,6 +522,7 @@ class ProductInstallWorker(QObject):
                     json.dumps(manifest, ensure_ascii=False, indent=2),
                     encoding="utf-8",
                 )
+                create_product_shortcuts(self.product)
                 shutil.rmtree(backup_dir, ignore_errors=True)
                 log_debug(f"product_install_complete slug={self.slug} install_dir={install_dir} exe={exe_name}")
             except Exception:

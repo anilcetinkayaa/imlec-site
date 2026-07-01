@@ -1,6 +1,6 @@
 param(
     [string]$Root = "",
-    [string]$ReleaseVersion = $(if ($env:IMLEC_LAUNCHER_VERSION) { $env:IMLEC_LAUNCHER_VERSION } else { "0.1.3" })
+    [string]$ReleaseVersion = "0.1.4"
 )
 
 $ErrorActionPreference = "Stop"

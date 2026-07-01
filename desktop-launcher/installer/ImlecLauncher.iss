@@ -1,6 +1,6 @@
-#define MyAppName "Imlec Yazilim Launcher"
-#define MyAppVersion "0.1.3"
-#define MyAppPublisher "Imlec Yazilim"
+#define MyAppName "İmleç Yazılım Merkezi"
+#define MyAppVersion "0.1.4"
+#define MyAppPublisher "İmleç Yazılım"
 #define MyAppExeName "ImlecLauncher.exe"
 #define SourceDir "..\dist\ImlecLauncher"
 #define IconFile "..\assets\branding\imlec-yazilim.ico"
@@ -10,12 +10,12 @@ AppId={{A0AA3F06-35D5-4A95-9E7F-4A1E57C0DE11}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
-DefaultDirName={autopf}\Imlec Yazilim Launcher
-DefaultGroupName=Imlec Yazilim
+DefaultDirName={autopf}\İmleç Yazılım Merkezi
+DefaultGroupName=İmleç Yazılım
 DisableProgramGroupPage=yes
 AllowNoIcons=yes
 OutputDir=output
-OutputBaseFilename=ImlecLauncher_Setup_v0.1.3
+OutputBaseFilename=ImlecLauncher_Setup_v0.1.4
 SetupIconFile={#IconFile}
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2/ultra64
@@ -29,15 +29,12 @@ CloseApplications=yes
 RestartApplications=no
 VersionInfoVersion={#MyAppVersion}
 VersionInfoCompany={#MyAppPublisher}
-VersionInfoDescription=Imlec Yazilim Launcher
+VersionInfoDescription=İmleç Yazılım Merkezi
 VersionInfoProductName={#MyAppName}
 VersionInfoProductVersion={#MyAppVersion}
 
 [Languages]
 Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
-
-[Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checkedonce
 
 [Dirs]
 Name: "{localappdata}\ImlecYazilim"; Permissions: users-modify
@@ -48,8 +45,13 @@ Name: "{localappdata}\ImlecYazilim\Downloads"; Permissions: users-modify
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\Imlec Yazilim Launcher"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; IconFilename: "{app}\assets\branding\imlec-yazilim.ico"
-Name: "{commondesktop}\Imlec Yazilim Launcher"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; IconFilename: "{app}\assets\branding\imlec-yazilim.ico"; Tasks: desktopicon
+Name: "{group}\İmleç Yazılım Merkezi"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; IconFilename: "{app}\assets\branding\imlec-yazilim.ico"
+
+[InstallDelete]
+Type: files; Name: "{commondesktop}\Imlec Yazilim Launcher.lnk"
+Type: files; Name: "{userdesktop}\Imlec Yazilim Launcher.lnk"
+Type: files; Name: "{commondesktop}\İmleç Yazılım Merkezi.lnk"
+Type: files; Name: "{userdesktop}\İmleç Yazılım Merkezi.lnk"
 
 [Run]
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""Get-ChildItem -LiteralPath '{app}' -Recurse -Force | Unblock-File -ErrorAction SilentlyContinue"""; Flags: runhidden waituntilterminated
