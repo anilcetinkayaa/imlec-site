@@ -34,6 +34,14 @@ def find_payload_root(extract_dir: Path, exe_name: str) -> Path:
     return matches[0].parent
 
 
+def find_setup_exe(extract_dir: Path) -> Path | None:
+    matches = sorted(extract_dir.rglob("ImlecLauncher_Setup_*.exe"))
+    if matches:
+        return matches[0]
+    matches = sorted(extract_dir.rglob("*Setup*.exe"))
+    return matches[0] if matches else None
+
+
 def copy_payload(source: Path, install_dir: Path) -> None:
     backup_dir = install_dir.with_name(f"{install_dir.name}_backup")
     staging_dir = install_dir.with_name(f"{install_dir.name}_new")
@@ -52,17 +60,23 @@ def install_update(package_path: Path, install_dir: Path, exe_name: str) -> None
     if not install_dir.exists():
         raise RuntimeError(f"Launcher kurulum klasörü bulunamadı: {install_dir}")
 
-    work_root = install_dir.parent
+    work_root = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "ImlecYazilim" / "Updates"
+    work_root.mkdir(parents=True, exist_ok=True)
     extract_dir = work_root / f"_ImlecLauncher_extract_{int(time.time())}"
     shutil.rmtree(extract_dir, ignore_errors=True)
     extract_dir.mkdir(parents=True, exist_ok=True)
     try:
         with zipfile.ZipFile(package_path, "r") as archive:
             archive.extractall(extract_dir)
+        setup_exe = find_setup_exe(extract_dir)
+        if setup_exe is not None:
+            subprocess.Popen([str(setup_exe)], cwd=str(setup_exe.parent), close_fds=True)
+            return
         source = find_payload_root(extract_dir, exe_name)
         copy_payload(source, install_dir)
     finally:
-        shutil.rmtree(extract_dir, ignore_errors=True)
+        if find_setup_exe(extract_dir) is None:
+            shutil.rmtree(extract_dir, ignore_errors=True)
 
 
 def main() -> int:

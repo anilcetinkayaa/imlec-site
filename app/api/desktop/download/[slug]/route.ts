@@ -1,4 +1,4 @@
-import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { DeviceStatus, EntitlementStatus, SessionType } from "@prisma/client";
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/src/db/prisma";
@@ -103,12 +103,10 @@ function entitlementIsActive(entitlement: {
 }
 
 async function desktopDeviceCanDownload({
-  token,
   userId,
   productId,
   deviceId,
 }: {
-  token: string;
   userId: string;
   productId: string;
   deviceId: string | null;
@@ -140,25 +138,26 @@ async function desktopDeviceCanDownload({
     return { allowed: false, status: "DEVICE_REVOKED" };
   }
 
-  const tokenHash = createHash("sha256").update(token).digest("hex");
-  const session = await prisma.session.findUnique({
-    where: { tokenHash },
+  const session = await prisma.session.findFirst({
+    where: {
+      userId,
+      productId,
+      deviceId: device.id,
+      type: SessionType.DESKTOP,
+      revokedAt: null,
+      expiresAt: {
+        gt: new Date(),
+      },
+    },
+    orderBy: {
+      lastUsedAt: "desc",
+    },
     select: {
       id: true,
-      deviceId: true,
-      type: true,
-      expiresAt: true,
-      revokedAt: true,
     },
   });
 
-  if (
-    !session ||
-    session.type !== SessionType.DESKTOP ||
-    session.deviceId !== device.id ||
-    session.revokedAt ||
-    session.expiresAt <= new Date()
-  ) {
+  if (!session) {
     return { allowed: false, status: "SESSION_INVALID" };
   }
 
@@ -263,7 +262,6 @@ export async function GET(request: NextRequest, context: DesktopDownloadContext)
 
   if (slug !== "launcher") {
     const deviceGate = await desktopDeviceCanDownload({
-      token,
       userId: payload.sub,
       productId: product.id,
       deviceId: payload.device?.trim() || null,
