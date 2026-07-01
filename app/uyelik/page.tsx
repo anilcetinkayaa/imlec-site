@@ -17,9 +17,9 @@ import {
   MEMBERSHIP_CURRENCY,
   MEMBERSHIP_PRICE_TRY,
 } from "@/lib/config";
-import { buildLemonSqueezyCheckoutUrl } from "@/lib/lemonsqueezy-checkout";
 import { prisma } from "@/src/db/prisma";
 import { requestFis260AccessFromMembershipPage } from "@/app/download/actions";
+import { startFis260Checkout } from "@/app/uyelik/actions";
 
 export const metadata: Metadata = {
   title: "Üyelikler | İmleç Yazılım",
@@ -83,15 +83,9 @@ function AccessRequestSuccessBanner() {
 export default async function MembershipPage({ searchParams }: MembershipPageProps) {
   const session = await auth();
   const params = await searchParams;
-  const checkoutUrl =
-    session?.user?.id && session.user.email && process.env.LEMONSQUEEZY_FIS260_CHECKOUT_URL
-      ? buildLemonSqueezyCheckoutUrl({
-          checkoutUrl: process.env.LEMONSQUEEZY_FIS260_CHECKOUT_URL,
-          email: session.user.email,
-          userId: session.user.id,
-          productSlug: "fis260",
-        })
-      : null;
+  const checkoutConfigured = Boolean(
+    process.env.LEMONSQUEEZY_FIS260_CHECKOUT_URL,
+  );
   const pendingRequest = session?.user?.id
     ? await prisma.accessRequest.findUnique({
         where: {
@@ -192,10 +186,17 @@ export default async function MembershipPage({ searchParams }: MembershipPagePro
             <p className="text-body-s max-w-md text-[var(--text-tertiary)]">
               Abonelik başarılı olunca FİŞ260 erişimi hesabınıza otomatik tanımlanır.
             </p>
-            {checkoutUrl ? (
-              <Button asChild size="lg" variant="primary">
-                <Link href={checkoutUrl}>Aboneliği başlat</Link>
-              </Button>
+            {session?.user?.id && session.user.email && checkoutConfigured ? (
+              <div className="flex flex-col items-stretch gap-2 sm:items-end">
+                <p className="text-body-s text-[var(--text-tertiary)]">
+                  {session.user.email} hesabı için
+                </p>
+                <form action={startFis260Checkout}>
+                  <Button size="lg" type="submit" variant="primary">
+                    Aboneliği başlat
+                  </Button>
+                </form>
+              </div>
             ) : session?.user?.id ? (
               <form action={requestFis260AccessFromMembershipPage}>
                 <Button
