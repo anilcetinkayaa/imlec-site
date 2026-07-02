@@ -443,6 +443,7 @@ model Payment {
   amount           Int
   currency         String
   status           PaymentStatus
+  testMode         Boolean       @default(false)
   paidAt           DateTime?
   createdAt        DateTime      @default(now())
 
@@ -458,6 +459,7 @@ model Payment {
   @@index([subscriptionId])
   @@index([billingProfileId])
   @@index([status])
+  @@index([testMode])
   @@index([paidAt])
 }
 

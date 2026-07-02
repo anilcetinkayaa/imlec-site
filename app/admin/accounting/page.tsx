@@ -101,6 +101,7 @@ export default async function AdminAccountingPage() {
 
   const [
     paidThisMonth,
+    testPayments,
     invoiceWaitingPayments,
     missingBillingProfiles,
     refundedPayments,
@@ -110,6 +111,7 @@ export default async function AdminAccountingPage() {
     prisma.payment.aggregate({
       where: {
         status: PaymentStatus.PAID,
+        testMode: false,
         paidAt: {
           gte: monthStart(),
         },
@@ -119,9 +121,20 @@ export default async function AdminAccountingPage() {
       },
       _count: true,
     }),
+    prisma.payment.aggregate({
+      where: {
+        status: PaymentStatus.PAID,
+        testMode: true,
+      },
+      _sum: {
+        amount: true,
+      },
+      _count: true,
+    }),
     prisma.payment.findMany({
       where: {
         status: PaymentStatus.PAID,
+        testMode: false,
         invoices: {
           none: {},
         },
@@ -263,7 +276,7 @@ export default async function AdminAccountingPage() {
           </div>
         </div>
 
-        <section className="mt-6 grid gap-4 md:grid-cols-4">
+        <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           <div className="rounded-xl border border-emerald-300/20 bg-emerald-300/[0.06] p-5">
             <p className="text-sm text-zinc-400">Bu ay tahsilat</p>
             <p className="mt-2 text-3xl font-semibold text-white">
@@ -271,6 +284,15 @@ export default async function AdminAccountingPage() {
             </p>
             <p className="mt-2 text-xs text-zinc-500">
               {paidThisMonth._count} ödeme kaydı.
+            </p>
+          </div>
+          <div className="rounded-xl border border-purple-300/20 bg-purple-300/[0.06] p-5">
+            <p className="text-sm text-zinc-400">Test siparişleri</p>
+            <p className="mt-2 text-3xl font-semibold text-white">
+              {testPayments._count}
+            </p>
+            <p className="mt-2 text-xs text-zinc-500">
+              Test tahsilatı: {formatMoney(testPayments._sum.amount ?? 0)}.
             </p>
           </div>
           <div className="rounded-xl border border-amber-300/20 bg-amber-300/[0.06] p-5">

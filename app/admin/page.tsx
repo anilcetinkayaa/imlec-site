@@ -189,6 +189,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     suspiciousLogCount,
     monthPayments,
     yearPayments,
+    testPayments,
     refundedPayments,
     subscriptionCounts,
     latestVersions,
@@ -310,6 +311,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     prisma.payment.aggregate({
       where: {
         status: PaymentStatus.PAID,
+        testMode: false,
         paidAt: {
           gte: monthStart(),
         },
@@ -322,6 +324,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     prisma.payment.aggregate({
       where: {
         status: PaymentStatus.PAID,
+        testMode: false,
         paidAt: {
           gte: yearStart(),
         },
@@ -333,7 +336,18 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     }),
     prisma.payment.aggregate({
       where: {
+        status: PaymentStatus.PAID,
+        testMode: true,
+      },
+      _sum: {
+        amount: true,
+      },
+      _count: true,
+    }),
+    prisma.payment.aggregate({
+      where: {
         status: PaymentStatus.REFUNDED,
+        testMode: false,
       },
       _sum: {
         amount: true,
@@ -471,7 +485,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               </div>
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
               <StatCard
                 title="Bu ay tahsilat"
                 value={formatMoney(monthlyRevenue)}
@@ -483,6 +497,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 value={formatMoney(yearlyRevenue)}
                 note={`${yearPayments._count} ödeme kaydı.`}
                 tone="emerald"
+              />
+              <StatCard
+                title="Test siparişleri"
+                value={testPayments._count}
+                note={`Test tahsilatı: ${formatMoney(testPayments._sum.amount ?? 0)}.`}
+                tone="purple"
               />
               <StatCard
                 title={`Bu ay tahmini vergi (%${taxRate})`}

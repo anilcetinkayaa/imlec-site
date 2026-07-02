@@ -15,6 +15,7 @@ import { upsertEntitlementBySource } from "@/src/server/entitlement-helpers";
 type LemonSqueezyPayload = {
   meta?: {
     event_name?: string;
+    test_mode?: boolean;
     custom_data?: {
       user_id?: string;
       product_slug?: string;
@@ -247,6 +248,7 @@ async function upsertPayment({
     asString(attributes.currency) ??
     asString(attributes.currency_code) ??
     "TRY";
+  const testMode = payload.meta?.test_mode === true;
   const paidAt =
     status === PaymentStatus.PAID
       ? parseDate(attributes.created_at) ?? new Date()
@@ -266,6 +268,7 @@ async function upsertPayment({
       amount,
       currency,
       status,
+      testMode,
       paidAt,
     },
     create: {
@@ -277,6 +280,7 @@ async function upsertPayment({
       amount,
       currency,
       status,
+      testMode,
       paidAt,
     },
   });
