@@ -5,12 +5,15 @@ export function ResetPassword({ resetUrl }: { resetUrl: string }) {
   return (
     <BaseEmail preview="Şifre sıfırlama talebi." title="Şifrenizi sıfırlayın.">
       <Text style={text}>
-        Şifre sıfırlama talebi aldıysanız aşağıdaki bağlantıdan yeni şifre
-        belirleyebilirsiniz.
+        İmleç Yazılım hesabınız için şifre sıfırlama talebi aldık. Aşağıdaki
+        bağlantı 30 dakika boyunca ve yalnızca bir kez kullanılabilir.
       </Text>
       <Button href={resetUrl} style={button}>
         Şifreyi sıfırla
       </Button>
+      <Text style={text}>
+        Bu işlemi siz istemediyseniz e-postayı dikkate almayabilirsiniz.
+      </Text>
     </BaseEmail>
   );
 }

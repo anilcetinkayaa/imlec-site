@@ -157,43 +157,58 @@ enum FeatureSuggestionStatus {
 }
 
 model User {
-  id              String    @id @default(cuid())
-  email           String    @unique
-  username        String?   @unique
-  name            String?
-  staffTitle      String?
-  staffPermissions String[] @default([])
-  passwordHash    String?
-  role            UserRole  @default(USER)
-  twoFactorEnabled Boolean  @default(false)
-  emailVerifiedAt DateTime?
-  disabledAt      DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id               String    @id @default(cuid())
+  email            String    @unique
+  username         String?   @unique
+  name             String?
+  staffTitle       String?
+  staffPermissions String[]  @default([])
+  passwordHash     String?
+  role             UserRole  @default(USER)
+  twoFactorEnabled Boolean   @default(false)
+  emailVerifiedAt  DateTime?
+  disabledAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  sessions       Session[]
-  subscriptions  Subscription[]
-  lemonSqueezyCustomers LemonSqueezyCustomer[]
-  entitlements   Entitlement[]
-  devices        Device[]
-  payments       Payment[]
-  invoices       Invoice[]
-  billingProfiles BillingProfile[]
-  billingRequests BillingRequest[]
-  accessRequests AccessRequest[]
-  supportTickets SupportTicket[]
-  featureSuggestions FeatureSuggestion[]
+  sessions               Session[]
+  subscriptions          Subscription[]
+  lemonSqueezyCustomers  LemonSqueezyCustomer[]
+  entitlements           Entitlement[]
+  devices                Device[]
+  payments               Payment[]
+  invoices               Invoice[]
+  billingProfiles        BillingProfile[]
+  billingRequests        BillingRequest[]
+  accessRequests         AccessRequest[]
+  supportTickets         SupportTicket[]
+  featureSuggestions     FeatureSuggestion[]
   featureSuggestionVotes FeatureSuggestionVote[]
-  memberships    Membership[]
-  adminActions   AdminAction[] @relation("AdminActionsByUser")
-  targetedActions AdminAction[] @relation("AdminActionsForUser")
-  admin2FA      Admin2FA?
-  auditEvents    AuditLog[]    @relation("AuditActor")
-  targetedEvents AuditLog[]    @relation("AuditTarget")
+  memberships            Membership[]
+  adminActions           AdminAction[]           @relation("AdminActionsByUser")
+  targetedActions        AdminAction[]           @relation("AdminActionsForUser")
+  admin2FA               Admin2FA?
+  auditEvents            AuditLog[]              @relation("AuditActor")
+  targetedEvents         AuditLog[]              @relation("AuditTarget")
+  passwordResetTokens    PasswordResetToken[]
 
   @@index([role])
   @@index([username])
   @@index([disabledAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
 }
 
 model Session {
@@ -227,15 +242,15 @@ model Product {
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
-  subscriptions Subscription[]
-  entitlements  Entitlement[]
-  devices       Device[]
-  sessions      Session[]
-  payments      Payment[]
-  invoices      Invoice[]
+  subscriptions   Subscription[]
+  entitlements    Entitlement[]
+  devices         Device[]
+  sessions        Session[]
+  payments        Payment[]
+  invoices        Invoice[]
   billingRequests BillingRequest[]
-  versions      ProductVersion[]
-  accessRequests AccessRequest[]
+  versions        ProductVersion[]
+  accessRequests  AccessRequest[]
 
   @@index([status])
 }
@@ -257,16 +272,16 @@ model ProductVersion {
 }
 
 model AccessRequest {
-  id            String              @id @default(cuid())
-  userId        String
-  email         String
-  productCode   String
-  productId     String?
-  status        AccessRequestStatus @default(PENDING)
-  reviewedById  String?
-  reviewedAt    DateTime?
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
+  id           String              @id @default(cuid())
+  userId       String
+  email        String
+  productCode  String
+  productId    String?
+  status       AccessRequestStatus @default(PENDING)
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
 
   user    User     @relation(fields: [userId], references: [id], onDelete: Restrict)
   product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
@@ -291,12 +306,12 @@ model Subscription {
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
-  product      Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
-  entitlements Entitlement[]
-  payments     Payment[]
-  invoices     Invoice[]
-  billingRequests BillingRequest[]
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  product              Product               @relation(fields: [productId], references: [id], onDelete: Restrict)
+  entitlements         Entitlement[]
+  payments             Payment[]
+  invoices             Invoice[]
+  billingRequests      BillingRequest[]
   lemonSqueezyLicenses LemonSqueezyLicense[]
 
   @@unique([provider, providerSubscriptionId])
@@ -306,12 +321,12 @@ model Subscription {
 }
 
 model LemonSqueezyCustomer {
-  id                 String   @id @default(cuid())
-  userId             String
-  lemonSqueezyId     String   @unique
-  email              String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id             String   @id @default(cuid())
+  userId         String
+  lemonSqueezyId String   @unique
+  email          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Restrict)
 
@@ -320,15 +335,15 @@ model LemonSqueezyCustomer {
 }
 
 model LemonSqueezyLicense {
-  id                String   @id @default(cuid())
-  userId            String
-  subscriptionId    String?
-  licenseKeyId      String   @unique
-  licenseKey        String?
-  activationLimit   Int?
-  status            String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id              String   @id @default(cuid())
+  userId          String
+  subscriptionId  String?
+  licenseKeyId    String   @unique
+  licenseKey      String?
+  activationLimit Int?
+  status          String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
 
@@ -338,13 +353,13 @@ model LemonSqueezyLicense {
 }
 
 model LemonSqueezyWebhookEvent {
-  id          String   @id @default(cuid())
-  eventId     String   @unique
+  id          String    @id @default(cuid())
+  eventId     String    @unique
   eventName   String
   payload     Json
   processedAt DateTime?
   error       String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   @@index([eventName])
   @@index([processedAt])
@@ -391,8 +406,8 @@ model Device {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Restrict)
-  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  product  Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
   sessions Session[]
 
   @@unique([userId, productId, fingerprintHash])
@@ -418,24 +433,24 @@ model DownloadLog {
 }
 
 model Payment {
-  id              String        @id @default(cuid())
-  userId          String
-  productId       String
-  subscriptionId  String?
+  id               String        @id @default(cuid())
+  userId           String
+  productId        String
+  subscriptionId   String?
   billingProfileId String?
-  provider        String
-  providerOrderId String
-  amount          Int
-  currency        String
-  status          PaymentStatus
-  paidAt          DateTime?
-  createdAt       DateTime      @default(now())
+  provider         String
+  providerOrderId  String
+  amount           Int
+  currency         String
+  status           PaymentStatus
+  paidAt           DateTime?
+  createdAt        DateTime      @default(now())
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
-  product      Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
-  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
-  billingProfile BillingProfile? @relation(fields: [billingProfileId], references: [id], onDelete: SetNull)
-  invoices     Invoice[]
+  user            User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  product         Product          @relation(fields: [productId], references: [id], onDelete: Restrict)
+  subscription    Subscription?    @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  billingProfile  BillingProfile?  @relation(fields: [billingProfileId], references: [id], onDelete: SetNull)
+  invoices        Invoice[]
   billingRequests BillingRequest[]
 
   @@unique([provider, providerOrderId])
@@ -447,7 +462,7 @@ model Payment {
 }
 
 model Invoice {
-  id                String   @id @default(cuid())
+  id                String    @id @default(cuid())
   userId            String
   productId         String
   subscriptionId    String?
@@ -458,13 +473,13 @@ model Invoice {
   invoiceUrl        String?
   downloadUrl       String?
   issuedAt          DateTime?
-  createdAt         DateTime @default(now())
+  createdAt         DateTime  @default(now())
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
-  product      Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
-  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Restrict)
+  product        Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  subscription   Subscription?   @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   billingProfile BillingProfile? @relation(fields: [billingProfileId], references: [id], onDelete: SetNull)
-  payment      Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  payment        Payment?        @relation(fields: [paymentId], references: [id], onDelete: SetNull)
 
   @@unique([provider, providerInvoiceId])
   @@index([userId, productId])

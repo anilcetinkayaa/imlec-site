@@ -12,6 +12,7 @@ type LoginPageProps = {
     callbackUrl?: string;
     error?: string;
     registered?: string;
+    reset?: string;
   }>;
 };
 
@@ -76,6 +77,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 params.error ? "Email veya sifre hatali." : undefined
               }
               registered={Boolean(params.registered)}
+              passwordReset={params.reset === "1"}
             />
           </div>
         </section>
