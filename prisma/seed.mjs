@@ -81,13 +81,13 @@ async function main() {
 
   if (fis260) {
     await upsertVersion(fis260, {
-      version: "0.1.1",
-      minimumVersion: "0.1.0",
+      version: "0.1.2",
+      minimumVersion: "0.1.1",
       releaseNotes:
-        "Guncel kullanici arayuzu, imzali Windows uygulamasi, guvenli guncelleme ve PDF tarayici destegi.",
+        "Windows 10 sistemlerde Paddle OCR profiler paketleme hatasi giderildi.",
       filePath:
-        "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/FIS260-0.1.1-windows-x64.zip",
-      sha256: "9cbf2b96b51e1cec9b15835889911ffdc27b808855557504b9c800fcaa6e2e7c",
+        "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/FIS260-0.1.2-windows-x64.zip",
+      sha256: "bf580a47b3e6bbba22b2e79eac1fe8a98874cf5d67fffaf7b5234fe75d8df2ba",
     });
   }
 
