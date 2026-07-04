@@ -40,7 +40,7 @@ from PySide6.QtWidgets import (
 
 
 AUTH_BASE_URL = os.environ.get("IMLEC_AUTH_BASE_URL", "https://imlecyazilim.com").rstrip("/")
-LAUNCHER_VERSION = "0.1.4"
+LAUNCHER_VERSION = "0.1.5"
 PRODUCT_EXE_NAMES = {
     "fis260": "FIS260.exe",
     "cozver": "Cozver.exe",
@@ -484,6 +484,7 @@ class ProductInstallWorker(QObject):
             install_dir = product_install_dir(self.slug)
             backup_dir = install_dir.with_name(f"{install_dir.name}_backup")
             extract_dir = Path(tempfile.mkdtemp(prefix=f"imlec_{self.slug}_"))
+            backup_created = False
             self.progress.emit(self.slug, 72, "Paket açılıyor")
             try:
                 with zipfile.ZipFile(package_path, "r") as archive:
@@ -508,7 +509,14 @@ class ProductInstallWorker(QObject):
                 if backup_dir.exists():
                     shutil.rmtree(backup_dir, ignore_errors=True)
                 if install_dir.exists():
-                    install_dir.rename(backup_dir)
+                    try:
+                        install_dir.rename(backup_dir)
+                        backup_created = True
+                    except PermissionError as exc:
+                        raise RuntimeError(
+                            f"{str(self.product.get('name') or self.slug).strip()} açık. "
+                            "Uygulamayı kapatıp Güncelle düğmesine tekrar basın."
+                        ) from exc
                 install_dir.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copytree(source, install_dir)
                 manifest = {
@@ -526,10 +534,11 @@ class ProductInstallWorker(QObject):
                 shutil.rmtree(backup_dir, ignore_errors=True)
                 log_debug(f"product_install_complete slug={self.slug} install_dir={install_dir} exe={exe_name}")
             except Exception:
-                if install_dir.exists():
-                    shutil.rmtree(install_dir, ignore_errors=True)
-                if backup_dir.exists():
-                    backup_dir.rename(install_dir)
+                if backup_created:
+                    if install_dir.exists():
+                        shutil.rmtree(install_dir, ignore_errors=True)
+                    if backup_dir.exists():
+                        backup_dir.rename(install_dir)
                 raise
             finally:
                 shutil.rmtree(extract_dir, ignore_errors=True)

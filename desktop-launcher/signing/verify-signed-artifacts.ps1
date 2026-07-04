@@ -1,7 +1,7 @@
 param(
     [string]$Root = "",
     [string[]]$Paths = @(),
-    [string]$ReleaseVersion = "0.1.4",
+    [string]$ReleaseVersion = "0.1.5",
     [string]$SignToolPath = $env:SIGNTOOL_PATH
 )
 

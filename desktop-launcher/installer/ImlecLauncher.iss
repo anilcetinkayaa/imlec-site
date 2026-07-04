@@ -1,5 +1,5 @@
 #define MyAppName "İmleç Yazılım Merkezi"
-#define MyAppVersion "0.1.4"
+#define MyAppVersion "0.1.5"
 #define MyAppPublisher "İmleç Yazılım"
 #define MyAppExeName "ImlecLauncher.exe"
 #define SourceDir "..\dist\ImlecLauncher"
@@ -15,7 +15,7 @@ DefaultGroupName=İmleç Yazılım
 DisableProgramGroupPage=yes
 AllowNoIcons=yes
 OutputDir=output
-OutputBaseFilename=ImlecLauncher_Setup_v0.1.4
+OutputBaseFilename=ImlecLauncher_Setup_v0.1.5
 SetupIconFile={#IconFile}
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2/ultra64

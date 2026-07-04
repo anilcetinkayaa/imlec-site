@@ -69,13 +69,13 @@ async function main() {
 
   if (launcher) {
     await upsertVersion(launcher, {
-      version: "0.1.4",
-      minimumVersion: "0.1.3",
+      version: "0.1.5",
+      minimumVersion: "0.1.4",
       releaseNotes:
-        "Guncelleme dongusu giderildi. FIS260 masaustu ve Baslat menusu kisayollari profesyonel ad ve simgeyle olusturuluyor; launcher masaustu kisayolu kaldirildi.",
+        "Uygulama acikken basarisiz olan urun guncellemelerinde mevcut kurulumun silinmesi engellendi ve anlasilir uyari eklendi.",
       filePath:
-        "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/ImlecLauncher-0.1.4-app-windows-x64.zip",
-      sha256: "4cbe2975258b40298fb41be8cd55fa1cdf550e23b9b0f67f7002ba330603790e",
+        "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/ImlecLauncher-0.1.5-app-windows-x64.zip",
+      sha256: "e64fab27174c2dc51d22858021dd07c58dd478430aca2f6ecc4b418d937ddc9a",
     });
   }
 
