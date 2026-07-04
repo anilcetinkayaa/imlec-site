@@ -81,13 +81,13 @@ async function main() {
 
   if (fis260) {
     await upsertVersion(fis260, {
-      version: "0.1.3",
+      version: "0.1.4",
       minimumVersion: "0.1.1",
       releaseNotes:
-        "Paddle OCR paketleme hatalari giderildi; Windows 10 ve guncel Windows sistemleri icin eksik runtime modulleri tamamlandi.",
+        "PaddleOCR model dosyalari ASCII guvenli Windows yolundan acilir; OCR sozluk verileri pakete dahil edildi ve model baslatma testi eklendi.",
       filePath:
-        "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/FIS260-0.1.3-windows-x64.zip",
-      sha256: "5f127854adbd1d645db5a8ad6cdeb86961ad41701c819e717cfe4d902e535559",
+        "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/FIS260-0.1.4-windows-x64.zip",
+      sha256: "f2ee003bebfb7b4ef38491490a2416e6b4ae28390a57817e0d48fc1e4aa6e00e",
     });
   }
 
