@@ -74,8 +74,8 @@ async function main() {
       releaseNotes:
         "Launcher guncellemesi Program Files kurulumlarinda yonetici izni alarak guvenli sekilde tamamlanir.",
       filePath:
-        "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/ImlecLauncher-0.1.6-app-windows-x64.zip",
-      sha256: "cb2e9c370b3b2e5f447edbcb8da1b2678fcf58c72ab17722a467611dda207b4a",
+        "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/ImlecLauncher-0.1.6-windows-x64.zip",
+      sha256: "fa4e8551042bcbc68bc0decb3d63cd095fa0bb8e10136bea446c73a25aa41cb2",
     });
   }
 
