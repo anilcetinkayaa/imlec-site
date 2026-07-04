@@ -6,7 +6,33 @@ import subprocess
 import sys
 import time
 import zipfile
+import ctypes
 from pathlib import Path
+
+
+def is_elevated() -> bool:
+    try:
+        return bool(ctypes.windll.shell32.IsUserAnAdmin())
+    except Exception:
+        return False
+
+
+def requires_elevation(install_dir: Path) -> bool:
+    program_files = [
+        os.environ.get("ProgramFiles", ""),
+        os.environ.get("ProgramFiles(x86)", ""),
+    ]
+    target = str(install_dir.resolve()).casefold()
+    return any(root and target.startswith(str(Path(root).resolve()).casefold()) for root in program_files)
+
+
+def relaunch_elevated() -> bool:
+    executable = Path(sys.executable).resolve()
+    parameters = subprocess.list2cmdline(sys.argv[1:])
+    result = ctypes.windll.shell32.ShellExecuteW(
+        None, "runas", str(executable), parameters, str(executable.parent), 1
+    )
+    return int(result) > 32
 
 
 def wait_for_parent(parent_pid: int, timeout: float = 45.0) -> None:
@@ -91,6 +117,10 @@ def main() -> int:
     log_path = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "ImlecYazilim" / "launcher_update.log"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     try:
+        if requires_elevation(install_dir) and not is_elevated():
+            if not relaunch_elevated():
+                raise RuntimeError("Launcher güncellemesi için yönetici izni verilmedi.")
+            return 0
         wait_for_parent(args.parent_pid)
         install_update(Path(args.package).resolve(), install_dir, args.exe_name)
         manifest = {

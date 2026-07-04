@@ -40,7 +40,7 @@ from PySide6.QtWidgets import (
 
 
 AUTH_BASE_URL = os.environ.get("IMLEC_AUTH_BASE_URL", "https://imlecyazilim.com").rstrip("/")
-LAUNCHER_VERSION = "0.1.5"
+LAUNCHER_VERSION = "0.1.6"
 PRODUCT_EXE_NAMES = {
     "fis260": "FIS260.exe",
     "cozver": "Cozver.exe",
