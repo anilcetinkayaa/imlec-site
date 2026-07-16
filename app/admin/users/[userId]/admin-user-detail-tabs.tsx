@@ -346,6 +346,124 @@ export function AdminUserDetailTabs({
               </div>
             </div>
 
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-5 lg:col-span-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h2 className="font-medium text-white">Ürün erişimleri</h2>
+                  <p className="mt-1 text-sm text-zinc-400">
+                    Hesaba tanımlanmış aktif, süresi dolmuş ve kaldırılmış tüm
+                    ürün kayıtları.
+                  </p>
+                </div>
+                <span className="font-mono text-xs text-zinc-500">
+                  {entitlements.length} kayıt
+                </span>
+              </div>
+
+              {entitlements.length > 0 ? (
+                <div className="mt-4 overflow-x-auto rounded-lg border border-white/[0.07]">
+                  <div className="grid min-w-[780px] grid-cols-[1.2fr_0.8fr_0.8fr_1fr_1fr] bg-white/[0.03] px-4 py-3 text-xs text-zinc-500">
+                    <span>Ürün</span>
+                    <span>Durum</span>
+                    <span>Kaynak</span>
+                    <span>Başlangıç</span>
+                    <span>Bitiş / kaldırılma</span>
+                  </div>
+                  {entitlements.map((item) => (
+                    <div
+                      key={item.id}
+                      className="grid min-w-[780px] grid-cols-[1.2fr_0.8fr_0.8fr_1fr_1fr] items-center border-t border-white/[0.07] px-4 py-3 text-sm"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-zinc-200">
+                          {item.productName}
+                        </p>
+                        <p className="mt-1 font-mono text-[11px] text-zinc-500">
+                          {item.productSlug}
+                        </p>
+                      </div>
+                      <StatusBadge value={item.status} />
+                      <StatusBadge value={item.source} />
+                      <span className="font-mono text-xs text-zinc-400">
+                        {item.startsAt}
+                      </span>
+                      <span className="font-mono text-xs text-zinc-400">
+                        {item.revokedAt !== "-"
+                          ? `Kaldırıldı: ${item.revokedAt}`
+                          : item.expiresAt === "-"
+                            ? "Süresiz"
+                            : item.expiresAt}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-4">
+                  <EmptyState>Hesaba tanımlanmış ürün erişimi yok.</EmptyState>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-5 lg:col-span-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h2 className="font-medium text-white">Kayıtlı cihazlar</h2>
+                  <p className="mt-1 text-sm text-zinc-400">
+                    Masaüstü uygulamasına bağlanmış cihazlar ve son bağlantı
+                    bilgileri.
+                  </p>
+                </div>
+                <span className="font-mono text-xs text-zinc-500">
+                  {devices.length} cihaz
+                </span>
+              </div>
+
+              {devices.length > 0 ? (
+                <div className="mt-4 overflow-x-auto rounded-lg border border-white/[0.07]">
+                  <div className="grid min-w-[820px] grid-cols-[1.2fr_1fr_0.8fr_0.7fr_0.8fr_1fr] bg-white/[0.03] px-4 py-3 text-xs text-zinc-500">
+                    <span>Cihaz</span>
+                    <span>Ürün</span>
+                    <span>Sistem</span>
+                    <span>Sürüm</span>
+                    <span>Durum</span>
+                    <span>Son bağlantı</span>
+                  </div>
+                  {devices.map((device) => (
+                    <div
+                      key={device.id}
+                      className="grid min-w-[820px] grid-cols-[1.2fr_1fr_0.8fr_0.7fr_0.8fr_1fr] items-center border-t border-white/[0.07] px-4 py-3 text-sm"
+                    >
+                      <div>
+                        <p className="font-medium text-zinc-200">
+                          {device.deviceName}
+                        </p>
+                        {device.revokedAt !== "-" ? (
+                          <p className="mt-1 font-mono text-[11px] text-red-300">
+                            Kaldırıldı: {device.revokedAt}
+                          </p>
+                        ) : null}
+                      </div>
+                      <span className="text-zinc-400">
+                        {device.productName}
+                      </span>
+                      <span className="text-zinc-400">{device.os}</span>
+                      <span className="font-mono text-xs text-zinc-400">
+                        {device.appVersion}
+                      </span>
+                      <StatusBadge value={device.status} />
+                      <span className="font-mono text-xs text-zinc-400">
+                        {device.lastSeenAt}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-4">
+                  <EmptyState>Bu hesaba bağlı cihaz bulunmuyor.</EmptyState>
+                </div>
+              )}
+            </div>
+
             <details className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4 lg:col-span-2">
               <summary className="cursor-pointer text-xs text-zinc-500">
                 Teknik hesap kimliğini göster
