@@ -253,9 +253,9 @@ export function AdminUserDetailTabs({
   diagnostic,
 }: AdminUserDetailTabsProps) {
   return (
-    <div className="sticky top-6 max-h-[calc(100vh-3rem)] overflow-auto rounded-2xl border border-white/[0.08] bg-[#101216] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.32)]">
+    <section className="rounded-2xl border border-white/[0.08] bg-[#101216] p-3 shadow-[0_24px_70px_rgba(0,0,0,0.22)] sm:p-4">
       <Tabs defaultValue="overview">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-1">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 md:grid-cols-4 xl:grid-cols-8">
           <TabsTrigger value="overview" className="justify-start gap-2">
             <Activity className="size-4" strokeWidth={1.5} />
             Özet
@@ -290,36 +290,63 @@ export function AdminUserDetailTabs({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview">
-          <div className="grid gap-3">
-            <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4">
-              <p className="text-sm font-medium text-white">Hesap özeti</p>
-              <p className="mt-1 text-sm leading-6 text-zinc-400">
-                Ürün erişimi, cihaz ve indirme durumunu bu alandan takip
-                edebilirsiniz.
+        <TabsContent value="overview" className="pt-2">
+          <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-5">
+              <p className="text-sm font-medium text-white">Hesap durumu</p>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-zinc-400">
+                Bu görünüm müşterinin ürün erişimini, cihaz bağlantısını ve
+                son yönetim hareketlerini tek bakışta özetler.
               </p>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4">
-                <p className="text-xs text-zinc-500">Ürün erişimi</p>
-                <p className="mt-2 font-mono text-2xl text-white">
-                  {entitlements.length}
-                </p>
-              </div>
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4">
-                <p className="text-xs text-zinc-500">Cihaz</p>
-                <p className="mt-2 font-mono text-2xl text-white">
-                  {devices.length}
-                </p>
-              </div>
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4">
-                <p className="text-xs text-zinc-500">İndirme</p>
-                <p className="mt-2 font-mono text-2xl text-white">
-                  {downloadLogs.length}
-                </p>
+              <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {[
+                  ["Toplam erişim", entitlements.length],
+                  ["Kayıtlı cihaz", devices.length],
+                  ["İndirme kaydı", downloadLogs.length],
+                  ["Yönetim işlemi", actionLogs.length],
+                ].map(([label, value]) => (
+                  <div
+                    key={String(label)}
+                    className="rounded-lg border border-white/[0.07] bg-black/15 p-3"
+                  >
+                    <p className="text-xs text-zinc-500">{label}</p>
+                    <p className="mt-2 font-mono text-2xl text-white">{value}</p>
+                  </div>
+                ))}
               </div>
             </div>
-            <details className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4">
+
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-5">
+              <p className="text-sm font-medium text-white">Son durumlar</p>
+              <div className="mt-4 grid gap-3">
+                <div className="flex items-center justify-between gap-4 border-b border-white/[0.07] pb-3">
+                  <span className="text-sm text-zinc-400">Son indirme</span>
+                  <span className="text-right text-sm text-zinc-200">
+                    {downloadLogs[0]
+                      ? `${downloadLogs[0].success ? "Başarılı" : "Başarısız"} · ${downloadLogs[0].createdAt}`
+                      : "Kayıt yok"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4 border-b border-white/[0.07] pb-3">
+                  <span className="text-sm text-zinc-400">Son cihaz</span>
+                  <span className="text-right text-sm text-zinc-200">
+                    {devices[0]
+                      ? `${devices[0].deviceName} · ${devices[0].lastSeenAt}`
+                      : "Kayıt yok"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm text-zinc-400">Son yönetim işlemi</span>
+                  <span className="text-right text-sm text-zinc-200">
+                    {actionLogs[0]
+                      ? `${getAdminActionPresentation(actionLogs[0].action).label} · ${actionLogs[0].createdAt}`
+                      : "Kayıt yok"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <details className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4 lg:col-span-2">
               <summary className="cursor-pointer text-xs text-zinc-500">
                 Teknik hesap kimliğini göster
               </summary>
@@ -330,8 +357,8 @@ export function AdminUserDetailTabs({
           </div>
         </TabsContent>
 
-        <TabsContent value="entitlements">
-          <div className="grid gap-3">
+        <TabsContent value="entitlements" className="pt-2">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {entitlements.length > 0 ? (
               entitlements.map((item) => (
                 <div
@@ -361,8 +388,8 @@ export function AdminUserDetailTabs({
           </div>
         </TabsContent>
 
-        <TabsContent value="devices">
-          <div className="grid gap-3">
+        <TabsContent value="devices" className="pt-2">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {devices.length > 0 ? (
               devices.map((device) => (
                 <div
@@ -392,19 +419,21 @@ export function AdminUserDetailTabs({
           </div>
         </TabsContent>
 
-        <TabsContent value="downloads">
+        <TabsContent value="downloads" className="pt-2">
           <div className="grid gap-2">
             {downloadLogs.length > 0 ? (
               downloadLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-white/[0.07] bg-[#0c0d10] px-3 py-2 font-mono text-xs"
+                  className="grid gap-2 rounded-lg border border-white/[0.07] bg-[#0c0d10] px-4 py-3 text-sm sm:grid-cols-[0.7fr_1.4fr_0.8fr] sm:items-center"
                 >
                   <span className={log.success ? "text-emerald-300" : "text-red-300"}>
                     {log.success ? "Başarılı" : "Başarısız"}
                   </span>
                   <span className="truncate text-zinc-400">{log.reason}</span>
-                  <span className="text-zinc-500">{log.createdAt}</span>
+                  <span className="font-mono text-xs text-zinc-500 sm:text-right">
+                    {log.createdAt}
+                  </span>
                 </div>
               ))
             ) : (
@@ -413,8 +442,8 @@ export function AdminUserDetailTabs({
           </div>
         </TabsContent>
 
-        <TabsContent value="notes">
-          <div className="grid gap-3">
+        <TabsContent value="notes" className="pt-2">
+          <div className="grid gap-3 md:grid-cols-2">
             {notes.length > 0 ? (
               notes.map((note) => (
                 <div
@@ -433,7 +462,7 @@ export function AdminUserDetailTabs({
           </div>
         </TabsContent>
 
-        <TabsContent value="history">
+        <TabsContent value="history" className="pt-2">
           <div className="mb-3">
             <h2 className="text-sm font-medium text-white">İşlem geçmişi</h2>
             <p className="mt-1 text-xs leading-5 text-zinc-500">
@@ -444,7 +473,7 @@ export function AdminUserDetailTabs({
           <AdminActionTimeline logs={actionLogs} />
         </TabsContent>
 
-        <TabsContent value="actions">
+        <TabsContent value="actions" className="pt-2">
           <AdminUserActions
             userId={userId}
             products={products}
@@ -462,8 +491,8 @@ export function AdminUserDetailTabs({
           />
         </TabsContent>
 
-        <TabsContent value="diagnostic">
-          <div className="grid gap-3">
+        <TabsContent value="diagnostic" className="pt-2">
+          <div className="grid gap-3 lg:grid-cols-2">
             <div className="rounded-lg border border-white/[0.07] bg-[#0c0d10] p-3">
               <p className="text-zinc-500">Tanılama adresi</p>
               <code className="mt-1 block break-all font-mono text-xs text-zinc-200">
@@ -485,6 +514,6 @@ export function AdminUserDetailTabs({
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+    </section>
   );
 }
