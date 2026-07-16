@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { auth } from "@/auth";
@@ -12,6 +11,7 @@ import {
 } from "@/lib/admin-2fa";
 import { prisma } from "@/src/db/prisma";
 import { getAdminSession } from "@/src/server/admin";
+import { TwoFactorEnrollment } from "./enrollment-form";
 
 export const metadata: Metadata = {
   title: "Admin 2FA Kurulum | İmleç Yazılım",
@@ -107,20 +107,7 @@ export default async function Admin2FASetupPage() {
           QR kodu Microsoft Authenticator veya RFC 6238 uyumlu TOTP uygulaması
           ile tarayın. Ardından doğrulama kodunu girin.
         </p>
-        <div className="mt-6 flex justify-center rounded-xl border border-white/[0.08] bg-white p-4">
-          <Image
-            alt="Admin 2FA QR kodu"
-            height={240}
-            src={qrDataUrl}
-            width={240}
-          />
-        </div>
-        <a
-          className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg bg-zinc-100 px-5 text-sm font-medium text-zinc-950 transition hover:bg-white"
-          href="/admin/2fa/verify"
-        >
-          Kodu doğrula
-        </a>
+        <TwoFactorEnrollment qrDataUrl={qrDataUrl} />
       </section>
     </main>
   );
