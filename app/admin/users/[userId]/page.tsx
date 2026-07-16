@@ -179,6 +179,22 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
     notFound();
   }
 
+  const actionAdminIds = [
+    ...new Set(actionLogs.map((log) => log.adminId)),
+  ];
+  const actionAdmins = actionAdminIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: actionAdminIds } },
+        select: { id: true, name: true, username: true, email: true },
+      })
+    : [];
+  const actionAdminNames = new Map(
+    actionAdmins.map((actor) => [
+      actor.id,
+      actor.name ?? actor.username ?? actor.email,
+    ]),
+  );
+
   const canManageStaff =
     admin.session.user.role === UserRole.OWNER ||
     admin.session.user.role === UserRole.ADMIN;
@@ -401,6 +417,8 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
               actionLogs={actionLogs.map((log) => ({
                 id: log.id,
                 adminId: log.adminId,
+                adminName:
+                  actionAdminNames.get(log.adminId) ?? "Bilinmeyen personel",
                 action: log.action,
                 before: log.before,
                 after: log.after,

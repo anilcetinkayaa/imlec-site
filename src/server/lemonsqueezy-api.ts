@@ -32,6 +32,20 @@ export async function cancelLemonSqueezySubscription(
 }
 
 export async function getLemonSqueezySubscriptionForOrder(orderId: string) {
+  return getLemonSqueezySubscription({
+    orderId,
+  });
+}
+
+export async function getLemonSqueezySubscriptionForEmail(userEmail: string) {
+  return getLemonSqueezySubscription({
+    userEmail,
+  });
+}
+
+async function getLemonSqueezySubscription(
+  filter: { orderId: string } | { userEmail: string },
+) {
   const apiKey = process.env.LEMONSQUEEZY_API_KEY?.trim();
 
   if (!apiKey) {
@@ -40,9 +54,7 @@ export async function getLemonSqueezySubscriptionForOrder(orderId: string) {
 
   lemonSqueezySetup({ apiKey });
   const response = await listSubscriptions({
-    filter: {
-      orderId,
-    },
+    filter,
     page: {
       size: 1,
     },

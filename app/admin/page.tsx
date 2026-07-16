@@ -10,7 +10,10 @@ import { redirect } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { prisma } from "@/src/db/prisma";
 import { getAdminSession } from "@/src/server/admin";
-import { getLemonSqueezySubscriptionForOrder } from "@/src/server/lemonsqueezy-api";
+import {
+  getLemonSqueezySubscriptionForEmail,
+  getLemonSqueezySubscriptionForOrder,
+} from "@/src/server/lemonsqueezy-api";
 import {
   AdminEmptyState,
   AdminPageHeader,
@@ -378,9 +381,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         }
 
         const orderId = orderIdByUser.get(membership.userId);
-        const subscription = orderId
-          ? await getLemonSqueezySubscriptionForOrder(orderId)
-          : null;
+        const subscription =
+          (orderId
+            ? await getLemonSqueezySubscriptionForOrder(orderId)
+            : null) ??
+          (await getLemonSqueezySubscriptionForEmail(membership.user.email));
         return [membership.userId, subscription] as const;
       }),
     ),
@@ -540,9 +545,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   const effectiveStatus =
                     subscription?.status ??
                     providerSubscription?.status ??
-                    (isTest && membership.status === EntitlementStatus.ACTIVE
-                      ? SubscriptionStatus.TRIALING
-                      : membership.status);
+                    membership.status;
                   const scheduleDate =
                     effectiveStatus === SubscriptionStatus.TRIALING ||
                     effectiveStatus === "on_trial"
@@ -602,8 +605,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         <p className="mt-1 font-mono text-xs text-[var(--text-secondary)]">
                           {scheduleDate
                             ? formatDate(scheduleDate)
-                            : "Abonelik webhook'u alınmadı"}
+                            : "Yenileme bilgisi bekleniyor"}
                         </p>
+                        {!scheduleDate ? (
+                          <p className="mt-1 text-xs leading-5 text-[var(--text-tertiary)]">
+                            Sipariş ve ürün erişimi mevcut. Abonelik tarihi henüz
+                            Lemon Squeezy kaydıyla eşleşmedi.
+                          </p>
+                        ) : null}
                       </div>
                     </div>
                   );
