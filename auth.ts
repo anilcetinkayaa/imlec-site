@@ -5,6 +5,8 @@ import { prisma } from "@/src/db/prisma";
 import { normalizeEmail, verifyPassword } from "@/src/server/auth/password";
 import { normalizeStaffUsername } from "@/src/server/admin-permissions";
 
+const ADMIN_PANEL_ROLES = new Set(["OWNER", "ADMIN", "SUPPORT"]);
+
 export const authConfig = {
   adapter: PrismaAdapter(prisma),
   secret: process.env.AUTH_SECRET,
@@ -94,7 +96,8 @@ export const authConfig = {
       if (
         trigger === "update" &&
         session?.user?.twoFactorVerified === true &&
-        token.role === "ADMIN"
+        token.role &&
+        ADMIN_PANEL_ROLES.has(token.role)
       ) {
         token.twoFactorRequired = true;
         token.twoFactorVerified = true;

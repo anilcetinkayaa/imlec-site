@@ -1,6 +1,5 @@
 "use server";
 
-import { UserRole } from "@prisma/client";
 import { timingSafeEqual } from "node:crypto";
 import { redirect } from "next/navigation";
 import { update } from "@/auth";
@@ -127,7 +126,6 @@ export async function verify2FAAction(
         },
         data: {
           twoFactorEnabled: true,
-          role: UserRole.ADMIN,
         },
       }),
     ]);

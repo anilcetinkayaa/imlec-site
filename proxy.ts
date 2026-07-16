@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+const ADMIN_PANEL_ROLES = new Set(["OWNER", "ADMIN", "SUPPORT"]);
+
 export async function proxy(request: NextRequest) {
   const forwardedProto = request.headers.get("x-forwarded-proto");
   const secureCookie =
@@ -46,7 +48,7 @@ export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/admin")) {
     const is2FARoute = request.nextUrl.pathname.startsWith("/admin/2fa");
 
-    if (token.role !== "ADMIN") {
+    if (!token.role || !ADMIN_PANEL_ROLES.has(token.role)) {
       return NextResponse.redirect(new URL("/", request.url));
     }
 
