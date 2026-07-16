@@ -95,7 +95,7 @@ export default async function Admin2FASetupPage() {
   });
 
   return (
-    <main className="min-h-screen bg-[#08090b] px-6 py-12 text-zinc-100">
+    <main className="min-h-screen px-6 py-12 text-zinc-100">
       <section className="mx-auto max-w-xl rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6">
         <p className="font-mono text-xs uppercase tracking-[0.22em] text-blue-300">
           Admin 2FA

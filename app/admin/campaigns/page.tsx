@@ -1,21 +1,26 @@
-import { EntitlementSource } from "@prisma/client";
+import { EntitlementSource, UserRole } from "@prisma/client";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/src/db/prisma";
 import { getAdminSession } from "@/src/server/admin";
+import {
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminPanel,
+} from "@/components/admin/ui";
+import { CampaignGrantForm, type CampaignPreset } from "./campaign-form";
 
 export const metadata: Metadata = {
   title: "Kampanyalar | İmleç Admin",
   description: "Deneme, elde tutma ve telafi kampanyalarını yönetin.",
 };
 
-const campaignPresets = [
+const campaignPresets: CampaignPreset[] = [
   {
     code: "TRIAL_7",
     title: "7 gün ücretsiz deneme",
     days: 7,
-    description: "Yeni üyeye FIS260 deneme erişimi verir.",
+    description: "Yeni üyeye FİŞ260 deneme erişimi verir.",
   },
   {
     code: "RETENTION_14",
@@ -31,6 +36,13 @@ const campaignPresets = [
   },
 ];
 
+const sourceLabels: Record<string, string> = {
+  TRIAL: "Deneme",
+  MANUAL: "Manuel",
+  ADMIN: "Admin",
+  LEMON_SQUEEZY: "Satın alma",
+};
+
 function formatDate(date: Date | null) {
   if (!date) {
     return "-";
@@ -45,6 +57,30 @@ function formatDate(date: Date | null) {
   }).format(date);
 }
 
+function monthStart() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+}
+
+type CampaignLogDetails = {
+  campaignCode?: string;
+  days?: number;
+  reason?: string | null;
+};
+
+function parseLogDetails(value: unknown): CampaignLogDetails {
+  if (!value || typeof value !== "object") {
+    return {};
+  }
+  const record = value as Record<string, unknown>;
+  return {
+    campaignCode:
+      typeof record.campaignCode === "string" ? record.campaignCode : undefined,
+    days: typeof record.days === "number" ? record.days : undefined,
+    reason: typeof record.reason === "string" ? record.reason : null,
+  };
+}
+
 export default async function AdminCampaignsPage() {
   const admin = await getAdminSession();
 
@@ -56,7 +92,13 @@ export default async function AdminCampaignsPage() {
     redirect("/admin");
   }
 
-  const [products, recentEntitlements, recentCampaignLogs] = await Promise.all([
+  const [
+    products,
+    recentEntitlements,
+    recentCampaignLogs,
+    customerEmailRows,
+    monthlyCampaignLogs,
+  ] = await Promise.all([
     prisma.product.findMany({
       orderBy: { name: "asc" },
       select: { id: true, name: true, slug: true },
@@ -76,185 +118,183 @@ export default async function AdminCampaignsPage() {
       where: { action: "CAMPAIGN_GRANT" },
       orderBy: { createdAt: "desc" },
       take: 12,
+      select: {
+        id: true,
+        targetUserId: true,
+        createdAt: true,
+        after: true,
+      },
+    }),
+    prisma.user.findMany({
+      where: { role: UserRole.USER },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      select: { email: true },
+    }),
+    prisma.adminActionLog.findMany({
+      where: {
+        action: "CAMPAIGN_GRANT",
+        createdAt: { gte: monthStart() },
+      },
+      select: { after: true },
     }),
   ]);
 
+  const targetIds = [
+    ...new Set(
+      recentCampaignLogs
+        .map((log) => log.targetUserId)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const targets = targetIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: targetIds } },
+        select: { id: true, email: true, name: true },
+      })
+    : [];
+  const targetMap = new Map(
+    targets.map((target) => [target.id, target.name ?? target.email]),
+  );
+
+  const monthlyByCode = new Map<string, number>();
+  for (const log of monthlyCampaignLogs) {
+    const code = parseLogDetails(log.after).campaignCode ?? "OTHER";
+    monthlyByCode.set(code, (monthlyByCode.get(code) ?? 0) + 1);
+  }
+
   return (
-    <main className="min-h-screen bg-[#08090b] px-6 py-8 text-zinc-100">
+    <main className="min-h-screen px-6 py-8">
       <div className="mx-auto max-w-6xl">
-        <div className="flex flex-col gap-4 border-b border-white/[0.08] pb-6 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-amber-300/80">
-              Müşteri kazanımı
-            </p>
-            <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-              Kampanyalar
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm text-zinc-400">
-              Deneme, iptal kurtarma ve telafi erişimlerini tek yerden tanımlayın.
-              İşlemler entitlement olarak yazılır ve admin loguna düşer.
-            </p>
-          </div>
-          <Link
-            href="/admin"
-            className="rounded-lg border border-white/[0.12] px-4 py-2 text-sm text-zinc-300 transition hover:bg-white/[0.05]"
-          >
-            Admin ana sayfa
-          </Link>
-        </div>
-
-        <section className="mt-6 grid gap-4 md:grid-cols-3">
-          {campaignPresets.map((preset) => (
-            <div
-              key={preset.code}
-              className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-5"
-            >
-              <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-300/80">
-                {preset.days} gün
-              </p>
-              <h2 className="mt-3 text-xl font-semibold tracking-tight">
-                {preset.title}
-              </h2>
-              <p className="mt-2 text-sm text-zinc-400">{preset.description}</p>
-            </div>
-          ))}
-        </section>
-
-        <section className="mt-6 rounded-xl border border-white/[0.08] bg-white/[0.025] p-5">
-          <h2 className="text-2xl font-semibold tracking-tight">
-            Kampanya tanımla
-          </h2>
-          <form
-            action="/api/admin/campaigns/grant"
-            method="post"
-            className="mt-5 grid gap-4 md:grid-cols-2"
-          >
-            <label className="grid gap-2 text-sm text-zinc-300">
-              Kullanıcı e-postası
-              <input
-                name="email"
-                type="email"
-                required
-                placeholder="musteri@example.com"
-                className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-amber-300/50"
-              />
-            </label>
-            <label className="grid gap-2 text-sm text-zinc-300">
-              Ürün
-              <select
-                name="productId"
-                required
-                className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none focus:border-amber-300/50"
-              >
-                {products.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name} ({product.slug})
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="grid gap-2 text-sm text-zinc-300">
-              Kampanya tipi
-              <select
-                name="campaignCode"
-                required
-                className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none focus:border-amber-300/50"
-              >
-                {campaignPresets.map((preset) => (
-                  <option key={preset.code} value={preset.code}>
-                    {preset.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="grid gap-2 text-sm text-zinc-300">
-              Gün
-              <input
-                name="days"
-                type="number"
-                min={1}
-                max={365}
-                defaultValue={7}
-                required
-                className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-sm text-white outline-none focus:border-amber-300/50"
-              />
-            </label>
-            <label className="grid gap-2 text-sm text-zinc-300 md:col-span-2">
-              Not
-              <textarea
-                name="reason"
-                rows={3}
-                placeholder="Örn. İlk görüşme sonrası 7 gün deneme verildi."
-                className="rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 py-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-amber-300/50"
-              />
-            </label>
-            <div className="md:col-span-2">
-              <button className="h-11 rounded-lg bg-amber-300 px-5 text-sm font-medium text-amber-950 transition hover:bg-amber-200">
-                Kampanyayı uygula
-              </button>
-            </div>
-          </form>
-        </section>
-
-        <section className="mt-6 overflow-hidden rounded-xl border border-white/[0.08]">
-          <div className="grid grid-cols-[1.3fr_1fr_0.8fr_0.8fr_1fr] bg-white/[0.035] px-4 py-3 text-xs uppercase tracking-[0.12em] text-zinc-500">
-            <span>Kullanıcı</span>
-            <span>Ürün</span>
-            <span>Kaynak</span>
-            <span>Bitiş</span>
-            <span>Güncelleme</span>
-          </div>
-          {recentEntitlements.length > 0 ? (
-            recentEntitlements.map((entitlement) => (
-              <div
-                key={entitlement.id}
-                className="grid grid-cols-[1.3fr_1fr_0.8fr_0.8fr_1fr] border-t border-white/[0.07] px-4 py-3 text-sm text-zinc-300"
-              >
-                <span className="truncate text-white">
-                  {entitlement.user.email}
-                </span>
-                <span>{entitlement.product.name}</span>
-                <span>{entitlement.source}</span>
-                <span>{formatDate(entitlement.expiresAt)}</span>
-                <span>{formatDate(entitlement.updatedAt)}</span>
-              </div>
-            ))
-          ) : (
-            <div className="border-t border-white/[0.07] px-4 py-5 text-sm text-zinc-500">
-              Henüz deneme veya manuel kampanya yok.
-            </div>
-          )}
-        </section>
-
-        <section className="mt-6 rounded-xl border border-white/[0.08] bg-white/[0.025] p-5">
-          <h2 className="text-xl font-semibold tracking-tight">
-            Son kampanya logları
-          </h2>
-          <div className="mt-4 grid gap-3">
-            {recentCampaignLogs.length > 0 ? (
-              recentCampaignLogs.map((log) => (
+        <AdminPageHeader
+          eyebrow="Müşteri kazanımı"
+          tone="warning"
+          title="Kampanyalar"
+          lead="Deneme, iptal kurtarma ve telafi erişimlerini tek yerden tanımlayın. İşlemler entitlement olarak yazılır ve admin loguna düşer."
+          actions={
+            <div className="flex gap-2">
+              {campaignPresets.map((preset) => (
                 <div
-                  key={log.id}
-                  className="rounded-lg border border-white/[0.07] bg-[#0c0d10] px-4 py-3 text-sm text-zinc-300"
+                  key={preset.code}
+                  className="rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-white/[0.025] px-3 py-2 text-center"
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span className="font-mono text-xs text-amber-200">
-                      {log.action}
-                    </span>
-                    <span className="text-xs text-zinc-500">
-                      {formatDate(log.createdAt)}
-                    </span>
-                  </div>
-                  <p className="mt-2 truncate text-xs text-zinc-500">
-                    Hedef kullanıcı: {log.targetUserId ?? "-"}
+                  <p className="text-lg font-semibold text-[var(--text-primary)]">
+                    {monthlyByCode.get(preset.code) ?? 0}
+                  </p>
+                  <p className="font-mono text-[10px] uppercase tracking-wide text-[var(--text-tertiary)]">
+                    {preset.days}g / bu ay
                   </p>
                 </div>
-              ))
+              ))}
+            </div>
+          }
+        />
+
+        <div className="mt-6">
+          <CampaignGrantForm
+            presets={campaignPresets}
+            products={products}
+            customerEmails={customerEmailRows.map((row) => row.email)}
+          />
+        </div>
+
+        <AdminPanel
+          className="mt-6"
+          eyebrow="Aktif tanımlar"
+          title="Deneme ve manuel erişimler"
+        >
+          <div className="mt-4 overflow-x-auto rounded-[var(--radius-md)] border border-[var(--border-subtle)]">
+            <div className="grid min-w-[720px] grid-cols-[1.3fr_1fr_0.8fr_0.9fr_0.9fr] bg-white/[0.035] px-4 py-3 text-xs uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+              <span>Kullanıcı</span>
+              <span>Ürün</span>
+              <span>Kaynak</span>
+              <span>Bitiş</span>
+              <span>Güncelleme</span>
+            </div>
+            {recentEntitlements.length > 0 ? (
+              recentEntitlements.map((entitlement) => {
+                const expired =
+                  entitlement.expiresAt && entitlement.expiresAt < new Date();
+
+                return (
+                  <div
+                    key={entitlement.id}
+                    className="grid min-w-[720px] grid-cols-[1.3fr_1fr_0.8fr_0.9fr_0.9fr] items-center border-t border-[var(--border-subtle)] px-4 py-3 text-sm text-[var(--text-secondary)]"
+                  >
+                    <span className="truncate text-[var(--text-primary)]">
+                      {entitlement.user.email}
+                    </span>
+                    <span>{entitlement.product.name}</span>
+                    <span>
+                      {sourceLabels[entitlement.source] ?? entitlement.source}
+                    </span>
+                    <span
+                      className={`font-mono text-xs ${
+                        expired ? "text-[var(--danger)]" : ""
+                      }`}
+                    >
+                      {formatDate(entitlement.expiresAt)}
+                    </span>
+                    <span className="font-mono text-xs">
+                      {formatDate(entitlement.updatedAt)}
+                    </span>
+                  </div>
+                );
+              })
             ) : (
-              <p className="text-sm text-zinc-500">Kampanya logu yok.</p>
+              <div className="border-t border-[var(--border-subtle)] p-4">
+                <AdminEmptyState>
+                  Henüz deneme veya manuel kampanya yok.
+                </AdminEmptyState>
+              </div>
             )}
           </div>
-        </section>
+        </AdminPanel>
+
+        <AdminPanel
+          className="mt-6"
+          eyebrow="Denetim"
+          title="Son kampanya logları"
+        >
+          <div className="mt-4 grid gap-3">
+            {recentCampaignLogs.length > 0 ? (
+              recentCampaignLogs.map((log) => {
+                const details = parseLogDetails(log.after);
+                const preset = campaignPresets.find(
+                  (item) => item.code === details.campaignCode,
+                );
+
+                return (
+                  <div
+                    key={log.id}
+                    className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-0)]/60 px-4 py-3 text-sm text-[var(--text-secondary)]"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <span className="font-mono text-xs text-[var(--warning)]">
+                        {preset?.title ?? details.campaignCode ?? "Kampanya"}
+                        {details.days ? ` • ${details.days} gün` : ""}
+                      </span>
+                      <span className="text-xs text-[var(--text-tertiary)]">
+                        {formatDate(log.createdAt)}
+                      </span>
+                    </div>
+                    <p className="mt-2 truncate text-xs text-[var(--text-tertiary)]">
+                      Hedef:{" "}
+                      <span className="text-[var(--text-secondary)]">
+                        {log.targetUserId
+                          ? targetMap.get(log.targetUserId) ?? log.targetUserId
+                          : "-"}
+                      </span>
+                      {details.reason ? ` — ${details.reason}` : ""}
+                    </p>
+                  </div>
+                );
+              })
+            ) : (
+              <AdminEmptyState>Kampanya logu yok.</AdminEmptyState>
+            )}
+          </div>
+        </AdminPanel>
       </div>
     </main>
   );

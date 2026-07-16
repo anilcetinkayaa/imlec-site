@@ -77,7 +77,7 @@ export async function createStaffUser(
   if (!username || username.length < 3) {
     return {
       ok: false,
-      message: "Kullanici adi en az 3 karakter olmali. Ornek: GVARDARLI.",
+      message: "Kullanıcı adı en az 3 karakter olmalı.",
     };
   }
 

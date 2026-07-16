@@ -12,6 +12,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/src/db/prisma";
+import { cancelLemonSqueezySubscription } from "@/src/server/lemonsqueezy-api";
 
 const requestTypes = new Set(Object.values(BillingRequestType));
 const requestReasons = new Set(Object.values(BillingRequestReason));
@@ -126,6 +127,8 @@ export async function cancelSubscriptionNow(formData: FormData) {
     select: {
       id: true,
       productId: true,
+      provider: true,
+      providerSubscriptionId: true,
       status: true,
       renewsAt: true,
       endsAt: true,
@@ -137,13 +140,40 @@ export async function cancelSubscriptionNow(formData: FormData) {
     redirect("/account/billing?billingRequest=invalid");
   }
 
+  if (subscription.provider !== "lemonsqueezy") {
+    redirect("/account/billing?billingRequest=provider_unsupported");
+  }
+
+  let providerEndsAt: Date | null = null;
+  let providerCancelFailed = false;
+
+  try {
+    const cancellation = await cancelLemonSqueezySubscription(
+      subscription.providerSubscriptionId,
+    );
+    providerEndsAt = cancellation.endsAt;
+  } catch (error) {
+    console.error(
+      "[LEMONSQUEEZY CANCEL ERROR]",
+      error instanceof Error ? error.message : "UNKNOWN_ERROR",
+    );
+    providerCancelFailed = true;
+  }
+
+  if (providerCancelFailed) {
+    redirect("/account/billing?billingRequest=cancel_failed");
+  }
+
   const now = new Date();
   const isTrial =
     subscription.status === SubscriptionStatus.TRIALING &&
     (!subscription.trialEndsAt || subscription.trialEndsAt > now);
-  const accessEndsAt = isTrial
-    ? now
-    : subscription.endsAt ?? subscription.renewsAt ?? now;
+  const accessEndsAt =
+    providerEndsAt ??
+    subscription.endsAt ??
+    subscription.renewsAt ??
+    subscription.trialEndsAt ??
+    now;
   const keepAccessUntilPeriodEnd = accessEndsAt > now;
 
   await prisma.$transaction(async (tx) => {
@@ -161,8 +191,11 @@ export async function cancelSubscriptionNow(formData: FormData) {
       where: {
         userId: session.user.id,
         productId: subscription.productId,
-        subscriptionId: subscription.id,
         source: EntitlementSource.LEMON_SQUEEZY,
+        OR: [
+          { subscriptionId: subscription.id },
+          { subscriptionId: null },
+        ],
       },
       data: keepAccessUntilPeriodEnd
         ? {

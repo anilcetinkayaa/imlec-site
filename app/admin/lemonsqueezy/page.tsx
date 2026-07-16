@@ -109,7 +109,7 @@ export default async function AdminLemonSqueezyPage() {
   ]);
 
   return (
-    <main className="min-h-screen bg-[#08090b] px-6 py-8 text-zinc-100">
+    <main className="min-h-screen px-6 py-8 text-zinc-100">
       <div className="mx-auto max-w-7xl">
         <Link href="/admin" className="text-sm text-zinc-400 transition hover:text-white">
           ← Admin

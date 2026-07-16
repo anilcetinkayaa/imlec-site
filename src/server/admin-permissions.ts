@@ -3,57 +3,57 @@ import { UserRole } from "@prisma/client";
 export const ADMIN_PERMISSIONS = [
   {
     key: "DASHBOARD_VIEW",
-    label: "Yonetim ana sayfasini gor",
+    label: "Yönetim ana sayfasını gör",
     group: "Genel",
   },
   {
     key: "STAFF_MANAGE",
-    label: "Personel hesabi ve yetki yonet",
+    label: "Personel hesabı ve yetki yönet",
     group: "Ekip",
   },
   {
     key: "CUSTOMER_MANAGE",
-    label: "Musteri hesaplarini gor ve yonet",
-    group: "Musteri",
+    label: "Müşteri hesaplarını gör ve yönet",
+    group: "Müşteri",
   },
   {
     key: "BILLING_VIEW",
-    label: "Muhasebe, odeme ve iade ekranini gor",
+    label: "Muhasebe, ödeme ve iade ekranını gör",
     group: "Finans",
   },
   {
     key: "SUPPORT_VIEW",
-    label: "Destek ve fis hata bildirimlerini gor",
+    label: "Destek ve fiş hata bildirimlerini gör",
     group: "Destek",
   },
   {
     key: "FEATURE_SUGGESTION_MANAGE",
-    label: "Ozellik onerilerini onayla ve yonet",
-    group: "Urun",
+    label: "Özellik önerilerini onayla ve yönet",
+    group: "Ürün",
   },
   {
     key: "SECURITY_VIEW",
-    label: "Guvenlik ve cihaz olaylarini gor",
-    group: "Guvenlik",
+    label: "Güvenlik ve cihaz olaylarını gör",
+    group: "Güvenlik",
   },
   {
     key: "CAMPAIGN_MANAGE",
-    label: "Kampanya ve manuel erisim yonet",
+    label: "Kampanya ve manuel erişim yönet",
     group: "Pazarlama",
   },
   {
     key: "RELEASE_MANAGE",
-    label: "Surum, duyuru ve launcher yayinlarini yonet",
-    group: "Yayin",
+    label: "Sürüm, duyuru ve launcher yayınlarını yönet",
+    group: "Yayın",
   },
   {
     key: "ORGANIZATION_MANAGE",
-    label: "Sirket ve paket hesaplarini yonet",
+    label: "Şirket ve paket hesaplarını yönet",
     group: "Kurumsal",
   },
   {
     key: "LEMONSQUEEZY_VIEW",
-    label: "Lemon Squeezy kayitlarini gor",
+    label: "Lemon Squeezy kayıtlarını gör",
     group: "Finans",
   },
 ] as const;
@@ -72,7 +72,7 @@ export function roleLabel(role: UserRole) {
     case UserRole.SUPPORT:
       return "Personel";
     default:
-      return "Musteri";
+      return "Müşteri";
   }
 }
 

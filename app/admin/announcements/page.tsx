@@ -74,7 +74,7 @@ function publicationStatus(announcement: {
 
 function ForbiddenView() {
   return (
-    <main className="min-h-screen bg-[#08090b] px-6 py-10 text-zinc-100">
+    <main className="min-h-screen px-6 py-10 text-zinc-100">
       <div className="mx-auto max-w-3xl rounded-xl border border-white/[0.08] bg-white/[0.025] p-6">
         <p className="font-mono text-xs uppercase tracking-[0.22em] text-red-300">
           Erişim reddedildi
@@ -150,7 +150,7 @@ export default async function AdminAnnouncementsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-[#08090b] px-6 py-8 text-zinc-100">
+    <main className="min-h-screen px-6 py-8 text-zinc-100">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-4 border-b border-white/[0.08] pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>

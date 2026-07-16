@@ -206,8 +206,23 @@ export default async function AccountBillingPage({
           <Badge variant="active">Iptal tamamlandi</Badge>
           <p className="text-body-s mt-3 text-[var(--text-secondary)]">
             {params.billingRequest === "canceled_period"
-              ? "Aboneliginiz iptal edildi. Odenmis donem sonuna kadar erisiminiz korunur; yenileme yapilmaz."
-              : "Deneme/abonelik iptal edildi. Ucret alinmadan erisim kapatildi."}
+              ? "Aboneliğiniz Lemon Squeezy üzerinde iptal edildi. Sağlayıcının bildirdiği dönem sonuna kadar erişiminiz korunur; otomatik yenileme yapılmaz."
+              : "Deneme veya abonelik Lemon Squeezy üzerinde iptal edildi. Otomatik yenileme durduruldu ve erişim kapatıldı."}
+          </p>
+        </Card>
+      ) : null}
+
+      {params.billingRequest === "cancel_failed" ||
+      params.billingRequest === "provider_unsupported" ? (
+        <Card
+          className="mb-5 border-red-300/25 bg-red-300/[0.06] p-5"
+          variant="default"
+        >
+          <Badge variant="coming-soon">İptal tamamlanamadı</Badge>
+          <p className="text-body-s mt-3 text-[var(--text-secondary)]">
+            Abonelik sağlayıcısına ulaşılamadığı için yenileme durdurulmadı.
+            Hesabınızda herhangi bir iptal değişikliği yapılmadı. Lütfen kısa
+            süre sonra yeniden deneyin veya destek ile iletişime geçin.
           </p>
         </Card>
       ) : null}

@@ -256,7 +256,7 @@ export default async function AdminAccountingPage() {
   const openBillingRequestCount = billingRequests.length;
 
   return (
-    <main className="min-h-screen bg-[#08090b] px-6 py-8 text-zinc-100">
+    <main className="min-h-screen px-6 py-8 text-zinc-100">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-4 border-b border-white/[0.08] pb-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
