@@ -361,17 +361,20 @@ class ApiClient:
         return payload
 
     def device_headers(self) -> dict[str, str]:
+        installed_fis260 = read_installed_version("fis260")
         return {
             "X-Imlec-Device-Id": stable_device_fingerprint(self.settings),
             "X-Imlec-Device-Name": socket.gethostname(),
             "X-Imlec-OS": platform.platform(),
             "X-Imlec-App-Version": LAUNCHER_VERSION,
+            "X-Imlec-Product-Version": installed_fis260,
         }
 
     def register_fis260_device(self) -> None:
         token = self.token()
         if not token:
             return
+        installed_fis260 = read_installed_version("fis260")
         try:
             requests.post(
                 f"{AUTH_BASE_URL}/api/desktop-auth/device/register",
@@ -379,7 +382,8 @@ class ApiClient:
                     "deviceId": stable_device_fingerprint(self.settings),
                     "deviceName": socket.gethostname(),
                     "os": platform.platform(),
-                    "appVersion": LAUNCHER_VERSION,
+                    "appVersion": installed_fis260,
+                    "launcherVersion": LAUNCHER_VERSION,
                 },
                 headers={"Authorization": f"Bearer {token}"},
                 timeout=15,

@@ -24,6 +24,7 @@ type DeviceRegisterBody = {
   deviceName?: string;
   os?: string;
   appVersion?: string;
+  launcherVersion?: string;
 };
 
 function jsonError(error: string, status: number) {
@@ -46,7 +47,9 @@ function isDeviceRegisterBody(value: unknown): value is DeviceRegisterBody {
     typeof value.deviceId === "string" &&
     (!("deviceName" in value) || typeof value.deviceName === "string") &&
     (!("os" in value) || typeof value.os === "string") &&
-    (!("appVersion" in value) || typeof value.appVersion === "string")
+    (!("appVersion" in value) || typeof value.appVersion === "string") &&
+    (!("launcherVersion" in value) ||
+      typeof value.launcherVersion === "string")
   );
 }
 
@@ -373,6 +376,7 @@ export async function POST(request: Request) {
       deviceName: cleanOptionalText(body.deviceName),
       os: cleanOptionalText(body.os),
       appVersion: cleanOptionalText(body.appVersion),
+      launcherVersion: cleanOptionalText(body.launcherVersion),
       status: DeviceStatus.ACTIVE,
       lastSeenAt: new Date(),
       trustedUntil,
@@ -384,6 +388,7 @@ export async function POST(request: Request) {
       deviceName: cleanOptionalText(body.deviceName),
       os: cleanOptionalText(body.os),
       appVersion: cleanOptionalText(body.appVersion),
+      launcherVersion: cleanOptionalText(body.launcherVersion),
       status: DeviceStatus.ACTIVE,
       lastSeenAt: new Date(),
       trustedUntil,

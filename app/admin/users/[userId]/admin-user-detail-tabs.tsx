@@ -48,8 +48,16 @@ type DeviceItem = {
   deviceName: string;
   os: string;
   appVersion: string;
+  launcherVersion: string;
+  versionRecordType: "verified-separate" | "legacy-ambiguous";
+  latestProductVersion: string;
+  latestLauncherVersion: string;
+  productUpdateAvailable: boolean;
+  launcherUpdateAvailable: boolean;
   status: string;
   lastSeenAt: string;
+  trustedUntil: string;
+  registeredAt: string;
   revokedAt: string;
 };
 
@@ -86,6 +94,17 @@ type AdminUserDetailTabsProps = {
   downloadLogs: DownloadLogItem[];
   actionLogs: ActionLogItem[];
   notes: UserNoteItem[];
+  customerSummary: {
+    memberSince: string;
+    membershipDuration: string;
+    subscriptionStatus: string;
+    nextRenewal: string;
+    accessEndsAt: string;
+    paymentCount: number;
+    totalPaid: string;
+    lastPayment: string;
+    testMode: boolean;
+  };
   diagnostic: {
     productExists: boolean;
     latestReason: string;
@@ -116,6 +135,10 @@ const statusLabels: Record<string, string> = {
   MANUAL: "Manuel",
   ADMIN: "Yönetici",
   LEMON_SQUEEZY: "Lemon Squeezy",
+  TRIALING: "Deneme",
+  PAST_DUE: "Ödeme bekleniyor",
+  CANCELED: "Yenileme kapalı",
+  PAUSED: "Duraklatıldı",
 };
 
 function StatusBadge({ value }: { value: string }) {
@@ -280,6 +303,7 @@ export function AdminUserDetailTabs({
   downloadLogs,
   actionLogs,
   notes,
+  customerSummary,
   diagnostic,
 }: AdminUserDetailTabsProps) {
   return (
@@ -376,6 +400,51 @@ export function AdminUserDetailTabs({
               </div>
             </div>
 
+            <div className="rounded-xl border border-emerald-300/15 bg-emerald-300/[0.025] p-5 lg:col-span-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium text-white">
+                    Üyelik ve ödeme özeti
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-zinc-400">
+                    Lemon Squeezy aboneliğinin süresi, yenilemesi ve tahsilat
+                    geçmişi.
+                  </p>
+                </div>
+                {customerSummary.testMode ? (
+                  <span className="w-fit rounded-md border border-violet-300/25 bg-violet-300/10 px-2 py-1 text-xs text-violet-200">
+                    Test modu
+                  </span>
+                ) : null}
+              </div>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {[
+                  ["Üyelik başlangıcı", customerSummary.memberSince],
+                  ["Üyelik süresi", customerSummary.membershipDuration],
+                  [
+                    "Abonelik durumu",
+                    statusLabels[customerSummary.subscriptionStatus] ??
+                      customerSummary.subscriptionStatus,
+                  ],
+                  ["Sonraki yenileme", customerSummary.nextRenewal],
+                  ["Erişim bitişi", customerSummary.accessEndsAt],
+                  ["Başarılı ödeme", String(customerSummary.paymentCount)],
+                  ["Toplam tahsilat", customerSummary.totalPaid],
+                  ["Son ödeme", customerSummary.lastPayment],
+                ].map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="rounded-lg border border-white/[0.07] bg-black/15 p-3"
+                  >
+                    <p className="text-xs text-zinc-500">{label}</p>
+                    <p className="mt-2 break-words font-mono text-xs leading-5 text-zinc-200">
+                      {value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-5 lg:col-span-2">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
@@ -446,18 +515,18 @@ export function AdminUserDetailTabs({
 
               {devices.length > 0 ? (
                 <div className="mt-4 overflow-x-auto rounded-lg border border-white/[0.07]">
-                  <div className="grid min-w-[820px] grid-cols-[1.2fr_1fr_0.8fr_0.7fr_0.8fr_1fr] bg-white/[0.03] px-4 py-3 text-xs text-zinc-500">
+                  <div className="grid min-w-[1080px] grid-cols-[1.15fr_0.9fr_1fr_1.15fr_0.8fr_1fr] bg-white/[0.03] px-4 py-3 text-xs text-zinc-500">
                     <span>Cihaz</span>
                     <span>Ürün</span>
                     <span>Sistem</span>
-                    <span>Sürüm</span>
+                    <span>Sürüm bilgisi</span>
                     <span>Durum</span>
                     <span>Son bağlantı</span>
                   </div>
                   {devices.map((device) => (
                     <div
                       key={device.id}
-                      className="grid min-w-[820px] grid-cols-[1.2fr_1fr_0.8fr_0.7fr_0.8fr_1fr] items-center border-t border-white/[0.07] px-4 py-3 text-sm"
+                      className="grid min-w-[1080px] grid-cols-[1.15fr_0.9fr_1fr_1.15fr_0.8fr_1fr] items-center border-t border-white/[0.07] px-4 py-3 text-sm"
                     >
                       <div>
                         <p className="font-medium text-zinc-200">
@@ -473,13 +542,51 @@ export function AdminUserDetailTabs({
                         {device.productName}
                       </span>
                       <span className="text-zinc-400">{device.os}</span>
-                      <span className="font-mono text-xs text-zinc-400">
-                        {device.appVersion}
-                      </span>
+                      <div className="text-xs">
+                        {device.versionRecordType === "verified-separate" ? (
+                          <>
+                            <p className="font-mono text-zinc-200">
+                              FİŞ260 v{device.appVersion}
+                              {device.productUpdateAvailable ? (
+                                <span className="ml-2 text-amber-300">
+                                  Güncelleme var
+                                </span>
+                              ) : null}
+                            </p>
+                            <p className="mt-1 font-mono text-zinc-500">
+                              Launcher v{device.launcherVersion}
+                              {device.launcherUpdateAvailable
+                                ? " · güncelleme var"
+                                : ""}
+                            </p>
+                            <p className="mt-1 text-zinc-500">
+                              Güncel: FİŞ260 v{device.latestProductVersion} ·
+                              Launcher v{device.latestLauncherVersion}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="font-mono text-amber-200">
+                              Eski kayıt: v{device.appVersion}
+                            </p>
+                            <p className="mt-1 leading-5 text-zinc-500">
+                              Bu değer launcher sürümü olabilir. Yeni launcher
+                              bağlantısında iki sürüm ayrı doğrulanır.
+                            </p>
+                            <p className="mt-1 text-zinc-500">
+                              Güncel FİŞ260: v{device.latestProductVersion} ·
+                              Güncel launcher: v{device.latestLauncherVersion}
+                            </p>
+                          </>
+                        )}
+                      </div>
                       <StatusBadge value={device.status} />
-                      <span className="font-mono text-xs text-zinc-400">
-                        {device.lastSeenAt}
-                      </span>
+                      <div className="font-mono text-xs text-zinc-400">
+                        <p>{device.lastSeenAt}</p>
+                        <p className="mt-1 text-zinc-500">
+                          Güven: {device.trustedUntil}
+                        </p>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -544,12 +651,21 @@ export function AdminUserDetailTabs({
                     <div>
                       <p className="font-medium text-white">{device.deviceName}</p>
                       <p className="mt-1 text-sm text-zinc-500">
-                        {device.productName} · {device.os} · {device.appVersion}
+                        {device.productName} · {device.os}
                       </p>
                     </div>
                     <StatusBadge value={device.status} />
                   </div>
                   <p className="mt-3 font-mono text-xs text-zinc-500">
+                    {device.versionRecordType === "verified-separate"
+                      ? `FİŞ260 v${device.appVersion} · Launcher v${device.launcherVersion}`
+                      : `Eski sürüm kaydı v${device.appVersion} · ürün/launcher ayrımı doğrulanamadı`}
+                  </p>
+                  <p className="mt-2 font-mono text-xs text-zinc-500">
+                    Kayıt: {device.registeredAt} · Çevrimdışı güven:{" "}
+                    {device.trustedUntil}
+                  </p>
+                  <p className="mt-2 font-mono text-xs text-zinc-500">
                     Son aktif: {device.lastSeenAt}
                     {device.revokedAt !== "-"
                       ? ` · Kaldırılma: ${device.revokedAt}`

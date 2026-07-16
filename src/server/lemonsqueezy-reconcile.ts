@@ -92,3 +92,44 @@ export async function reconcileLemonSqueezySubscriptions() {
     failed,
   };
 }
+
+export async function reconcileLemonSqueezyUserSubscriptions(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      email: true,
+      entitlements: {
+        where: {
+          source: EntitlementSource.LEMON_SQUEEZY,
+          subscriptionId: null,
+          revokedAt: null,
+          status: { in: ["ACTIVE", "GRACE_PERIOD"] },
+        },
+        select: {
+          productId: true,
+        },
+      },
+    },
+  });
+
+  if (!user || user.entitlements.length === 0) {
+    return { synchronized: false, reason: "NO_ORPHAN_ENTITLEMENT" };
+  }
+
+  const snapshot = await getLemonSqueezySubscriptionForEmail(user.email);
+
+  if (!snapshot) {
+    return { synchronized: false, reason: "PROVIDER_SUBSCRIPTION_NOT_FOUND" };
+  }
+
+  await prisma.$transaction((tx) =>
+    syncLemonSqueezySubscription({
+      tx,
+      userId,
+      productId: user.entitlements[0].productId,
+      snapshot,
+    }),
+  );
+
+  return { synchronized: true };
+}

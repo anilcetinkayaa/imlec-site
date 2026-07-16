@@ -13,6 +13,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { prisma } from "@/src/db/prisma";
 import { getAdminSession } from "@/src/server/admin";
+import { reconcileLemonSqueezyUserSubscriptions } from "@/src/server/lemonsqueezy-reconcile";
 import { AdminUserDetailTabs } from "./admin-user-detail-tabs";
 import {
   resetUserPassword,
@@ -47,6 +48,62 @@ function formatDate(date: Date | null) {
   }).format(date);
 }
 
+function formatMoney(amount: number, currency: string) {
+  return (amount / 100).toLocaleString("tr-TR", {
+    style: "currency",
+    currency,
+  });
+}
+
+function membershipDuration(startedAt: Date | null) {
+  if (!startedAt) {
+    return "-";
+  }
+
+  const days = Math.max(
+    0,
+    Math.floor((Date.now() - startedAt.getTime()) / (24 * 60 * 60 * 1000)),
+  );
+  const months = Math.floor(days / 30);
+  const remainingDays = days % 30;
+
+  if (months < 1) {
+    return `${days} gündür`;
+  }
+
+  return remainingDays
+    ? `${months} ay ${remainingDays} gündür`
+    : `${months} aydır`;
+}
+
+function versionParts(value: string | null) {
+  return (value ?? "")
+    .replace(/^v/i, "")
+    .split(".")
+    .map((part) => Number.parseInt(part, 10))
+    .map((part) => (Number.isFinite(part) ? part : 0));
+}
+
+function versionIsOlder(current: string | null, latest: string | null) {
+  if (!current || !latest) {
+    return null;
+  }
+
+  const left = versionParts(current);
+  const right = versionParts(latest);
+  const length = Math.max(left.length, right.length);
+
+  for (let index = 0; index < length; index += 1) {
+    const currentPart = left[index] ?? 0;
+    const latestPart = right[index] ?? 0;
+    if (currentPart !== latestPart) {
+      return currentPart < latestPart;
+    }
+  }
+
+  return false;
+}
+
 function ForbiddenView() {
   return (
     <main className="min-h-screen px-6 py-10 text-zinc-100">
@@ -74,6 +131,15 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
   }
 
   const { userId } = await params;
+  try {
+    await reconcileLemonSqueezyUserSubscriptions(userId);
+  } catch (error) {
+    console.error(
+      "[ADMIN SUBSCRIPTION SYNC ERROR]",
+      error instanceof Error ? error.message : "UNKNOWN_ERROR",
+    );
+  }
+
   const [
     user,
     products,
@@ -81,6 +147,8 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
     recentDownloadLogs,
     actionLogs,
     notes,
+    latestFis260Version,
+    latestLauncherVersion,
   ] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
@@ -112,9 +180,12 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
             deviceName: true,
             os: true,
             appVersion: true,
+            launcherVersion: true,
             status: true,
             lastSeenAt: true,
+            trustedUntil: true,
             revokedAt: true,
+            createdAt: true,
             product: {
               select: {
                 id: true,
@@ -122,6 +193,19 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
                 slug: true,
               },
             },
+          },
+        },
+        subscriptions: {
+          where: { provider: "lemonsqueezy" },
+          orderBy: { updatedAt: "desc" },
+          include: {
+            product: { select: { name: true } },
+          },
+        },
+        payments: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            product: { select: { name: true } },
           },
         },
       },
@@ -190,6 +274,16 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
         createdAt: true,
       },
     }),
+    prisma.productVersion.findFirst({
+      where: { product: { slug: "fis260" } },
+      orderBy: { createdAt: "desc" },
+      select: { version: true },
+    }),
+    prisma.productVersion.findFirst({
+      where: { product: { slug: "launcher" } },
+      orderBy: { createdAt: "desc" },
+      select: { version: true },
+    }),
   ]);
 
   if (!user) {
@@ -226,6 +320,26 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
     (device) => device.status === "ACTIVE" && !device.revokedAt,
   ).length;
   const displayName = user.name?.trim() || user.email;
+  const activeSubscription = user.subscriptions.find((subscription) =>
+    ["ACTIVE", "TRIALING", "PAST_DUE", "PAUSED"].includes(
+      subscription.status,
+    ),
+  );
+  const membershipStartedAt =
+    activeSubscription?.createdAt ??
+    user.entitlements
+      .filter((entitlement) => entitlement.source === "LEMON_SQUEEZY")
+      .map((entitlement) => entitlement.startsAt)
+      .sort((left, right) => left.getTime() - right.getTime())[0] ??
+    null;
+  const paidPayments = user.payments.filter(
+    (payment) => payment.status === "PAID",
+  );
+  const lastPayment = paidPayments[0] ?? null;
+  const totalPaid = paidPayments.reduce(
+    (sum, payment) => sum + payment.amount,
+    0,
+  );
   const initial = displayName.slice(0, 1).toLocaleUpperCase("tr-TR");
   const summaryStats: Array<{
     label: string;
@@ -357,10 +471,44 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
               deviceName: device.deviceName ?? "-",
               os: device.os ?? "-",
               appVersion: device.appVersion ?? "-",
+              launcherVersion: device.launcherVersion ?? "-",
+              versionRecordType: device.launcherVersion
+                ? "verified-separate"
+                : "legacy-ambiguous",
+              latestProductVersion: latestFis260Version?.version ?? "-",
+              latestLauncherVersion: latestLauncherVersion?.version ?? "-",
+              productUpdateAvailable:
+                versionIsOlder(
+                  device.appVersion,
+                  latestFis260Version?.version ?? null,
+                ) ?? false,
+              launcherUpdateAvailable:
+                versionIsOlder(
+                  device.launcherVersion,
+                  latestLauncherVersion?.version ?? null,
+                ) ?? false,
               status: device.status,
               lastSeenAt: formatDate(device.lastSeenAt),
+              trustedUntil: formatDate(device.trustedUntil),
+              registeredAt: formatDate(device.createdAt),
               revokedAt: formatDate(device.revokedAt),
             }))}
+            customerSummary={{
+              memberSince: formatDate(membershipStartedAt),
+              membershipDuration: membershipDuration(membershipStartedAt),
+              subscriptionStatus: activeSubscription?.status ?? "Kayıt yok",
+              nextRenewal: formatDate(activeSubscription?.renewsAt ?? null),
+              accessEndsAt: formatDate(activeSubscription?.endsAt ?? null),
+              paymentCount: paidPayments.length,
+              totalPaid: formatMoney(
+                totalPaid,
+                lastPayment?.currency ?? "TRY",
+              ),
+              lastPayment: lastPayment
+                ? `${formatMoney(lastPayment.amount, lastPayment.currency)} · ${formatDate(lastPayment.paidAt ?? lastPayment.createdAt)}`
+                : "Kayıt yok",
+              testMode: paidPayments.some((payment) => payment.testMode),
+            }}
             downloadLogs={recentDownloadLogs.map((log) => ({
               id: log.id,
               success: log.success,

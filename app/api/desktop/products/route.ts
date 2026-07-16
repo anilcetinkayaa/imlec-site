@@ -169,7 +169,10 @@ async function desktopDeviceCanDownload({
   const tokenHash = createHash("sha256").update(token).digest("hex");
   const deviceName = request.headers.get("x-imlec-device-name")?.trim() || null;
   const os = request.headers.get("x-imlec-os")?.trim() || null;
-  const appVersion = request.headers.get("x-imlec-app-version")?.trim() || null;
+  const launcherVersion =
+    request.headers.get("x-imlec-app-version")?.trim() || null;
+  const appVersion =
+    request.headers.get("x-imlec-product-version")?.trim() || null;
   let device = await prisma.device.findUnique({
     where: {
       userId_productId_fingerprintHash: {
@@ -225,6 +228,7 @@ async function desktopDeviceCanDownload({
         deviceName,
         os,
         appVersion,
+        launcherVersion,
         status: DeviceStatus.ACTIVE,
         lastSeenAt: new Date(),
       },
@@ -244,6 +248,8 @@ async function desktopDeviceCanDownload({
     prisma.device.update({
       where: { id: device.id },
       data: {
+        appVersion,
+        launcherVersion,
         lastSeenAt: new Date(),
       },
     }),
