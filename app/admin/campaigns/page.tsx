@@ -1,8 +1,9 @@
-import { EntitlementSource, UserRole } from "@prisma/client";
+import { EntitlementSource } from "@prisma/client";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { prisma } from "@/src/db/prisma";
 import { getAdminSession } from "@/src/server/admin";
+import { customerRelationshipWhere } from "@/src/server/customer-relationship";
 import {
   AdminEmptyState,
   AdminPageHeader,
@@ -126,7 +127,7 @@ export default async function AdminCampaignsPage() {
       },
     }),
     prisma.user.findMany({
-      where: { role: UserRole.USER },
+      where: customerRelationshipWhere(),
       orderBy: { createdAt: "desc" },
       take: 200,
       select: { email: true },

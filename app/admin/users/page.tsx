@@ -56,10 +56,7 @@ export default async function AdminUsersPage({
 
   const staffUsers = await prisma.user.findMany({
     where: {
-      OR: [
-        { role: { in: [UserRole.OWNER, UserRole.ADMIN, UserRole.SUPPORT] } },
-        { username: { not: null } },
-      ],
+      role: { in: [UserRole.OWNER, UserRole.ADMIN, UserRole.SUPPORT] },
     },
     orderBy: [{ role: "asc" }, { createdAt: "desc" }],
     take: 120,
@@ -72,6 +69,14 @@ export default async function AdminUsersPage({
       staffPermissions: true,
       role: true,
       disabledAt: true,
+      _count: {
+        select: {
+          entitlements: true,
+          payments: true,
+          subscriptions: true,
+          devices: true,
+        },
+      },
     },
   });
 
@@ -188,6 +193,11 @@ export default async function AdminUsersPage({
               staffUsers.map((user) => {
                 const isPrivileged =
                   user.role === UserRole.OWNER || user.role === UserRole.ADMIN;
+                const isCustomer =
+                  user._count.entitlements > 0 ||
+                  user._count.payments > 0 ||
+                  user._count.subscriptions > 0 ||
+                  user._count.devices > 0;
 
                 return (
                   <div
@@ -225,6 +235,11 @@ export default async function AdminUsersPage({
                       >
                         {roleLabel(user.role)}
                       </span>
+                      {isCustomer ? (
+                        <span className="ml-1 mt-1 inline-flex rounded-full border border-[var(--success)]/25 bg-[var(--success)]/10 px-2 py-0.5 text-[10px] text-[var(--success)]">
+                          Müşteri
+                        </span>
+                      ) : null}
                     </span>
                     <span className="font-mono text-xs">
                       {isPrivileged ? "Tümü" : `${user.staffPermissions.length} ekran`}

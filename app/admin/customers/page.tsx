@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { prisma } from "@/src/db/prisma";
 import { getAdminSession } from "@/src/server/admin";
 import { canUsePermission } from "@/src/server/admin-permissions";
+import { customerRelationshipWhere } from "@/src/server/customer-relationship";
 import {
   AdminEmptyState,
   AdminPageHeader,
@@ -125,23 +126,38 @@ export default async function AdminCustomersPage({
   const filter = parseFilter(params.filter);
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
 
+  const customerFilters: Prisma.UserWhereInput[] = [
+    customerRelationshipWhere(),
+  ];
+
+  if (query) {
+    customerFilters.push({
+      OR: [
+        { email: { contains: query, mode: "insensitive" } },
+        { name: { contains: query, mode: "insensitive" } },
+      ],
+    });
+  }
+
+  if (filter === "active") {
+    customerFilters.push({
+      entitlements: { some: activeEntitlementWhere() },
+    });
+  }
+
+  if (filter === "passive") {
+    customerFilters.push({
+      entitlements: { none: activeEntitlementWhere() },
+      disabledAt: null,
+    });
+  }
+
+  if (filter === "disabled") {
+    customerFilters.push({ disabledAt: { not: null } });
+  }
+
   const where: Prisma.UserWhereInput = {
-    role: UserRole.USER,
-    ...(query
-      ? {
-          OR: [
-            { email: { contains: query, mode: "insensitive" } },
-            { name: { contains: query, mode: "insensitive" } },
-          ],
-        }
-      : {}),
-    ...(filter === "active"
-      ? { entitlements: { some: activeEntitlementWhere() } }
-      : {}),
-    ...(filter === "passive"
-      ? { entitlements: { none: activeEntitlementWhere() }, disabledAt: null }
-      : {}),
-    ...(filter === "disabled" ? { disabledAt: { not: null } } : {}),
+    AND: customerFilters,
   };
 
   const [totalCount, users] = await Promise.all([
@@ -252,6 +268,11 @@ export default async function AdminCustomersPage({
                       {user.disabledAt ? (
                         <span className="shrink-0 rounded-full border border-[var(--danger)]/30 bg-[var(--danger)]/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--danger)]">
                           Devre dışı
+                        </span>
+                      ) : null}
+                      {user.role !== UserRole.USER ? (
+                        <span className="shrink-0 rounded-full border border-[var(--accent-brand)]/25 bg-[var(--accent-brand)]/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--accent-brand)]">
+                          Personel + müşteri
                         </span>
                       ) : null}
                     </span>

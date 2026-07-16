@@ -204,6 +204,7 @@ export async function updateStaffPermissions(formData: FormData) {
   });
 
   revalidatePath("/admin");
+  revalidatePath("/admin/customers");
   revalidatePath("/admin/users");
   revalidatePath(`/admin/users/${userId}`);
 }
