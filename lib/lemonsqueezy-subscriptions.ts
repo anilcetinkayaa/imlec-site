@@ -2,7 +2,10 @@ const subscriptionLifecycleEvents = new Set([
   "subscription_created",
   "subscription_updated",
   "subscription_cancelled",
+  "subscription_resumed",
   "subscription_expired",
+  "subscription_paused",
+  "subscription_unpaused",
 ]);
 
 export function isSubscriptionLifecyclePayload({

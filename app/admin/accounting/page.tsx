@@ -9,6 +9,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/src/db/prisma";
 import { getAdminSession } from "@/src/server/admin";
+import {
+  processRefundRequest,
+  rejectRefundRequest,
+} from "@/app/admin/accounting/actions";
 
 export const metadata: Metadata = {
   title: "Muhasebe | İmleç Yazılım Admin",
@@ -88,8 +92,13 @@ function billingRequestStatusLabel(status: string) {
   }
 }
 
-export default async function AdminAccountingPage() {
+export default async function AdminAccountingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ refund?: string }>;
+}) {
   const admin = await getAdminSession();
+  const params = await searchParams;
 
   if (admin.status === "unauthenticated") {
     redirect("/login?callbackUrl=/admin/accounting");
@@ -225,8 +234,11 @@ export default async function AdminAccountingPage() {
         },
         payment: {
           select: {
+            id: true,
             amount: true,
             currency: true,
+            providerOrderId: true,
+            testMode: true,
           },
         },
       },
@@ -321,6 +333,21 @@ export default async function AdminAccountingPage() {
         </section>
 
         <section className="mt-6 rounded-xl border border-purple-300/20 bg-purple-300/[0.035] p-5">
+          {params.refund ? (
+            <div
+              className={`mb-5 rounded-lg border px-4 py-3 text-sm ${
+                params.refund === "completed"
+                  ? "border-emerald-300/25 bg-emerald-300/[0.08] text-emerald-100"
+                  : "border-amber-300/25 bg-amber-300/[0.08] text-amber-100"
+              }`}
+            >
+              {params.refund === "completed"
+                ? "İade Lemon Squeezy üzerinde tamamlandı, abonelik yenilemesi durduruldu ve ürün erişimi kapatıldı."
+                : params.refund === "rejected"
+                  ? "İade talebi reddedildi."
+                  : "İade işlemi tamamlanamadı. Ödeme kaydını ve Lemon Squeezy durumunu kontrol edin."}
+            </div>
+          ) : null}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.18em] text-purple-200/80">
@@ -338,20 +365,21 @@ export default async function AdminAccountingPage() {
               {openBillingRequestCount} açık talep
             </span>
           </div>
-          <div className="mt-5 overflow-hidden rounded-lg border border-white/[0.07]">
-            <div className="grid grid-cols-[0.9fr_1.1fr_0.9fr_0.9fr_0.9fr_1.4fr] bg-white/[0.035] px-4 py-3 text-xs uppercase tracking-[0.12em] text-zinc-500">
+          <div className="mt-5 overflow-x-auto rounded-lg border border-white/[0.07]">
+            <div className="grid min-w-[1040px] grid-cols-[0.8fr_1.1fr_0.8fr_0.8fr_0.7fr_1.2fr_1.2fr] bg-white/[0.035] px-4 py-3 text-xs uppercase tracking-[0.12em] text-zinc-500">
               <span>Tarih</span>
               <span>Kullanıcı</span>
               <span>Tür</span>
               <span>Neden</span>
               <span>Durum</span>
               <span>Açıklama</span>
+              <span>İşlem</span>
             </div>
             {billingRequests.length > 0 ? (
               billingRequests.map((request) => (
                 <div
                   key={request.id}
-                  className="grid grid-cols-[0.9fr_1.1fr_0.9fr_0.9fr_0.9fr_1.4fr] border-t border-white/[0.07] px-4 py-3 text-sm text-zinc-300"
+                  className="grid min-w-[1040px] grid-cols-[0.8fr_1.1fr_0.8fr_0.8fr_0.7fr_1.2fr_1.2fr] items-center border-t border-white/[0.07] px-4 py-3 text-sm text-zinc-300"
                 >
                   <span>{formatDate(request.createdAt)}</span>
                   <span className="truncate text-white">{request.user.email}</span>
@@ -364,6 +392,43 @@ export default async function AdminAccountingPage() {
                         ? formatMoney(request.payment.amount, request.payment.currency)
                         : request.product.name)}
                   </span>
+                  <span>
+                    {request.type === BillingRequestType.REFUND ? (
+                      <div className="flex flex-wrap gap-2">
+                        <form action={processRefundRequest}>
+                          <input
+                            type="hidden"
+                            name="requestId"
+                            value={request.id}
+                          />
+                          <button
+                            type="submit"
+                            disabled={!request.payment}
+                            className="rounded-md border border-emerald-300/25 bg-emerald-300/10 px-3 py-1.5 text-xs text-emerald-100 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            İadeyi tamamla
+                          </button>
+                        </form>
+                        <form action={rejectRefundRequest}>
+                          <input
+                            type="hidden"
+                            name="requestId"
+                            value={request.id}
+                          />
+                          <button
+                            type="submit"
+                            className="rounded-md border border-red-300/20 bg-red-300/[0.06] px-3 py-1.5 text-xs text-red-100"
+                          >
+                            Reddet
+                          </button>
+                        </form>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-zinc-500">
+                        Otomatik tamamlandı
+                      </span>
+                    )}
+                  </span>
                 </div>
               ))
             ) : (
@@ -372,6 +437,22 @@ export default async function AdminAccountingPage() {
               </div>
             )}
           </div>
+        </section>
+
+        <section className="mt-6 rounded-xl border border-blue-300/15 bg-blue-300/[0.035] p-5">
+          <p className="font-mono text-xs uppercase tracking-[0.18em] text-blue-200/80">
+            Muhasebe kontrolü
+          </p>
+          <h2 className="mt-2 text-xl font-semibold">
+            İade belgesi ayrı değerlendirilir
+          </h2>
+          <p className="mt-2 max-w-4xl text-sm leading-6 text-zinc-400">
+            Lemon Squeezy iadesi para hareketini tamamlar. e-Fatura veya
+            e-Arşiv iade belgesinin yöntemi, ilk belgenin türüne ve müşterinin
+            vergi mükellefi durumuna göre muhasebe tarafından kontrol
+            edilmelidir. Sistem bu nedenle otomatik ve varsayımsal bir iade
+            faturası üretmez.
+          </p>
         </section>
 
         <section className="mt-6 rounded-xl border border-white/[0.08] bg-white/[0.025] p-5">

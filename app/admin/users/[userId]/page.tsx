@@ -88,6 +88,14 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
         entitlements: {
           orderBy: { createdAt: "desc" },
           include: {
+            subscription: {
+              select: {
+                status: true,
+                renewsAt: true,
+                endsAt: true,
+                trialEndsAt: true,
+              },
+            },
             product: {
               select: {
                 id: true,
@@ -334,6 +342,14 @@ export default async function AdminUserPage({ params }: AdminUserPageProps) {
               startsAt: formatDate(entitlement.startsAt),
               expiresAt: formatDate(entitlement.expiresAt),
               revokedAt: formatDate(entitlement.revokedAt),
+              subscriptionStatus: entitlement.subscription?.status ?? null,
+              renewsAt: formatDate(entitlement.subscription?.renewsAt ?? null),
+              subscriptionEndsAt: formatDate(
+                entitlement.subscription?.endsAt ?? null,
+              ),
+              trialEndsAt: formatDate(
+                entitlement.subscription?.trialEndsAt ?? null,
+              ),
             }))}
             devices={user.devices.map((device) => ({
               id: device.id,

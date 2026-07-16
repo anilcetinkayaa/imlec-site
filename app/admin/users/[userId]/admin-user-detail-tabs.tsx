@@ -36,6 +36,10 @@ type EntitlementItem = {
   startsAt: string;
   expiresAt: string;
   revokedAt: string;
+  subscriptionStatus: string | null;
+  renewsAt: string;
+  subscriptionEndsAt: string;
+  trialEndsAt: string;
 };
 
 type DeviceItem = {
@@ -129,6 +133,32 @@ function StatusBadge({ value }: { value: string }) {
       {statusLabels[value] ?? value}
     </span>
   );
+}
+
+function entitlementDateLabel(item: EntitlementItem) {
+  if (item.revokedAt !== "-") {
+    return `Kaldırıldı: ${item.revokedAt}`;
+  }
+
+  if (item.source === "LEMON_SQUEEZY") {
+    if (item.subscriptionStatus === "CANCELED") {
+      return item.subscriptionEndsAt === "-"
+        ? "Yenileme kapalı"
+        : `Erişim bitişi: ${item.subscriptionEndsAt}`;
+    }
+
+    if (item.subscriptionStatus === "TRIALING") {
+      return item.trialEndsAt === "-"
+        ? "Deneme tarihi eşitleniyor"
+        : `Deneme bitişi: ${item.trialEndsAt}`;
+    }
+
+    return item.renewsAt === "-"
+      ? "Yenileme tarihi eşitleniyor"
+      : `Sonraki yenileme: ${item.renewsAt}`;
+  }
+
+  return item.expiresAt === "-" ? "Süresiz" : item.expiresAt;
 }
 
 function TechnicalRecord({
@@ -388,11 +418,7 @@ export function AdminUserDetailTabs({
                         {item.startsAt}
                       </span>
                       <span className="font-mono text-xs text-zinc-400">
-                        {item.revokedAt !== "-"
-                          ? `Kaldırıldı: ${item.revokedAt}`
-                          : item.expiresAt === "-"
-                            ? "Süresiz"
-                            : item.expiresAt}
+                        {entitlementDateLabel(item)}
                       </span>
                     </div>
                   ))}
@@ -495,7 +521,7 @@ export function AdminUserDetailTabs({
                   <div className="mt-3 flex flex-wrap gap-2">
                     <StatusBadge value={item.source} />
                     <span className="font-mono text-xs text-zinc-500">
-                      {item.startsAt} → {item.expiresAt}
+                      {item.startsAt} → {entitlementDateLabel(item)}
                     </span>
                   </div>
                 </div>

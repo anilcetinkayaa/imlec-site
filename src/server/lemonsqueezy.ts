@@ -12,6 +12,7 @@ import { sendMail } from "@/lib/mail";
 import { isSubscriptionLifecyclePayload } from "@/lib/lemonsqueezy-subscriptions";
 import { prisma } from "@/src/db/prisma";
 import { upsertEntitlementBySource } from "@/src/server/entitlement-helpers";
+import { getLemonSqueezySubscriptionById } from "@/src/server/lemonsqueezy-api";
 
 type LemonSqueezyPayload = {
   meta?: {
@@ -37,9 +38,14 @@ const handledEvents = new Set([
   "subscription_created",
   "subscription_updated",
   "subscription_cancelled",
+  "subscription_resumed",
   "subscription_expired",
+  "subscription_paused",
+  "subscription_unpaused",
   "subscription_payment_success",
   "subscription_payment_failed",
+  "subscription_payment_recovered",
+  "subscription_payment_refunded",
   "license_key_created",
   "license_key_updated",
 ]);
@@ -141,8 +147,11 @@ async function getProduct(payload: LemonSqueezyPayload) {
 }
 
 function paymentGraceEndsAt() {
-  const days = Number.parseInt(process.env.LEMONSQUEEZY_PAYMENT_GRACE_DAYS ?? "7", 10);
-  const safeDays = Number.isFinite(days) && days > 0 ? days : 7;
+  const days = Number.parseInt(
+    process.env.LEMONSQUEEZY_PAYMENT_GRACE_DAYS ?? "21",
+    10,
+  );
+  const safeDays = Number.isFinite(days) && days > 0 ? days : 21;
   return new Date(Date.now() + safeDays * 24 * 60 * 60 * 1000);
 }
 
@@ -214,27 +223,35 @@ async function revokeEntitlement({
 }
 
 function paymentStatusForEvent(eventName: string) {
-  if (eventName === "order_refunded") {
+  if (
+    eventName === "order_refunded" ||
+    eventName === "subscription_payment_refunded"
+  ) {
     return PaymentStatus.REFUNDED;
   }
   if (eventName === "subscription_payment_failed") {
     return PaymentStatus.FAILED;
   }
-  if (eventName === "order_created" || eventName === "subscription_payment_success") {
+  if (
+    eventName === "order_created" ||
+    eventName === "subscription_payment_success" ||
+    eventName === "subscription_payment_recovered"
+  ) {
     return PaymentStatus.PAID;
   }
   return PaymentStatus.PENDING;
 }
 
-function paymentIdForPayload(eventName: string, payload: LemonSqueezyPayload) {
+function paymentIdsForPayload(eventName: string, payload: LemonSqueezyPayload) {
   const attributes = payload.data?.attributes ?? {};
-  return (
-    asProviderString(attributes.order_id) ??
-    asProviderString(attributes.order_number) ??
-    asProviderString(attributes.invoice_id) ??
-    asProviderString(attributes.subscription_invoice_id) ??
-    (payload.data?.id ? `${eventName}:${payload.data.id}` : null)
-  );
+  return [
+    payload.data?.id ?? null,
+    asProviderString(attributes.order_id),
+    asProviderString(attributes.order_number),
+    asProviderString(attributes.invoice_id),
+    asProviderString(attributes.subscription_invoice_id),
+    payload.data?.id ? `${eventName}:${payload.data.id}` : null,
+  ].filter((value): value is string => Boolean(value));
 }
 
 async function upsertPayment({
@@ -257,7 +274,8 @@ async function upsertPayment({
   }
 
   const attributes = payload.data?.attributes ?? {};
-  const providerOrderId = paymentIdForPayload(eventName, payload);
+  const providerOrderIds = paymentIdsForPayload(eventName, payload);
+  const providerOrderId = providerOrderIds[0];
 
   if (!providerOrderId) {
     return null;
@@ -272,41 +290,51 @@ async function upsertPayment({
     asString(attributes.currency) ??
     asString(attributes.currency_code) ??
     "TRY";
-  const testMode = payload.meta?.test_mode === true;
+  const testMode =
+    payload.meta?.test_mode === true || attributes.test_mode === true;
   const paidAt =
     status === PaymentStatus.PAID
       ? parseDate(attributes.created_at) ?? new Date()
       : null;
 
-  return prisma.payment.upsert({
-    where: {
-      provider_providerOrderId: {
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.payment.findFirst({
+      where: {
+        provider: "lemonsqueezy",
+        providerOrderId: { in: providerOrderIds },
+      },
+    });
+
+    if (existing) {
+      return tx.payment.update({
+        where: { id: existing.id },
+        data: {
+          userId,
+          productId,
+          subscriptionId: subscriptionId ?? existing.subscriptionId,
+          amount: amount || existing.amount,
+          currency,
+          status,
+          testMode,
+          paidAt: paidAt ?? existing.paidAt,
+        },
+      });
+    }
+
+    return tx.payment.create({
+      data: {
+        userId,
+        productId,
+        subscriptionId,
         provider: "lemonsqueezy",
         providerOrderId,
+        amount,
+        currency,
+        status,
+        testMode,
+        paidAt,
       },
-    },
-    update: {
-      userId,
-      productId,
-      subscriptionId,
-      amount,
-      currency,
-      status,
-      testMode,
-      paidAt,
-    },
-    create: {
-      userId,
-      productId,
-      subscriptionId,
-      provider: "lemonsqueezy",
-      providerOrderId,
-      amount,
-      currency,
-      status,
-      testMode,
-      paidAt,
-    },
+    });
   });
 }
 
@@ -375,7 +403,7 @@ async function findExistingSubscription(payload: LemonSqueezyPayload) {
     return null;
   }
 
-  return prisma.subscription.findUnique({
+  const existing = await prisma.subscription.findUnique({
     where: {
       provider_providerSubscriptionId: {
         provider: "lemonsqueezy",
@@ -383,6 +411,53 @@ async function findExistingSubscription(payload: LemonSqueezyPayload) {
       },
     },
   });
+
+  if (existing) {
+    return existing;
+  }
+
+  const providerSubscription = await getLemonSqueezySubscriptionById(
+    providerSubscriptionId,
+  );
+
+  if (!providerSubscription) {
+    return null;
+  }
+
+  const user = await findWebhookUser(payload);
+  const product = await getProduct(payload);
+
+  if (!user || !product) {
+    return null;
+  }
+
+  return prisma.subscription.create({
+    data: {
+      userId: user.id,
+      productId: product.id,
+      provider: "lemonsqueezy",
+      providerCustomerId: providerSubscription.providerCustomerId,
+      providerSubscriptionId,
+      providerVariantId: providerSubscription.providerVariantId,
+      status: mapSubscriptionStatus(providerSubscription.status),
+      renewsAt: providerSubscription.renewsAt,
+      endsAt: providerSubscription.endsAt,
+      trialEndsAt: providerSubscription.trialEndsAt,
+    },
+  });
+}
+
+function isFullRefund(payload: LemonSqueezyPayload) {
+  const attributes = payload.data?.attributes ?? {};
+  const total = asNumber(attributes.total);
+  const refundedAmount =
+    asNumber(attributes.refunded_amount) ?? asNumber(attributes.amount);
+
+  return (
+    total === null ||
+    refundedAmount === null ||
+    refundedAmount >= total
+  );
 }
 
 async function upsertCustomer({
@@ -460,7 +535,11 @@ async function sendPaymentEmail({
   productName: string;
   amount?: string;
 }) {
-  if (eventName === "subscription_payment_success" || eventName === "order_created") {
+  if (
+    eventName === "subscription_payment_success" ||
+    eventName === "subscription_payment_recovered" ||
+    eventName === "order_created"
+  ) {
     await sendMail({
       to: userEmail,
       subject: "Ödeme kaydınız işlendi",
@@ -522,28 +601,30 @@ export async function processLemonSqueezyEvent(payload: LemonSqueezyPayload) {
 
   if (
     (eventName === "subscription_created" ||
-      eventName === "subscription_payment_success") &&
+      eventName === "subscription_resumed" ||
+      eventName === "subscription_unpaused" ||
+      eventName === "subscription_payment_success" ||
+      eventName === "subscription_payment_recovered") &&
     subscription
   ) {
     await ensureEntitlement({
       userId: user.id,
       productId: product.id,
       subscriptionId: subscription.id,
-      expiresAt: subscription.endsAt ?? subscription.trialEndsAt,
+      expiresAt: subscription.trialEndsAt,
     });
   }
 
   if (eventName === "subscription_updated" && subscription) {
     if (
       subscription.status === SubscriptionStatus.ACTIVE ||
-      subscription.status === SubscriptionStatus.TRIALING ||
-      subscription.status === SubscriptionStatus.PAUSED
+      subscription.status === SubscriptionStatus.TRIALING
     ) {
       await ensureEntitlement({
         userId: user.id,
         productId: product.id,
         subscriptionId: subscription.id,
-        expiresAt: subscription.endsAt ?? subscription.trialEndsAt,
+        expiresAt: subscription.trialEndsAt,
       });
     } else if (subscription.status === SubscriptionStatus.PAST_DUE) {
       await ensureEntitlement({
@@ -582,6 +663,16 @@ export async function processLemonSqueezyEvent(payload: LemonSqueezyPayload) {
     });
   }
 
+  if (eventName === "subscription_paused" && subscription) {
+    await ensureEntitlement({
+      userId: user.id,
+      productId: product.id,
+      subscriptionId: subscription.id,
+      status: EntitlementStatus.GRACE_PERIOD,
+      expiresAt: subscription.renewsAt ?? paymentGraceEndsAt(),
+    });
+  }
+
   if (eventName === "subscription_cancelled") {
     if (subscription?.endsAt && subscription.endsAt > new Date()) {
       await ensureEntitlement({
@@ -598,7 +689,12 @@ export async function processLemonSqueezyEvent(payload: LemonSqueezyPayload) {
     }
   }
 
-  if (eventName === "subscription_expired" || eventName === "order_refunded") {
+  if (
+    eventName === "subscription_expired" ||
+    ((eventName === "order_refunded" ||
+      eventName === "subscription_payment_refunded") &&
+      isFullRefund(payload))
+  ) {
     await revokeEntitlement({
       userId: user.id,
       productId: product.id,
@@ -615,6 +711,7 @@ export async function processLemonSqueezyEvent(payload: LemonSqueezyPayload) {
 
   if (
     eventName === "subscription_payment_success" ||
+    eventName === "subscription_payment_recovered" ||
     eventName === "subscription_payment_failed" ||
     eventName === "order_created"
   ) {

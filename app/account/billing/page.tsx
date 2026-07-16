@@ -15,6 +15,7 @@ import {
 import {
   cancelSubscriptionNow,
   createBillingRequest,
+  openLemonSqueezyBillingPortal,
 } from "@/app/account/billing/actions";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -213,17 +214,101 @@ export default async function AccountBillingPage({
       ) : null}
 
       {params.billingRequest === "cancel_failed" ||
-      params.billingRequest === "provider_unsupported" ? (
+      params.billingRequest === "provider_unsupported" ||
+      params.billingRequest === "portal_unavailable" ? (
         <Card
           className="mb-5 border-red-300/25 bg-red-300/[0.06] p-5"
           variant="default"
         >
-          <Badge variant="coming-soon">İptal tamamlanamadı</Badge>
+          <Badge variant="coming-soon">İşlem tamamlanamadı</Badge>
           <p className="text-body-s mt-3 text-[var(--text-secondary)]">
-            Abonelik sağlayıcısına ulaşılamadığı için yenileme durdurulmadı.
-            Hesabınızda herhangi bir iptal değişikliği yapılmadı. Lütfen kısa
-            süre sonra yeniden deneyin veya destek ile iletişime geçin.
+            Lemon Squeezy abonelik yönetimi şu anda açılamadı. Hesabınızda
+            herhangi bir değişiklik yapılmadı. Lütfen kısa süre sonra yeniden
+            deneyin veya destek ile iletişime geçin.
           </p>
+        </Card>
+      ) : null}
+
+      {subscriptions.length > 0 ? (
+        <Card className="mb-5 overflow-hidden" variant="default">
+          <div className="border-b border-[var(--border-subtle)] bg-[var(--surface-2)] px-5 py-4">
+            <h2 className="text-h4">Abonelik durumu</h2>
+            <p className="text-body-s mt-1 text-[var(--text-secondary)]">
+              Yenileme, dönem sonu ve ödeme yöntemi bilgileri.
+            </p>
+          </div>
+          <div className="grid gap-3 p-5">
+            {subscriptions.map((subscription) => {
+              const isCanceled =
+                subscription.status === SubscriptionStatus.CANCELED;
+              const isPastDue =
+                subscription.status === SubscriptionStatus.PAST_DUE;
+              const dateLabel = isCanceled
+                ? "Erişim bitişi"
+                : subscription.status === SubscriptionStatus.TRIALING
+                  ? "Deneme bitişi"
+                  : "Sonraki yenileme";
+              const dateValue = isCanceled
+                ? subscription.endsAt
+                : subscription.status === SubscriptionStatus.TRIALING
+                  ? subscription.trialEndsAt
+                  : subscription.renewsAt;
+
+              return (
+                <div
+                  key={subscription.id}
+                  className="grid gap-4 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 md:grid-cols-[1fr_auto] md:items-center"
+                >
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium text-[var(--text-primary)]">
+                        {subscription.product.name}
+                      </p>
+                      <Badge
+                        variant={
+                          isPastDue || isCanceled ? "coming-soon" : "active"
+                        }
+                      >
+                        {isPastDue
+                          ? "Ödeme bekleniyor"
+                          : isCanceled
+                            ? "Yenileme kapalı"
+                            : subscription.status ===
+                                SubscriptionStatus.TRIALING
+                              ? "Deneme"
+                              : "Otomatik yenilenir"}
+                      </Badge>
+                    </div>
+                    <p className="text-body-s mt-2 text-[var(--text-secondary)]">
+                      {dateLabel}:{" "}
+                      <span className="text-mono text-[var(--text-primary)]">
+                        {formatDate(dateValue)}
+                      </span>
+                    </p>
+                    {isPastDue ? (
+                      <p className="text-body-s mt-2 text-amber-200">
+                        Son ödeme alınamadı. Lemon Squeezy yeniden tahsilat
+                        deneyecektir. Erişimin kesilmemesi için ödeme yönteminizi
+                        güncelleyin.
+                      </p>
+                    ) : null}
+                  </div>
+                  {!isCanceled ? (
+                    <form action={openLemonSqueezyBillingPortal}>
+                      <input
+                        type="hidden"
+                        name="subscriptionId"
+                        value={subscription.id}
+                      />
+                      <Button type="submit" variant="outline">
+                        Ödeme yöntemini güncelle
+                      </Button>
+                    </form>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
         </Card>
       ) : null}
 

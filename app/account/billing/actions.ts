@@ -12,7 +12,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/src/db/prisma";
-import { cancelLemonSqueezySubscription } from "@/src/server/lemonsqueezy-api";
+import {
+  cancelLemonSqueezySubscription,
+  getLemonSqueezySubscriptionById,
+} from "@/src/server/lemonsqueezy-api";
 
 const requestTypes = new Set(Object.values(BillingRequestType));
 const requestReasons = new Set(Object.values(BillingRequestReason));
@@ -234,4 +237,41 @@ export async function cancelSubscriptionNow(formData: FormData) {
   redirect(
     `/account/billing?billingRequest=${keepAccessUntilPeriodEnd ? "canceled_period" : "canceled"}`,
   );
+}
+
+export async function openLemonSqueezyBillingPortal(formData: FormData) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/login?callbackUrl=/account/billing");
+  }
+
+  const subscriptionId = String(formData.get("subscriptionId") ?? "").trim();
+  const subscription = await prisma.subscription.findFirst({
+    where: {
+      id: subscriptionId,
+      userId: session.user.id,
+      provider: "lemonsqueezy",
+    },
+    select: {
+      providerSubscriptionId: true,
+    },
+  });
+
+  if (!subscription) {
+    redirect("/account/billing?billingRequest=invalid");
+  }
+
+  const providerSubscription = await getLemonSqueezySubscriptionById(
+    subscription.providerSubscriptionId,
+  );
+  const destination =
+    providerSubscription?.updatePaymentMethodUrl ??
+    providerSubscription?.customerPortalUrl;
+
+  if (!destination) {
+    redirect("/account/billing?billingRequest=portal_unavailable");
+  }
+
+  redirect(destination);
 }
