@@ -23,8 +23,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/Accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
-import { Footer } from "@/components/marketing/Footer";
-import { SiteHeader } from "@/components/marketing/SiteHeader";
+import { PublicPageShell } from "@/components/marketing/PublicPageShell";
 import { cn } from "@/lib/cn";
 
 type StatusVariant = "active" | "beta" | "coming-soon" | "new";
@@ -198,12 +197,8 @@ export function ProductPageLayout({ config }: ProductPageLayoutProps) {
   const firstScreen = config.screenshots[0]?.id;
 
   return (
-    <main
-      className="min-h-screen overflow-hidden bg-[var(--surface-0)] text-[var(--text-primary)]"
-      style={style}
-    >
+    <PublicPageShell style={style}>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[42rem] bg-[radial-gradient(circle_at_50%_0%,color-mix(in_oklch,var(--product-accent),transparent_84%),transparent_60%)]" />
-      <SiteHeader />
 
       <section className="relative mx-auto grid max-w-7xl gap-12 px-6 pb-16 pt-16 sm:px-8 lg:grid-cols-[0.92fr_1.08fr] lg:px-10 lg:pb-20 lg:pt-20">
         <div className="flex flex-col justify-center">
@@ -556,7 +551,6 @@ export function ProductPageLayout({ config }: ProductPageLayoutProps) {
         </div>
       </section>
 
-      <Footer />
-    </main>
+    </PublicPageShell>
   );
 }

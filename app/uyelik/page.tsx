@@ -8,8 +8,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { auth } from "@/auth";
-import { Footer } from "@/components/marketing/Footer";
-import { SiteHeader } from "@/components/marketing/SiteHeader";
+import { PublicPageShell } from "@/components/marketing/PublicPageShell";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -17,12 +16,11 @@ import {
   MEMBERSHIP_CURRENCY,
   MEMBERSHIP_PRICE_TRY,
 } from "@/lib/config";
-import { prisma } from "@/src/db/prisma";
-import { requestFis260AccessFromMembershipPage } from "@/app/download/actions";
+import { getLemonSqueezyMode } from "@/lib/lemonsqueezy-config";
 import { startFis260Checkout } from "@/app/uyelik/actions";
 
 export const metadata: Metadata = {
-  title: "Üyelikler | İmleç Yazılım",
+  title: "Abone ol | İmleç Yazılım",
   description:
     "İmleç Yazılım üyelik bilgileri, FİŞ260 abonelik ve ürün erişimi akışı.",
 };
@@ -60,66 +58,27 @@ function priceLabel() {
   return `${formattedPrice} / ay`;
 }
 
-type MembershipPageProps = {
-  searchParams: Promise<{
-    request?: string;
-    product?: string;
-  }>;
-};
-
-function AccessRequestSuccessBanner() {
-  return (
-    <div className="mb-8 rounded-[var(--radius-lg)] border border-[var(--success)]/25 bg-[var(--success)]/8 px-4 py-4">
-      <Badge variant="active">Talep gönderildi</Badge>
-      <h2 className="text-h4 mt-3">Erişim talebiniz gönderildi.</h2>
-      <p className="text-body-s mt-2 max-w-2xl text-[var(--text-secondary)]">
-        İnceleme sonrasında hesabınıza manuel erişim tanımlanabilir. Erişim
-        onaylandığında bilgilendirme maili alırsınız.
-      </p>
-    </div>
-  );
-}
-
-export default async function MembershipPage({ searchParams }: MembershipPageProps) {
+export default async function MembershipPage() {
   const session = await auth();
-  const params = await searchParams;
+  const lemonSqueezyMode = getLemonSqueezyMode();
   const checkoutConfigured = Boolean(
     process.env.LEMONSQUEEZY_FIS260_CHECKOUT_URL,
   );
-  const pendingRequest = session?.user?.id
-    ? await prisma.accessRequest.findUnique({
-        where: {
-          userId_productCode: {
-            userId: session.user.id,
-            productCode: "fis260",
-          },
-        },
-        select: {
-          status: true,
-        },
-      })
-    : null;
-  const hasPendingRequest = pendingRequest?.status === "PENDING";
-  const showAccessRequestSent =
-    params.request === "sent" && params.product === "fis260";
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[var(--surface-0)] text-[var(--text-primary)]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[36rem] bg-[radial-gradient(circle_at_50%_0%,oklch(0.70_0.18_250/0.14),transparent_62%)]" />
-      <SiteHeader />
-
+    <PublicPageShell>
       <section className="relative mx-auto max-w-5xl px-6 py-14 sm:px-8 lg:px-10 lg:py-20">
-        {showAccessRequestSent ? <AccessRequestSuccessBanner /> : null}
-
-        <div className="mb-8 flex flex-col gap-3 rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--surface-2)] px-4 py-3 sm:flex-row sm:items-center">
-          <Badge variant="beta">Test Mode</Badge>
-          <p className="text-body-s text-[var(--text-secondary)]">
-            Şu an Lemon Squeezy test ödeme akışı aktiftir. Live mode bilgileri ayrıca girilecektir.
-          </p>
-        </div>
+        {lemonSqueezyMode === "test" ? (
+          <div className="mb-8 flex flex-col gap-3 rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--surface-2)]/80 px-4 py-3 backdrop-blur-xl sm:flex-row sm:items-center">
+            <Badge variant="beta">Test modu</Badge>
+            <p className="text-body-s text-[var(--text-secondary)]">
+              Bu ortamda Lemon Squeezy test ödeme akışı kullanılmaktadır.
+            </p>
+          </div>
+        ) : null}
 
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-label text-[var(--accent-brand)]">Üyelikler</p>
+          <p className="text-label text-[var(--accent-brand)]">Abone ol</p>
           <h1 className="text-h1 mt-4">
             FİŞ260 aboneliğinizi İmleç hesabınızla başlatın.
           </h1>
@@ -193,31 +152,28 @@ export default async function MembershipPage({ searchParams }: MembershipPagePro
                 </p>
                 <form action={startFis260Checkout}>
                   <Button size="lg" type="submit" variant="primary">
-                    Aboneliği başlat
+                    Abone ol
                   </Button>
                 </form>
               </div>
             ) : session?.user?.id ? (
-              <form action={requestFis260AccessFromMembershipPage}>
-                <Button
-                  disabled={hasPendingRequest}
-                  size="lg"
-                  type="submit"
-                  variant="outline"
-                >
-                  {hasPendingRequest ? "Talep beklemede" : "Manuel erişim talebi"}
+              <div className="max-w-sm text-right">
+                <p className="text-body-s text-[var(--text-secondary)]">
+                  Abonelik işlemi şu anda kullanılamıyor. Lütfen daha sonra tekrar
+                  deneyin veya destekle iletişime geçin.
+                </p>
+                <Button asChild className="mt-3" size="lg" variant="outline">
+                  <Link href="mailto:destek@imlecyazilim.com">Destek ile iletişime geç</Link>
                 </Button>
-              </form>
+              </div>
             ) : (
               <Button asChild size="lg" variant="primary">
-                <Link href="/login?callbackUrl=/uyelik">Giriş yap ve aboneliği başlat</Link>
+                <Link href="/login?callbackUrl=/uyelik">Giriş yap ve abone ol</Link>
               </Button>
             )}
           </div>
         </Card>
       </section>
-
-      <Footer />
-    </main>
+    </PublicPageShell>
   );
 }

@@ -9,7 +9,10 @@ import { PaymentFailedEmail } from "@/emails/PaymentFailedEmail";
 import { PaymentSuccessEmail } from "@/emails/PaymentSuccessEmail";
 import { TrialStartedEmail } from "@/emails/TrialStartedEmail";
 import { sendMail } from "@/lib/mail";
-import { isSubscriptionLifecyclePayload } from "@/lib/lemonsqueezy-subscriptions";
+import {
+  isSubscriptionLifecyclePayload,
+  subscriptionAccessExpiresAt,
+} from "@/lib/lemonsqueezy-subscriptions";
 import { prisma } from "@/src/db/prisma";
 import { upsertEntitlementBySource } from "@/src/server/entitlement-helpers";
 import { getLemonSqueezySubscriptionById } from "@/src/server/lemonsqueezy-api";
@@ -148,10 +151,10 @@ async function getProduct(payload: LemonSqueezyPayload) {
 
 function paymentGraceEndsAt() {
   const days = Number.parseInt(
-    process.env.LEMONSQUEEZY_PAYMENT_GRACE_DAYS ?? "21",
+    process.env.LEMONSQUEEZY_PAYMENT_GRACE_DAYS ?? "7",
     10,
   );
-  const safeDays = Number.isFinite(days) && days > 0 ? days : 21;
+  const safeDays = Number.isFinite(days) && days > 0 ? days : 7;
   return new Date(Date.now() + safeDays * 24 * 60 * 60 * 1000);
 }
 
@@ -611,7 +614,10 @@ export async function processLemonSqueezyEvent(payload: LemonSqueezyPayload) {
       userId: user.id,
       productId: product.id,
       subscriptionId: subscription.id,
-      expiresAt: subscription.trialEndsAt,
+      expiresAt: subscriptionAccessExpiresAt({
+        status: subscription.status,
+        trialEndsAt: subscription.trialEndsAt,
+      }),
     });
   }
 
@@ -624,7 +630,10 @@ export async function processLemonSqueezyEvent(payload: LemonSqueezyPayload) {
         userId: user.id,
         productId: product.id,
         subscriptionId: subscription.id,
-        expiresAt: subscription.trialEndsAt,
+        expiresAt: subscriptionAccessExpiresAt({
+          status: subscription.status,
+          trialEndsAt: subscription.trialEndsAt,
+        }),
       });
     } else if (subscription.status === SubscriptionStatus.PAST_DUE) {
       await ensureEntitlement({

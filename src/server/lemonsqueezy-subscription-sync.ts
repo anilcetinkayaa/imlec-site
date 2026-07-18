@@ -33,10 +33,10 @@ export function mapLemonSqueezySubscriptionStatus(
 
 function paymentGraceEndsAt(renewsAt: Date | null) {
   const days = Number.parseInt(
-    process.env.LEMONSQUEEZY_PAYMENT_GRACE_DAYS ?? "21",
+    process.env.LEMONSQUEEZY_PAYMENT_GRACE_DAYS ?? "7",
     10,
   );
-  const safeDays = Number.isFinite(days) && days > 0 ? days : 21;
+  const safeDays = Number.isFinite(days) && days > 0 ? days : 7;
   const from = renewsAt && renewsAt < new Date() ? renewsAt : new Date();
   return new Date(from.getTime() + safeDays * 24 * 60 * 60 * 1000);
 }

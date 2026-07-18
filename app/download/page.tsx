@@ -10,8 +10,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { auth } from "@/auth";
-import { Footer } from "@/components/marketing/Footer";
-import { SiteHeader } from "@/components/marketing/SiteHeader";
+import { PublicPageShell } from "@/components/marketing/PublicPageShell";
 import {
   Accordion,
   AccordionContent,
@@ -262,14 +261,12 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
 
   if (!session?.user?.id) {
     return (
-      <main className="min-h-screen overflow-hidden bg-[var(--surface-0)] text-[var(--text-primary)]">
+      <PublicPageShell>
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_50%_0%,oklch(0.70_0.18_250/0.14),transparent_62%)]" />
-        <SiteHeader />
         <section className="relative mx-auto max-w-5xl px-6 py-16 sm:px-8 lg:px-10 lg:py-24">
           <LoginGate />
         </section>
-        <Footer />
-      </main>
+      </PublicPageShell>
     );
   }
 
@@ -307,9 +304,8 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
   const hasPendingFis260Request = pendingFis260Request?.status === "PENDING";
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[var(--surface-0)] text-[var(--text-primary)]">
+    <PublicPageShell>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_50%_0%,oklch(0.70_0.18_250/0.14),transparent_62%)]" />
-      <SiteHeader />
 
       <section className="relative mx-auto max-w-6xl px-6 py-14 sm:px-8 lg:px-10 lg:py-20">
         <div className="max-w-3xl">
@@ -391,7 +387,6 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
         </Card>
       </section>
 
-      <Footer />
-    </main>
+    </PublicPageShell>
   );
 }

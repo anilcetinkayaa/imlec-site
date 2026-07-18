@@ -1,17 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Download, Menu } from "lucide-react";
+import { Download } from "lucide-react";
 import { auth } from "@/auth";
 import { logoutAction } from "@/app/account/actions";
 import { Button } from "@/components/ui/Button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/Dialog";
-import { ProductSwitcher } from "@/components/marketing/ProductSwitcher";
+import { MobileSiteMenu } from "@/components/marketing/MobileSiteMenu";
 
 type SiteHeaderProps = {
   compact?: boolean;
@@ -19,8 +12,7 @@ type SiteHeaderProps = {
 
 const navItems = [
   { href: "/#products", label: "Ürünler" },
-  { href: "/changelog", label: "Güncellemeler" },
-  { href: "/uyelik", label: "Üyelikler" },
+  { href: "/uyelik", label: "Abone ol" },
 ];
 
 export async function SiteHeader({ compact = false }: SiteHeaderProps) {
@@ -56,7 +48,6 @@ export async function SiteHeader({ compact = false }: SiteHeaderProps) {
               </span>
             </span>
           </Link>
-          <ProductSwitcher />
         </div>
 
         <nav className="hidden items-center gap-7 text-sm text-[var(--text-secondary)] md:flex">
@@ -75,7 +66,7 @@ export async function SiteHeader({ compact = false }: SiteHeaderProps) {
           <Button asChild variant="brand" size="md" className="hidden lg:inline-flex">
             <Link href="/api/downloads/launcher">
               <Download aria-hidden="true" strokeWidth={1.5} />
-              Windows için indir
+              İmleç Launcher&apos;ı indir
             </Link>
           </Button>
 
@@ -138,59 +129,7 @@ export async function SiteHeader({ compact = false }: SiteHeaderProps) {
             </>
           )}
 
-          <Dialog>
-            <DialogTrigger asChild>
-              <button className="inline-flex size-10 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border-default)] bg-white/[0.035] text-[var(--text-secondary)] transition hover:bg-white/[0.06] hover:text-[var(--text-primary)] md:hidden">
-                <Menu aria-hidden="true" className="size-5" strokeWidth={1.5} />
-                <span className="sr-only">Menüyü aç</span>
-              </button>
-            </DialogTrigger>
-            <DialogContent className="left-auto right-0 top-0 h-dvh w-[min(88vw,360px)] max-w-none translate-x-0 translate-y-0 rounded-none border-y-0 border-l border-r-0 p-5">
-              <DialogHeader>
-                <DialogTitle>Menü</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-2">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="rounded-[var(--radius-sm)] px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-white/[0.05] hover:text-[var(--text-primary)]"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-                <Link
-                  href="/api/downloads/launcher"
-                  className="rounded-[var(--radius-sm)] px-3 py-2 text-sm text-[var(--accent-brand)] hover:bg-[var(--accent-brand)]/10"
-                >
-                  Windows için indir
-                </Link>
-                {session?.user ? (
-                  <Link
-                    href="/account"
-                    className="rounded-[var(--radius-sm)] px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-white/[0.05] hover:text-[var(--text-primary)]"
-                  >
-                    Hesabım
-                  </Link>
-                ) : (
-                  <>
-                    <Link
-                      href="/login"
-                      className="rounded-[var(--radius-sm)] px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-white/[0.05] hover:text-[var(--text-primary)]"
-                    >
-                      Giriş
-                    </Link>
-                    <Link
-                      href="/register"
-                      className="rounded-[var(--radius-sm)] px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-white/[0.05]"
-                    >
-                      Hesap oluştur
-                    </Link>
-                  </>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
+          <MobileSiteMenu signedIn={Boolean(session?.user)} />
         </div>
       </div>
     </header>

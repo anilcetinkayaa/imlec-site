@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { Footer } from "@/components/marketing/Footer";
-import { SiteHeader } from "@/components/marketing/SiteHeader";
+import { PublicPageShell } from "@/components/marketing/PublicPageShell";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -16,9 +15,8 @@ export const metadata: Metadata = {
 
 export default function ChangelogPage() {
   return (
-    <main className="min-h-screen overflow-hidden bg-[var(--surface-0)] text-[var(--text-primary)]">
+    <PublicPageShell>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_50%_0%,oklch(0.70_0.18_250/0.13),transparent_62%)]" />
-      <SiteHeader />
 
       <section className="relative mx-auto max-w-5xl px-6 py-16 sm:px-8 lg:px-10 lg:py-20">
         <div className="max-w-3xl">
@@ -77,7 +75,6 @@ export default function ChangelogPage() {
         </div>
       </section>
 
-      <Footer />
-    </main>
+    </PublicPageShell>
   );
 }

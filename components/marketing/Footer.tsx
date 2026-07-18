@@ -13,8 +13,8 @@ const columns = [
     title: "Şirket",
     links: [
       { href: "/", label: "Platform" },
-      { href: "/#updates", label: "Güncellemeler" },
-      { href: "/changelog", label: "Değişiklikler" },
+      { href: "/#products", label: "Ürünler" },
+      { href: "/uyelik", label: "Abone ol" },
     ],
   },
   {
@@ -37,7 +37,7 @@ const columns = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-[var(--border-subtle)] bg-[var(--surface-0)] px-6 py-12 sm:px-8 lg:px-10">
+    <footer className="relative z-10 border-t border-[var(--border-subtle)] bg-[var(--surface-0)]/72 px-6 py-12 backdrop-blur-xl sm:px-8 lg:px-10">
       <div className="mx-auto grid max-w-7xl gap-10">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {columns.map((column) => (

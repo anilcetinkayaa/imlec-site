@@ -29,3 +29,13 @@ export function parseLemonSqueezyDate(value: unknown) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
 }
+
+export function subscriptionAccessExpiresAt({
+  status,
+  trialEndsAt,
+}: {
+  status: string;
+  trialEndsAt: Date | null;
+}) {
+  return status === "TRIALING" ? trialEndsAt : null;
+}

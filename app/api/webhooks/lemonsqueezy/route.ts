@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
 import type { Prisma } from "@prisma/client";
-import { after } from "next/server";
 import { verifyLemonSqueezySignature } from "@/lib/lemonsqueezy-signature";
 import { prisma } from "@/src/db/prisma";
 import {
@@ -79,28 +78,38 @@ export async function POST(request: Request) {
     });
 
   if (!insertResult) {
-    return Response.json({ ok: true, duplicate: true });
+    const existingEvent = await prisma.lemonSqueezyWebhookEvent.findUnique({
+      where: { eventId },
+      select: { processedAt: true, error: true },
+    });
+
+    if (existingEvent?.processedAt && !existingEvent.error) {
+      return Response.json({ ok: true, duplicate: true });
+    }
   }
 
-  after(async () => {
-    try {
-      await processLemonSqueezyEvent(payload);
-      await prisma.lemonSqueezyWebhookEvent.update({
-        where: { eventId },
-        data: {
-          processedAt: new Date(),
-        },
-      });
-    } catch (error) {
-      await prisma.lemonSqueezyWebhookEvent.update({
-        where: { eventId },
-        data: {
-          error: error instanceof Error ? error.message : "UNKNOWN_ERROR",
-          processedAt: new Date(),
-        },
-      });
-    }
-  });
+  try {
+    await processLemonSqueezyEvent(payload);
+    await prisma.lemonSqueezyWebhookEvent.update({
+      where: { eventId },
+      data: {
+        error: null,
+        processedAt: new Date(),
+      },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "UNKNOWN_ERROR";
+
+    await prisma.lemonSqueezyWebhookEvent.update({
+      where: { eventId },
+      data: {
+        error: message,
+        processedAt: null,
+      },
+    });
+    console.error("[LEMON SQUEEZY WEBHOOK ERROR]", eventName, message);
+    return jsonError("PROCESSING_FAILED", 500);
+  }
 
   return Response.json({ ok: true });
 }

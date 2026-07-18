@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --test --experimental-transform-types lib/*.test.mjs",
+    "audit:lemonsqueezy": "node scripts/audit-lemonsqueezy.mjs",
     "email": "react-email dev --dir emails",
     "postinstall": "prisma generate",
     "seed": "node prisma/seed.mjs",
