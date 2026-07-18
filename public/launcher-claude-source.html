@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>İmleç Launcher — Tasarım Önizlemesi</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 14px;
+    background: radial-gradient(ellipse 900px 500px at 50% -10%, #16223a, #0a0c11 60%);
+    font-family: "Segoe UI", "Inter", -apple-system, Roboto, Arial, sans-serif;
+    padding: 26px 16px 40px;
+  }
+  .note {
+    font-family: ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: #7ea6ff; background: rgba(77,145,255,0.10); border: 1px solid rgba(77,145,255,0.3);
+    padding: 7px 14px; border-radius: 99px;
+  }
+
+  /* ── Launcher penceresi ── */
+  .lw {
+    position: relative; z-index: 0;
+    width: min(96vw, 1180px); border-radius: 14px; overflow: hidden;
+    border: 1px solid var(--line); box-shadow: 0 40px 110px rgba(0,0,0,0.65);
+    display: flex; flex-direction: column; background: var(--bg0); color: var(--tx1);
+    transition: background .3s, color .3s;
+  }
+
+  /* Temalar */
+  .lw.th-gece {
+    --bg0:#0b0e15; --bg1:#0d1119; --bg2:#121724; --bg3:#171d2e;
+    --line:rgba(148,170,220,0.12); --line2:rgba(148,170,220,0.2);
+    --tx1:#f2f5fc; --tx2:#a9b6cd; --tx3:#68758d;
+    --acc:#4d91ff; --accTx:#0b1220; --accSoft:rgba(77,145,255,0.14);
+    --ok:#3ddc97; --warn:#ffc857; --danger:#ff6b6b;
+  }
+  .lw.th-komur {
+    --bg0:#101113; --bg1:#131416; --bg2:#18191c; --bg3:#1e2024;
+    --line:rgba(255,255,255,0.08); --line2:rgba(255,255,255,0.15);
+    --tx1:#f4f4f5; --tx2:#a8adb8; --tx3:#6b7078;
+    --acc:#8b93a3; --accTx:#101113; --accSoft:rgba(139,147,163,0.15);
+    --ok:#3ddc97; --warn:#ffc857; --danger:#ff6b6b;
+  }
+  .lw.th-zumrut {
+    --bg0:#0a110e; --bg1:#0c1411; --bg2:#101a15; --bg3:#15221c;
+    --line:rgba(110,220,180,0.12); --line2:rgba(110,220,180,0.22);
+    --tx1:#eefaf4; --tx2:#9fbfb0; --tx3:#5f7d6f;
+    --acc:#2fd39a; --accTx:#04120c; --accSoft:rgba(47,211,154,0.13);
+    --ok:#3ddc97; --warn:#ffc857; --danger:#ff6b6b;
+  }
+  .lw.th-aydinlik {
+    --bg0:#eef1f6; --bg1:#f7f9fc; --bg2:#ffffff; --bg3:#eef2f8;
+    --line:rgba(20,35,70,0.10); --line2:rgba(20,35,70,0.18);
+    --tx1:#141a26; --tx2:#4c5870; --tx3:#8b95a8;
+    --acc:#2f6df6; --accTx:#ffffff; --accSoft:rgba(47,109,246,0.10);
+    --ok:#13a06b; --warn:#c98a12; --danger:#d64545;
+  }
+  .lw.th-mor {
+    --bg0:#120e1b; --bg1:#150f20; --bg2:#1c1428; --bg3:#241a33;
+    --line:rgba(190,140,255,0.13); --line2:rgba(190,140,255,0.24);
+    --tx1:#f6f1fc; --tx2:#bfaed6; --tx3:#79688f;
+    --acc:#a86bff; --accTx:#170a24; --accSoft:rgba(168,107,255,0.16);
+    --ok:#3ddc97; --warn:#ffc857; --danger:#ff6b6b;
+  }
+  .lw.th-gunbatimi {
+    --bg0:#170f0c; --bg1:#1a1210; --bg2:#221714; --bg3:#2b1d18;
+    --line:rgba(255,170,110,0.14); --line2:rgba(255,170,110,0.25);
+    --tx1:#fbf1ea; --tx2:#d9b8a3; --tx3:#8a6d5e;
+    --acc:#ff8a4c; --accTx:#1a0d06; --accSoft:rgba(255,138,76,0.16);
+    --ok:#3ddc97; --warn:#ffc857; --danger:#ff6b6b;
+  }
+  .lw.th-altin {
+    --bg0:#14110a; --bg1:#17130b; --bg2:#1e190e; --bg3:#262010;
+    --line:rgba(212,175,90,0.14); --line2:rgba(212,175,90,0.25);
+    --tx1:#f9f4e7; --tx2:#cdbb8e; --tx3:#8a7c58;
+    --acc:#d4af5a; --accTx:#1a1508; --accSoft:rgba(212,175,90,0.16);
+    --ok:#3ddc97; --warn:#ffc857; --danger:#ff6b6b;
+  }
+  .lw.th-buz {
+    --bg0:#eef4f8; --bg1:#f6fafc; --bg2:#ffffff; --bg3:#e9f2f6;
+    --line:rgba(20,90,120,0.10); --line2:rgba(20,90,120,0.19);
+    --tx1:#0f1c24; --tx2:#47606d; --tx3:#84a0ac;
+    --acc:#0fb3c4; --accTx:#ffffff; --accSoft:rgba(15,179,196,0.12);
+    --ok:#0f9c72; --warn:#b9790f; --danger:#c93f3f;
+  }
+
+  /* ══ Hareketli (canlı) — İKİ SİSTEM bir arada: Özel (CSS animasyon) + Rev 9 web sitesi motoru (Canvas) ══ */
+  .lw.live .side, .lw.live .tbar { backdrop-filter: blur(16px) saturate(1.25); }
+  .lw[data-live-kind="new"] .side, .lw[data-live-kind="new"] .tbar { background: color-mix(in srgb, var(--bg1) 55%, transparent); }
+  .lw.reduce-motion .lv * { animation-play-state: paused !important; }
+
+  /* — Özel: 6 hazır tema, kendi paleti + CSS animasyonuyla (silinmedi, geri eklendi) — */
+  .lw.th-live-aurora {
+    --bg0:#060b0d; --bg1:#081014; --bg2:#0e1a1c; --bg3:#132428;
+    --line:rgba(120,255,210,0.14); --line2:rgba(120,255,210,0.26);
+    --tx1:#eafff6; --tx2:#a9d9cc; --tx3:#5f8b7f;
+    --acc:#39e6b0; --accTx:#04140f; --accSoft:rgba(57,230,176,0.16);
+    --ok:#3ddc97; --warn:#ffc857; --danger:#ff6b6b;
+  }
+  .lw.th-live-aurora .side, .lw.th-live-aurora .tbar { background: rgba(7,18,20,.5); }
+  .lw.th-live-nebula {
+    --bg0:#0a0714; --bg1:#0c081a; --bg2:#150f24; --bg3:#1c1430;
+    --line:rgba(180,150,255,0.14); --line2:rgba(180,150,255,0.26);
+    --tx1:#f3eefc; --tx2:#c2b3de; --tx3:#7c6f9a;
+    --acc:#c86bff; --accTx:#170a24; --accSoft:rgba(200,107,255,0.16);
+    --ok:#3ddc97; --warn:#ffc857; --danger:#ff6b6b;
+  }
+  .lw.th-live-nebula .side, .lw.th-live-nebula .tbar { background: rgba(11,7,24,.5); }
+  .lw.th-live-akiskan {
+    --bg0:#080b12; --bg1:#0a0e17; --bg2:#101623; --bg3:#161d2d;
+    --line:rgba(120,170,255,0.14); --line2:rgba(120,170,255,0.24);
+    --tx1:#f1f5fc; --tx2:#a9bcdc; --tx3:#647089;
+    --acc:#4fd1ff; --accTx:#031824; --accSoft:rgba(79,209,255,0.16);
+    --ok:#3ddc97; --warn:#ffc857; --danger:#ff6b6b;
+  }
+  .lw.th-live-akiskan .side, .lw.th-live-akiskan .tbar { background: rgba(8,11,18,.5); }
+  .lw.th-live-nefes {
+    --bg0:#0a0d16; --bg1:#0c1019; --bg2:#111726; --bg3:#171f30;
+    --line:rgba(255,200,140,0.12); --line2:rgba(255,200,140,0.22);
+    --tx1:#f4f2fb; --tx2:#a9b2c9; --tx3:#606a82;
+    --acc:#ffb454; --accTx:#1a1206; --accSoft:rgba(255,180,84,0.16);
+    --ok:#3ddc97; --warn:#ffc857; --danger:#ff6b6b;
+  }
+  .lw.th-live-nefes .side, .lw.th-live-nefes .tbar { background: rgba(9,12,20,.5); }
+  .lw.th-live-safak {
+    --bg0:#150c16; --bg1:#180e1a; --bg2:#211323; --bg3:#2b1a2d;
+    --line:rgba(255,175,150,0.14); --line2:rgba(255,175,150,0.25);
+    --tx1:#fbeeec; --tx2:#d9b3ac; --tx3:#8f6b68;
+    --acc:#ff7a68; --accTx:#1d0906; --accSoft:rgba(255,122,104,0.16);
+    --ok:#3ddc97; --warn:#ffc857; --danger:#ff6b6b;
+  }
+  .lw.th-live-safak .side, .lw.th-live-safak .tbar { background: rgba(19,10,20,.5); }
+  .lw.th-live-particles {
+    --bg0:#0a0d0a; --bg1:#0c0f0c; --bg2:#121712; --bg3:#181f18;
+    --line:rgba(255,210,140,0.12); --line2:rgba(255,210,140,0.22);
+    --tx1:#f5f4ec; --tx2:#b9bcae; --tx3:#71766a;
+    --acc:#ffcf6b; --accTx:#1c1404; --accSoft:rgba(255,207,107,0.16);
+    --ok:#3ddc97; --warn:#ffc857; --danger:#ff6b6b;
+  }
+  .lw.th-live-particles .side, .lw.th-live-particles .tbar { background: rgba(9,12,9,.5); }
+
+  #livebg { position:absolute; inset:0; z-index:-1; overflow:hidden; pointer-events:none; opacity:0; transition:opacity .5s ease; }
+  .lw[data-live-kind="old"] #livebg { opacity:1; }
+  .lv { position:absolute; inset:0; opacity:0; transition:opacity .7s ease; }
+  #livebg[data-active="aurora"] .lv-aurora,
+  #livebg[data-active="nebula"] .lv-nebula,
+  #livebg[data-active="akiskan"] .lv-akiskan,
+  #livebg[data-active="nefes"] .lv-nefes,
+  #livebg[data-active="safak"] .lv-safak,
+  #livebg[data-active="particles"] .lv-particles { opacity:1; }
+
+  .aur { position:absolute; top:-10%; width:46%; height:130%; filter:blur(38px); mix-blend-mode:screen; opacity:.55; border-radius:50%; }
+  .aur1 { left:-8%; background:linear-gradient(180deg, rgba(60,255,190,.55), rgba(60,255,190,0) 70%); animation: auroraSway 16s ease-in-out infinite; }
+  .aur2 { left:24%; background:linear-gradient(180deg, rgba(90,190,255,.5), rgba(90,190,255,0) 70%); animation: auroraSway 20s ease-in-out infinite -6s; }
+  .aur3 { left:58%; background:linear-gradient(180deg, rgba(170,110,255,.42), rgba(170,110,255,0) 70%); animation: auroraSway 24s ease-in-out infinite -12s; }
+  @keyframes auroraSway { 0%,100% { transform: translateX(0) skewX(-6deg) scaleY(1); } 50% { transform: translateX(6%) skewX(4deg) scaleY(1.12); } }
+
+  .lv-nebula { background: radial-gradient(ellipse 90% 70% at 30% 20%, #1b1030, #0a0714 65%); }
+  .neb-cloud { position:absolute; border-radius:50%; filter:blur(50px); opacity:.5; mix-blend-mode:screen; }
+  .neb1 { width:340px; height:340px; left:8%; top:12%; background:radial-gradient(circle, rgba(190,110,255,.55), transparent 70%); animation: nebDrift 34s ease-in-out infinite; }
+  .neb2 { width:280px; height:280px; right:10%; top:38%; background:radial-gradient(circle, rgba(110,150,255,.5), transparent 70%); animation: nebDrift 28s ease-in-out infinite -10s; }
+  .neb3 { width:220px; height:220px; left:34%; bottom:6%; background:radial-gradient(circle, rgba(255,130,210,.4), transparent 70%); animation: nebDrift 40s ease-in-out infinite -20s; }
+  @keyframes nebDrift { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(4%,-6%) scale(1.15); } }
+  .star { position:absolute; width:2px; height:2px; border-radius:50%; background:#fff; animation: twinkle 3.5s ease-in-out infinite; }
+  @keyframes twinkle { 0%,100% { opacity:.15; } 50% { opacity:1; } }
+
+  .lv-akiskan { background:#080b12; }
+  .liq { position:absolute; border-radius:50%; filter:blur(70px); opacity:.5; mix-blend-mode:screen; }
+  .liq1 { width:380px; height:380px; left:-6%; top:-8%; background:radial-gradient(circle, rgba(79,209,255,.55), transparent 70%); animation: liquidMove 22s ease-in-out infinite; }
+  .liq2 { width:320px; height:320px; right:-4%; top:20%; background:radial-gradient(circle, rgba(120,110,255,.5), transparent 70%); animation: liquidMove 27s ease-in-out infinite -8s; }
+  .liq3 { width:300px; height:300px; left:20%; bottom:-10%; background:radial-gradient(circle, rgba(60,230,200,.45), transparent 70%); animation: liquidMove 19s ease-in-out infinite -14s; }
+  @keyframes liquidMove { 0%,100% { transform: translate(0,0); } 33% { transform: translate(8%,6%); } 66% { transform: translate(-6%,4%); } }
+
+  .lv-nefes { background:#0a0d16; display:flex; align-items:center; justify-content:center; }
+  .orb-wrap { position:relative; width:420px; height:420px; }
+  .orb-core { position:absolute; inset:100px; border-radius:50%; background:radial-gradient(circle, rgba(255,180,84,.6), rgba(255,180,84,0) 72%); filter:blur(4px); animation: breathe 4.5s ease-in-out infinite; }
+  .orb-ring { position:absolute; inset:0; border:1px solid rgba(255,200,140,.18); border-radius:50%; }
+  .orb-ring.r2 { inset:38px; animation: spin 50s linear infinite; }
+  .orb-ring.r3 { inset:70px; animation: spin 34s linear infinite reverse; }
+  .orb-ring i { position:absolute; top:-3px; left:50%; width:6px; height:6px; margin-left:-3px; border-radius:50%; background:#ffcf8a; box-shadow:0 0 10px 2px rgba(255,180,84,.7); }
+  @keyframes breathe { 0%,100% { transform:scale(.92); opacity:.75; } 50% { transform:scale(1.06); opacity:1; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .lv-safak { background:linear-gradient(200deg,#150c2c,#3a1c3c 38%,#8a3d4a 62%,#c96a3e 82%,#e8a253 100%); background-size:180% 180%; animation: dawnShift 26s ease-in-out infinite alternate; }
+  .safak-glare { position:absolute; width:70%; height:46%; left:15%; bottom:6%; border-radius:50%; background:radial-gradient(ellipse, rgba(255,224,170,.55), transparent 70%); filter:blur(30px); animation: glareDrift 20s ease-in-out infinite; }
+  @keyframes dawnShift { 0% { background-position:0% 20%; } 100% { background-position:100% 80%; } }
+  @keyframes glareDrift { 0%,100% { transform: translateX(-4%); opacity:.85; } 50% { transform: translateX(4%); opacity:1; } }
+
+  .lv-particles { background:#0a0d0a; }
+  .fly { position:absolute; width:5px; height:5px; border-radius:50%; background:#ffcf6b; box-shadow:0 0 8px 2px rgba(255,207,107,.7); opacity:0; animation-name: floatUp; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+  @keyframes floatUp { 0% { transform:translateY(0); opacity:0; } 12% { opacity:.9; } 88% { opacity:.7; } 100% { transform:translateY(-160px); opacity:0; } }
+
+  .thp-live { position:relative; overflow:hidden; }
+  .mb { position:absolute; border-radius:50%; filter:blur(12px); opacity:.7; }
+  .mb1 { width:44px; height:44px; left:-8px; top:-8px; animation: miniFloat 6s ease-in-out infinite; }
+  .mb2 { width:32px; height:32px; right:-6px; bottom:-8px; animation: miniFloat 7s ease-in-out infinite -3.2s; }
+  @keyframes miniFloat { 0%,100% { transform:translate(0,0) scale(1); } 50% { transform:translate(5px,-5px) scale(1.18); } }
+  .mb.center { left:50%; top:50%; width:38px; height:38px; margin:-19px 0 0 -19px; animation: breathe 4.5s ease-in-out infinite; }
+  .mini-fly { position:absolute; width:3.5px; height:3.5px; border-radius:50%; background:#ffcf6b; box-shadow:0 0 6px 1.5px rgba(255,207,107,.8); animation-name: floatUp; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+  .thp-safak { background:linear-gradient(200deg,#150c2c,#3a1c3c 40%,#8a3d4a 66%,#e8a253 100%); background-size:180% 180%; animation: dawnShift 9s ease-in-out infinite alternate; }
+
+  /* — Rev 9: web sitesiyle aynı canvas motoru — */
+  #bgCanvas { position:absolute; inset:0; z-index:-1; width:100%; height:100%; display:block; opacity:0; transition:opacity .5s ease; }
+  .lw[data-live-kind="new"] #bgCanvas { opacity:1; }
+
+  /* Ayarlar sayfası — tema grubu başlıkları + canlı rozet + kontrol satırları */
+  .thgroup { font-size:12.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--tx3); margin:18px 0 3px; }
+  .thgroup:first-of-type { margin-top:2px; }
+  .live-pill { font-size:8.5px; font-weight:800; letter-spacing:.04em; color:#04140f; background:linear-gradient(90deg,#39e6b0,#4fd1ff); padding:2px 6px; border-radius:99px; text-transform:uppercase; margin-left:6px; vertical-align:1px; }
+  .themes-live { grid-template-columns: repeat(3, 1fr); }
+  .live-controls { margin: 12px 0 14px; display:flex; flex-direction:column; gap:10px; }
+  .lc-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .lc-lbl { font-size:11px; font-weight:700; color:var(--tx3); text-transform:uppercase; letter-spacing:.05em; width:60px; flex-shrink:0; }
+  .swatches { display:flex; gap:8px; }
+  .swatch {
+    width:26px; height:26px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0;
+    background: var(--c); box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); transition: transform .15s, border-color .15s;
+  }
+  .swatch:hover { transform: scale(1.12); }
+  .swatch.on { border-color: var(--tx1); }
+  .seg { display:flex; gap:4px; background:var(--bg3); padding:3px; border-radius:9px; }
+  .seg button { border:none; background:transparent; color:var(--tx2); font-size:13px; font-weight:600; padding:6px 14px; border-radius:6px; cursor:pointer; font-family:inherit; }
+  .seg button.on { background:var(--acc); color:var(--accTx); }
+  .thp-canvas { padding:0; overflow:hidden; background:#05070b; }
+  .thp-canvas canvas { display:block; width:100%; height:100%; }
+  .thc[data-atmos="off"] .thp { display:flex; align-items:center; justify-content:center; background:var(--bg3); color:var(--tx3); }
+
+  svg.i { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+  /* Başlık çubuğu */
+  .tbar {
+    height: 38px; display: flex; align-items: center; gap: 10px; padding: 0 6px 0 14px;
+    background: var(--bg1); border-bottom: 1px solid var(--line);
+    font-size: 12.5px; color: var(--tx2); user-select: none;
+  }
+  .tbar img { width: 18px; height: 18px; border-radius: 5px; }
+  .tbar .sp { flex: 1; }
+  .wbtn { width: 44px; height: 38px; display: grid; place-items: center; color: var(--tx3); cursor: pointer; transition: background .15s, color .15s; }
+  .wbtn:hover { background: var(--bg3); color: var(--tx1); }
+  .wbtn.close:hover { background: #d64545; color: white; }
+
+  .lw-body { display: flex; min-height: 700px; }
+
+  /* Kenar çubuğu */
+  .side {
+    width: 236px; background: var(--bg1); border-right: 1px solid var(--line);
+    display: flex; flex-direction: column; padding: 18px 12px 14px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 18px; }
+  .brand img { width: 38px; height: 38px; border-radius: 10px; }
+  .brand b { font-size: 15px; letter-spacing: -0.01em; }
+  .brand small { display: block; font-size: 10.5px; color: var(--tx3); font-weight: 400; margin-top: 1px; }
+  .nav { display: flex; flex-direction: column; gap: 3px; }
+  .nv {
+    display: flex; align-items: center; gap: 14px; min-height: 58px; padding: 14px 15px; border-radius: 11px;
+    font-size: 19px; color: var(--tx2); cursor: pointer; border: 1px solid transparent;
+    transition: background .15s, color .15s;
+  }
+  .nv svg.i { width: 24px; height: 24px; stroke-width: 2; }
+  .nv:hover { background: var(--bg2); color: var(--tx1); }
+  .nv.on { background: var(--accSoft); color: var(--tx1); border-color: transparent; position: relative; }
+  .nv.on::before { content: ""; position: absolute; left: -12px; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: var(--acc); }
+  .nv.on svg.i { color: var(--acc); }
+  .side .sp { flex: 1; }
+  .ucard {
+    display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 11px;
+    background: var(--bg2); border: 1px solid var(--line); cursor: pointer;
+  }
+  .ucard:hover { border-color: var(--line2); }
+  .ava {
+    width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center;
+    background: var(--accSoft); color: var(--acc); font-weight: 700; font-size: 14px;
+  }
+  .ucard .um { min-width: 0; flex: 1; }
+  .ucard .um b { display: block; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ucard .um span { font-size: 10.5px; color: var(--tx3); }
+  .status { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--tx3); padding: 12px 8px 0; }
+  .status i { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+
+  /* Ana alan */
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .top {
+    display: flex; align-items: center; gap: 10px; padding: 18px 24px 14px;
+  }
+  .top h1 { font-size: 21px; letter-spacing: -0.02em; font-weight: 650; }
+  .top .sub { font-size: 12px; color: var(--tx3); margin-top: 2px; }
+  .top .sp { flex: 1; }
+  .ibtn {
+    width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center;
+    background: var(--bg2); border: 1px solid var(--line); color: var(--tx2); cursor: pointer;
+    transition: border-color .15s, color .15s, transform .3s;
+  }
+  .ibtn:hover { border-color: var(--line2); color: var(--tx1); }
+  .ibtn.spin svg.i { animation: rot .7s ease; }
+  @keyframes rot { to { transform: rotate(360deg); } }
+  .avbtn { position: relative; }
+  .menu {
+    position: absolute; right: 0; top: 46px; width: 210px; z-index: 50;
+    background: var(--bg2); border: 1px solid var(--line2); border-radius: 12px;
+    box-shadow: 0 18px 50px rgba(0,0,0,0.45); padding: 6px; display: none;
+  }
+  .menu.open { display: block; }
+  .mi {
+    display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 8px;
+    font-size: 13px; color: var(--tx2); cursor: pointer;
+  }
+  .mi:hover { background: var(--bg3); color: var(--tx1); }
+  .mi.danger { color: var(--danger); }
+  .mi.danger:hover { background: rgba(214,69,69,0.1); }
+  .msep { height: 1px; background: var(--line); margin: 5px 8px; }
+
+  .page { flex: 1; padding: 6px 24px 24px; overflow-y: auto; display: none; }
+  .page.on { display: block; }
+
+  /* ── Başlangıç: tek parça hero yayın ── */
+  .hero {
+    position: relative; border-radius: 16px; overflow: hidden; border: 1px solid var(--line);
+    aspect-ratio: 16 / 6.6; min-height: 310px; background: #0a0d13; cursor: default;
+  }
+  .hero .img {
+    position: absolute; inset: 0; background-size: cover; background-position: center;
+    transform: scale(1.02); transition: opacity .5s ease, transform 8s linear;
+  }
+  .hero .shade {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(5,8,14,0.05) 30%, rgba(5,8,14,0.62) 68%, rgba(5,8,14,0.9) 100%);
+  }
+  .hero .txt { position: absolute; left: 26px; right: 26px; bottom: 40px; color: #f4f7ff; }
+  .hbadge {
+    display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px;
+    font-size: 10.5px; letter-spacing: 0.1em; font-weight: 700; text-transform: uppercase;
+    background: rgba(77,145,255,0.22); border: 1px solid rgba(120,170,255,0.45);
+    color: #cfe2ff; padding: 4px 10px; border-radius: 99px; backdrop-filter: blur(6px);
+  }
+  .hero h2 { font-size: 24px; letter-spacing: -0.015em; margin-bottom: 6px; text-shadow: 0 2px 18px rgba(0,0,0,0.5); }
+  .hero p { font-size: 13.5px; line-height: 1.55; color: rgba(230,238,252,0.85); max-width: 72ch; text-shadow: 0 1px 12px rgba(0,0,0,0.5); }
+  .hero .cta {
+    display: inline-flex; align-items: center; gap: 7px; margin-top: 14px;
+    background: var(--acc); color: var(--accTx); font-size: 12.5px; font-weight: 700;
+    padding: 8px 15px; border-radius: 9px; cursor: pointer; border: none;
+  }
+  .harr {
+    position: absolute; top: 50%; transform: translateY(-50%); width: 38px; height: 38px;
+    border-radius: 50%; display: grid; place-items: center; cursor: pointer; z-index: 5;
+    background: rgba(8,12,20,0.55); border: 1px solid rgba(255,255,255,0.15); color: #dfe8f8;
+    opacity: 0; transition: opacity .2s; backdrop-filter: blur(6px);
+  }
+  .hero:hover .harr { opacity: 1; }
+  .harr:hover { background: rgba(8,12,20,0.8); }
+  .harr.l { left: 14px; } .harr.r { right: 14px; }
+  .hfoot { position: absolute; left: 26px; right: 26px; bottom: 14px; display: flex; align-items: center; gap: 10px; z-index: 4; }
+  .hdots { display: flex; gap: 6px; }
+  .hdots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.35); cursor: pointer; transition: background .2s, width .2s; }
+  .hdots i.on { background: #fff; width: 18px; border-radius: 4px; }
+  .hprog { flex: 1; height: 2.5px; border-radius: 3px; background: rgba(255,255,255,0.18); overflow: hidden; }
+  .hprog i { display: block; height: 100%; width: 0%; background: var(--acc); border-radius: 3px; }
+  .hcount { font-size: 10.5px; color: rgba(255,255,255,0.6); font-family: ui-monospace, monospace; }
+
+  /* Hızlı erişim */
+  .quick { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .qc {
+    display: flex; align-items: center; gap: 15px; min-height: 78px; padding: 16px 18px; border-radius: 13px;
+    background: var(--bg2); border: 1px solid var(--line); cursor: pointer; transition: border-color .15s, transform .2s;
+  }
+  .qc:hover { border-color: var(--line2); transform: translateY(-1px); }
+  .qic { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; background: var(--accSoft); color: var(--acc); font-weight: 800; font-size: 18px; }
+  .qc b { display: block; font-size: 16px; }
+  .qc span { font-size: 13px; color: var(--tx3); }
+  .qc .go { margin-left: auto; color: var(--tx3); }
+
+  /* ── Uygulamalar ── */
+  .pc {
+    display: flex; align-items: center; gap: 18px; padding: 20px; border-radius: 14px;
+    background: var(--bg2); border: 1px solid var(--line); margin-bottom: 14px;
+    transition: border-color .15s;
+  }
+  .pc:hover { border-color: var(--line2); }
+  .pic { width: 60px; height: 60px; border-radius: 14px; display: grid; place-items: center; font-size: 23px; font-weight: 800; }
+  .pic.fis { background: rgba(72,160,255,0.13); border: 1px solid rgba(72,160,255,0.3); color: #58a6ff; }
+  .pic.coz { background: rgba(160,120,255,0.12); border: 1px solid rgba(160,120,255,0.28); color: #a985ff; }
+  .pic.iml { background: var(--accSoft); border: 1px solid var(--line2); color: var(--acc); padding: 8px; }
+  .pic.iml img { width: 100%; height: 100%; object-fit: contain; }
+  .pmeta { flex: 1; min-width: 0; }
+  .pmeta .r1 { display: flex; align-items: center; gap: 9px; }
+  .pmeta b { font-size: 17px; }
+  .chip { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; padding: 4px 10px; border-radius: 99px; }
+  .chip.ok { background: rgba(61,220,151,0.12); border: 1px solid rgba(61,220,151,0.35); color: var(--ok); }
+  .chip.up { background: rgba(255,200,87,0.1); border: 1px solid rgba(255,200,87,0.35); color: var(--warn); }
+  .chip.soon { background: var(--bg3); border: 1px solid var(--line); color: var(--tx3); }
+  .pmeta .r2 { font-size: 13px; color: var(--tx3); margin-top: 5px; display: flex; gap: 13px; }
+  .pbar { margin-top: 8px; height: 4px; border-radius: 3px; background: var(--bg3); overflow: hidden; max-width: 420px; }
+  .pbar i { display: block; height: 100%; width: 64%; background: var(--acc); border-radius: 3px; animation: dl 3s ease-in-out infinite alternate; }
+  @keyframes dl { from { width: 42%; } to { width: 78%; } }
+  .pact { display: flex; align-items: center; gap: 8px; }
+  .btn {
+    height: 40px; padding: 0 19px; border-radius: 9px; font-size: 14px; font-weight: 700;
+    border: 1px solid var(--line2); background: var(--bg3); color: var(--tx1); cursor: pointer;
+    transition: filter .15s, transform .15s;
+  }
+  .btn:hover { filter: brightness(1.15); }
+  .btn.pri { background: var(--acc); border-color: transparent; color: var(--accTx); }
+  .btn.ghost { background: transparent; }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+  .dots3 { width: 40px; height: 40px; border-radius: 9px; display: grid; place-items: center; border: 1px solid var(--line); background: transparent; color: var(--tx3); cursor: pointer; }
+  .dots3:hover { border-color: var(--line2); color: var(--tx1); }
+
+  /* ── Güncellemeler ── */
+  .ut { display: flex; gap: 18px; padding: 18px 6px; border-bottom: 1px solid var(--line); }
+  .ut:last-child { border-bottom: none; }
+  .uver { min-width: 88px; }
+  .uver b { display: inline-block; font-family: ui-monospace, monospace; font-size: 13px; background: var(--accSoft); color: var(--acc); padding: 4px 10px; border-radius: 7px; }
+  .uver span { display: block; font-size: 12px; color: var(--tx3); margin-top: 6px; }
+  .ut .ub b { font-size: 16px; }
+  .ut .ub p { font-size: 14px; color: var(--tx2); margin-top: 4px; line-height: 1.6; }
+
+  /* ── Hesap & Ayarlar ── */
+  .card2 { background: var(--bg2); border: 1px solid var(--line); border-radius: 14px; padding: 22px; margin-bottom: 14px; }
+  .card2 h3 { font-size: 17px; margin-bottom: 5px; }
+  .card2 .d { font-size: 14px; color: var(--tx3); }
+  .krow { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .krow:last-child { border-bottom: none; }
+  .krow .kl b { display: block; font-size: 15px; }
+  .krow .kl span { font-size: 13px; color: var(--tx3); }
+  .kv { font-size: 14px; color: var(--tx2); font-family: ui-monospace, monospace; }
+  .btn.danger { background: transparent; border-color: rgba(214,69,69,0.45); color: var(--danger); }
+  .btn.danger:hover { background: rgba(214,69,69,0.1); filter: none; }
+
+  .swc { position: relative; width: 40px; height: 22px; border-radius: 99px; background: var(--bg3); border: 1px solid var(--line2); cursor: pointer; transition: background .2s; }
+  .swc i { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--tx3); transition: left .2s, background .2s; }
+  .swc.on { background: var(--acc); border-color: transparent; }
+  .swc.on i { left: 20px; background: var(--accTx); }
+
+  .themes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
+  .thc { border-radius: 13px; border: 1.5px solid var(--line); overflow: hidden; cursor: pointer; transition: border-color .15s, transform .15s; }
+  .thc:hover { transform: translateY(-2px); }
+  .thc.on { border-color: var(--acc); }
+  .thp { height: 74px; display: flex; }
+  .thp .a { width: 34%; } .thp .b { flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 5px; }
+  .thp .l1 { height: 7px; border-radius: 4px; width: 70%; } .thp .l2 { height: 7px; border-radius: 4px; width: 45%; }
+  .thn { padding: 9px 11px; font-size: 13.5px; font-weight: 600; background: var(--bg2); display: flex; justify-content: space-between; align-items: center; }
+  .thn s { text-decoration: none; font-size: 10px; color: var(--tx3); font-weight: 400; }
+
+  @media (max-width: 860px) { .side { display: none; } .quick, .themes { grid-template-columns: 1fr 1fr; } }
+
+  /* Web hero embed: launcher'ın kendi düzenini sabit bir sahnede korur. */
+  html, body { width: 1030px; height: 742px; overflow: hidden; }
+  body { min-height: 742px; display: block; padding: 0; background: transparent; }
+  .note { display: none; }
+  .lw { width: 1030px; height: 742px; border-radius: 12px; box-shadow: none; }
+  .lw-body { min-height: 703px; height: 703px; }
+  .main { height: 703px; overflow: hidden; }
+  .page { min-height: 0; overflow: auto; }
+  #p-start { overflow-x: hidden; }
+  .ucard, .status, .avbtn { display: none; }
+</style>
+</head>
+<body>
+
+<div class="note">İmleç Launcher · 2026 tasarım önizlemesi — sekmeleri, temaları ve menüleri tıklayarak dene</div>
+
+<div class="lw th-gece" id="lw">
+  <div id="livebg" data-active="">
+    <div class="lv lv-aurora"><div class="aur aur1"></div><div class="aur aur2"></div><div class="aur aur3"></div></div>
+    <div class="lv lv-nebula"><div class="neb-cloud neb1"></div><div class="neb-cloud neb2"></div><div class="neb-cloud neb3"></div><div id="nebStars"></div></div>
+    <div class="lv lv-akiskan"><div class="liq liq1"></div><div class="liq liq2"></div><div class="liq liq3"></div></div>
+    <div class="lv lv-nefes"><div class="orb-wrap"><div class="orb-core"></div><div class="orb-ring r2"><i></i></div><div class="orb-ring r3"><i></i></div></div></div>
+    <div class="lv lv-safak"><div class="safak-glare"></div></div>
+    <div class="lv lv-particles" id="flyLayer"></div>
+  </div>
+  <canvas id="bgCanvas"></canvas>
+  <!-- Başlık çubuğu -->
+  <div class="tbar">
+    <img src="/imlec-icon.png" alt="">
+    <span>İmleç Yazılım</span>
+    <span class="sp"></span>
+    <div class="wbtn" title="Küçült"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></div>
+    <div class="wbtn" title="Büyüt"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1.5"/></svg></div>
+    <div class="wbtn close" title="Kapat — uygulamayı kapatır, hesabınız açık kalır"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></div>
+  </div>
+
+  <div class="lw-body">
+    <!-- Kenar çubuğu -->
+    <aside class="side">
+      <div class="brand">
+        <img src="/imlec-icon.png" alt="">
+        <div><b>İmleç Yazılım</b><small>Uygulama Merkezi</small></div>
+      </div>
+      <nav class="nav">
+        <div class="nv on" data-p="start">
+          <svg class="i" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 9.5V21h14V9.5"/></svg>
+          Başlangıç
+        </div>
+        <div class="nv" data-p="apps">
+          <svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          Uygulamalar
+        </div>
+        <div class="nv" data-p="updates">
+          <svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+          Güncellemeler
+        </div>
+        <div class="nv" data-p="settings">
+          <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Ayarlar
+        </div>
+      </nav>
+      <div class="sp"></div>
+      <div class="status"><i></i>Bağlı · Launcher v1.4.2 · Güncel</div>
+    </aside>
+
+    <!-- Ana alan -->
+    <div class="main">
+      <div class="top">
+        <div><h1 id="ptitle">Başlangıç</h1><div class="sub" id="psub">Yayınlar ve hızlı erişim</div></div>
+        <span class="sp"></span>
+        <div class="ibtn" id="refresh" title="Yenile"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></div>
+        <div class="ibtn" data-goto="settings" title="Ayarlar"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+      </div>
+
+      <!-- BAŞLANGIÇ -->
+      <div class="page on" id="p-start">
+        <div class="hero" id="hero">
+          <div class="img" id="heroImg"></div>
+          <div class="shade"></div>
+          <div class="harr l" id="hprev"><svg class="i" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></div>
+          <div class="harr r" id="hnext"><svg class="i" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></div>
+          <div class="txt">
+            <span class="hbadge" id="hbadge">LAUNCHER</span>
+            <h2 id="htitle">FİŞ260 yayımlandı.</h2>
+            <p id="hbody">Fiş görsellerinden firma, VKN/TCKN, vergi dairesi, tarih, saat, fiş numarası, toplam tutar ve KDV bilgilerini otomatik çıkararak Excel çıktısı oluşturur.</p>
+            <button class="cta">Detayları gör
+              <svg class="i" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </button>
+          </div>
+          <div class="hfoot">
+            <div class="hdots" id="hdots"></div>
+            <div class="hprog"><i id="hbar"></i></div>
+            <span class="hcount" id="hcount">1 / 3</span>
+          </div>
+        </div>
+        <div class="quick">
+          <div class="qc">
+            <div class="qic">F</div>
+            <div><b>FİŞ260&#39;ı başlat</b><span>Kurulu · v0.1.0 · Güncel</span></div>
+            <svg class="i go" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+          <div class="qc">
+            <div class="qic" style="color:var(--ok); background:rgba(61,220,151,0.1);">✓</div>
+            <div><b>Her şey güncel</b><span>Son denetim: bugün 14:32</span></div>
+            <svg class="i go" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- UYGULAMALAR -->
+      <div class="page" id="p-apps">
+        <div class="pc">
+          <div class="pic fis">F</div>
+          <div class="pmeta">
+            <div class="r1"><b>FİŞ260</b><span class="chip ok">KURULU · GÜNCEL</span></div>
+            <div class="r2"><span>v0.1.0</span><span>Muhasebe OCR</span><span>412 MB</span></div>
+          </div>
+          <div class="pact">
+            <button class="btn pri">Aç</button>
+            <button class="dots3" title="Diğer işlemler">⋯</button>
+          </div>
+        </div>
+        <div class="pc">
+          <div class="pic fis">F</div>
+          <div class="pmeta">
+            <div class="r1"><b>FİŞ260</b><span class="chip up">GÜNCELLEME İNİYOR</span></div>
+            <div class="r2"><span>v0.1.0 → v0.2.0</span><span>64% · 38 MB / 60 MB · 12 sn kaldı</span></div>
+            <div class="pbar"><i></i></div>
+          </div>
+          <div class="pact">
+            <button class="btn ghost">Duraklat</button>
+          </div>
+        </div>
+        <div class="pc">
+          <div class="pic coz">Ç</div>
+          <div class="pmeta">
+            <div class="r1"><b>ÇÖZVER</b><span class="chip soon">YAKINDA</span></div>
+            <div class="r2"><span>Finansal analiz ve spread</span><span>Geliştirme sürüyor</span></div>
+          </div>
+          <div class="pact">
+            <button class="btn" disabled>Kur</button>
+          </div>
+        </div>
+        <div class="pc">
+          <div class="pic iml"><img src="/imlec-icon.png" alt=""></div>
+          <div class="pmeta">
+            <div class="r1"><b>İmleç Launcher</b><span class="chip ok">GÜNCEL</span></div>
+            <div class="r2"><span>v1.4.2</span><span>Uygulama merkezi</span></div>
+          </div>
+          <div class="pact">
+            <button class="btn ghost">Sürüm notları</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GÜNCELLEMELER -->
+      <div class="page" id="p-updates">
+        <div class="card2">
+          <div class="ut">
+            <div class="uver"><b>v0.2.0</b><span>FİŞ260</span></div>
+            <div class="ub"><b>Toplu fiş işleme hızlandırıldı</b><p>OCR kuyruğu paralel çalışıyor; 100 fişlik paketlerde işlem süresi %40 kısaldı. Excel şablonlarına vergi dairesi sütunu eklendi.</p></div>
+          </div>
+          <div class="ut">
+            <div class="uver"><b>v1.4.2</b><span>Launcher</span></div>
+            <div class="ub"><b>Otomatik onarım</b><p>Bozuk indirme dosyaları artık otomatik algılanıp yeniden indiriliyor. Tepsi simgesi davranışları iyileştirildi.</p></div>
+          </div>
+          <div class="ut">
+            <div class="uver"><b>v0.1.0</b><span>FİŞ260</span></div>
+            <div class="ub"><b>İlk kararlı sürüm</b><p>Fiş işleme, alan kontrolü ve Excel aktarımı ile ilk sürüm yayında.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AYARLAR -->
+      <div class="page" id="p-settings">
+        <div class="card2">
+          <h3>Görünüm</h3>
+          <div class="d">Tema tercihiniz kaydedilir ve tüm launcher&#39;a uygulanır.</div>
+          <div class="thgroup">Klasik</div>
+          <div class="themes">
+            <div class="thc on" data-th="th-gece">
+              <div class="thp" style="background:#0b0e15;"><div class="a" style="background:#0d1119;"></div><div class="b"><i class="l1" style="background:#4d91ff;"></i><i class="l2" style="background:#232c40;"></i></div></div>
+              <div class="thn">Gece <s>varsayılan</s></div>
+            </div>
+            <div class="thc" data-th="th-komur">
+              <div class="thp" style="background:#101113;"><div class="a" style="background:#131416;"></div><div class="b"><i class="l1" style="background:#8b93a3;"></i><i class="l2" style="background:#232529;"></i></div></div>
+              <div class="thn">Kömür</div>
+            </div>
+            <div class="thc" data-th="th-zumrut">
+              <div class="thp" style="background:#0a110e;"><div class="a" style="background:#0c1411;"></div><div class="b"><i class="l1" style="background:#2fd39a;"></i><i class="l2" style="background:#1b2a23;"></i></div></div>
+              <div class="thn">Zümrüt</div>
+            </div>
+            <div class="thc" data-th="th-aydinlik">
+              <div class="thp" style="background:#eef1f6;"><div class="a" style="background:#ffffff;"></div><div class="b"><i class="l1" style="background:#2f6df6;"></i><i class="l2" style="background:#d7deea;"></i></div></div>
+              <div class="thn">Aydınlık</div>
+            </div>
+            <div class="thc" data-th="th-mor">
+              <div class="thp" style="background:#120e1b;"><div class="a" style="background:#150f20;"></div><div class="b"><i class="l1" style="background:#a86bff;"></i><i class="l2" style="background:#2a1f3a;"></i></div></div>
+              <div class="thn">Mor</div>
+            </div>
+            <div class="thc" data-th="th-gunbatimi">
+              <div class="thp" style="background:#170f0c;"><div class="a" style="background:#1a1210;"></div><div class="b"><i class="l1" style="background:#ff8a4c;"></i><i class="l2" style="background:#332019;"></i></div></div>
+              <div class="thn">Gün Batımı</div>
+            </div>
+            <div class="thc" data-th="th-altin">
+              <div class="thp" style="background:#14110a;"><div class="a" style="background:#17130b;"></div><div class="b"><i class="l1" style="background:#d4af5a;"></i><i class="l2" style="background:#2c2512;"></i></div></div>
+              <div class="thn">Altın</div>
+            </div>
+            <div class="thc" data-th="th-buz">
+              <div class="thp" style="background:#eef4f8;"><div class="a" style="background:#ffffff;"></div><div class="b"><i class="l1" style="background:#0fb3c4;"></i><i class="l2" style="background:#d8e8ee;"></i></div></div>
+              <div class="thn">Buz</div>
+            </div>
+          </div>
+          <div class="thgroup">Hareketli — Özel<span class="live-pill">CANLI</span></div>
+          <div class="themes themes-live">
+            <div class="thc" data-th="th-live-aurora">
+              <div class="thp thp-live" style="background:linear-gradient(160deg,#04100f,#0a1c1a);">
+                <div class="mb mb1" style="background:radial-gradient(circle,#39e6b0,transparent 70%);"></div>
+                <div class="mb mb2" style="background:radial-gradient(circle,#5ab0ff,transparent 70%);"></div>
+              </div>
+              <div class="thn">Aurora<span class="live-pill">CANLI</span></div>
+            </div>
+            <div class="thc" data-th="th-live-nebula">
+              <div class="thp thp-live" style="background:linear-gradient(160deg,#0a0714,#150f24);">
+                <div class="mb mb1" style="background:radial-gradient(circle,#c86bff,transparent 70%);"></div>
+                <div class="mb mb2" style="background:radial-gradient(circle,#6bb0ff,transparent 70%);"></div>
+              </div>
+              <div class="thn">Nebula<span class="live-pill">CANLI</span></div>
+            </div>
+            <div class="thc" data-th="th-live-akiskan">
+              <div class="thp thp-live" style="background:linear-gradient(160deg,#080b12,#101623);">
+                <div class="mb mb1" style="background:radial-gradient(circle,#4fd1ff,transparent 70%);"></div>
+                <div class="mb mb2" style="background:radial-gradient(circle,#8a7bff,transparent 70%);"></div>
+              </div>
+              <div class="thn">Akışkan<span class="live-pill">CANLI</span></div>
+            </div>
+            <div class="thc" data-th="th-live-nefes">
+              <div class="thp thp-live" style="background:#0a0d16;">
+                <div class="mb center" style="background:radial-gradient(circle,#ffb454,transparent 72%);"></div>
+              </div>
+              <div class="thn">Nefes<span class="live-pill">CANLI</span></div>
+            </div>
+            <div class="thc" data-th="th-live-safak">
+              <div class="thp thp-safak"></div>
+              <div class="thn">Şafak<span class="live-pill">CANLI</span></div>
+            </div>
+            <div class="thc" data-th="th-live-particles">
+              <div class="thp thp-live" style="background:#0a0d0a;">
+                <div class="mini-fly" style="left:18%; top:70%; animation-duration:5s; animation-delay:-1s;"></div>
+                <div class="mini-fly" style="left:42%; top:40%; animation-duration:6.5s; animation-delay:-3s;"></div>
+                <div class="mini-fly" style="left:65%; top:60%; animation-duration:5.8s; animation-delay:-.5s;"></div>
+                <div class="mini-fly" style="left:80%; top:30%; animation-duration:7s; animation-delay:-4s;"></div>
+              </div>
+              <div class="thn">Parçacıklar<span class="live-pill">CANLI</span></div>
+            </div>
+          </div>
+          <div class="thgroup">Hareketli — İmleç Yazılım web sitesi (Rev 9) ile aynı motor<span class="live-pill">CANLI</span></div>
+          <div class="live-controls">
+            <div class="lc-row">
+              <span class="lc-lbl">Renk</span>
+              <div class="swatches">
+                <button class="swatch on" data-color="mavi" style="--c:rgb(86,136,255);" title="Mavi"></button>
+                <button class="swatch" data-color="mor" style="--c:rgb(168,102,255);" title="Mor"></button>
+                <button class="swatch" data-color="zumrut" style="--c:rgb(52,200,160);" title="Zümrüt"></button>
+                <button class="swatch" data-color="gunbatimi" style="--c:rgb(255,122,84);" title="Gün Batımı"></button>
+                <button class="swatch" data-color="altin" style="--c:rgb(255,188,84);" title="Altın"></button>
+                <button class="swatch" data-color="buz" style="--c:rgb(168,214,255);" title="Buz"></button>
+              </div>
+            </div>
+            <div class="lc-row">
+              <span class="lc-lbl">Yoğunluk</span>
+              <div class="seg">
+                <button data-mult="0.6">Az</button>
+                <button data-mult="1" class="on">Orta</button>
+                <button data-mult="1.5">Çok</button>
+              </div>
+            </div>
+          </div>
+          <div class="themes themes-live">
+            <div class="thc" data-atmos="aurora">
+              <div class="thp thp-canvas"><canvas></canvas></div>
+              <div class="thn">Aurora<span class="live-pill">CANLI</span></div>
+            </div>
+            <div class="thc on" data-atmos="mesh">
+              <div class="thp thp-canvas"><canvas></canvas></div>
+              <div class="thn">Renk Kumaşı<span class="live-pill">CANLI</span></div>
+            </div>
+            <div class="thc" data-atmos="silk">
+              <div class="thp thp-canvas"><canvas></canvas></div>
+              <div class="thn">İpek<span class="live-pill">CANLI</span></div>
+            </div>
+            <div class="thc" data-atmos="shimmer">
+              <div class="thp thp-canvas"><canvas></canvas></div>
+              <div class="thn">Işıltı<span class="live-pill">CANLI</span></div>
+            </div>
+            <div class="thc" data-atmos="horizon">
+              <div class="thp thp-canvas"><canvas></canvas></div>
+              <div class="thn">Ufuk<span class="live-pill">CANLI</span></div>
+            </div>
+            <div class="thc" data-atmos="polar">
+              <div class="thp thp-canvas"><canvas></canvas></div>
+              <div class="thn">Kutup<span class="live-pill">CANLI</span></div>
+            </div>
+            <div class="thc" data-atmos="orb">
+              <div class="thp thp-canvas"><canvas></canvas></div>
+              <div class="thn">Küre<span class="live-pill">CANLI</span></div>
+            </div>
+            <div class="thc" data-atmos="dawn">
+              <div class="thp thp-canvas"><canvas></canvas></div>
+              <div class="thn">Şafak<span class="live-pill">CANLI</span></div>
+            </div>
+            <div class="thc" data-atmos="off">
+              <div class="thp"><span style="font-size:20px;">◐</span></div>
+              <div class="thn">Kapalı</div>
+            </div>
+          </div>
+        </div>
+        <div class="card2">
+          <h3>Davranış</h3>
+          <div class="krow"><div class="kl"><b>Windows ile başlat</b><span>Oturum açılınca launcher arka planda hazır olur</span></div><div class="swc on"><i></i></div></div>
+          <div class="krow"><div class="kl"><b>Kapatınca tepsiye küçült</b><span>X&#39;e basınca uygulama görev çubuğu tepsisinde çalışmaya devam eder</span></div><div class="swc"><i></i></div></div>
+          <div class="krow"><div class="kl"><b>Güncellemeleri otomatik indir</b><span>Yeni sürümler arka planda hazırlanır, siz onaylayınca kurulur</span></div><div class="swc on"><i></i></div></div>
+          <div class="krow"><div class="kl"><b>Hareketli arkaplanı azalt</b><span>Canlı temalarda animasyonları durdurur — düşük güçlü bilgisayarlar ve erişilebilirlik için</span></div><div class="swc" id="reduceMotionSwc"><i></i></div></div>
+        </div>
+        <div class="card2">
+          <h3>Depolama</h3>
+          <div class="krow"><div class="kl"><b>Kurulum klasörü</b><span>C:\Users\kullanıcı\AppData\Local\ImlecYazilim</span></div><button class="btn ghost">Klasörü aç</button></div>
+          <div class="krow"><div class="kl"><b>İndirme önbelleği</b><span>214 MB geçici dosya</span></div><button class="btn ghost">Temizle</button></div>
+        </div>
+        <div class="card2">
+          <h3>Hakkında</h3>
+          <div class="krow"><div class="kl"><b>İmleç Launcher</b><span>v1.4.2 · imza doğrulandı</span></div><button class="btn ghost">Güncellemeleri denetle</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Sekmeler
+  const pages = { start: "Başlangıç|Yayınlar ve hızlı erişim", apps: "Uygulamalar|Kur, güncelle, yönet", updates: "Güncellemeler|Sürüm geçmişi", settings: "Ayarlar|Görünüm ve davranış" };
+  function goto(p) {
+    document.querySelectorAll(".page").forEach(el => el.classList.remove("on"));
+    document.getElementById("p-" + p).classList.add("on");
+    document.querySelectorAll(".nv").forEach(el => el.classList.toggle("on", el.dataset.p === p));
+    const [t, s] = pages[p].split("|");
+    document.getElementById("ptitle").textContent = t;
+    document.getElementById("psub").textContent = s;
+  }
+  document.querySelectorAll(".nv").forEach(el => el.addEventListener("click", () => goto(el.dataset.p)));
+  document.querySelectorAll("[data-goto]").forEach(el => el.addEventListener("click", (e) => { e.stopPropagation(); goto(el.dataset.goto); }));
+
+  // Yenile animasyonu
+  const rf = document.getElementById("refresh");
+  rf.addEventListener("click", () => { rf.classList.remove("spin"); void rf.offsetWidth; rf.classList.add("spin"); });
+
+  // Tema seçimi — klasik statik temalar VE Özel (CSS animasyonlu) hazır temalar aynı data-th'yi paylaşır
+  const livebg = document.getElementById("livebg");
+  document.querySelectorAll(".thc[data-th]").forEach(c => c.addEventListener("click", () => {
+    const key = c.dataset.th;
+    const lw = document.getElementById("lw");
+    const isOldLive = key.startsWith("th-live-");
+    lw.className = "lw " + key + (isOldLive ? " live" : "");
+    lw.dataset.liveKind = isOldLive ? "old" : "";
+    livebg.dataset.active = isOldLive ? key.replace("th-live-", "") : "";
+    bgEngine.setAtmosphere("off"); // Rev 9 canvasını kapat, ikisi aynı anda görünmesin
+    document.querySelectorAll(".thc").forEach(x => x.classList.remove("on"));
+    c.classList.add("on");
+  }));
+
+  // Özel temalar için yıldızlar ve ateşböcekleri — rastgele dağıt
+  function scatter(container, count, build) {
+    for (let i = 0; i < count; i++) container.appendChild(build(i));
+  }
+  scatter(document.getElementById("nebStars"), 40, () => {
+    const s = document.createElement("i");
+    s.className = "star";
+    s.style.left = (Math.random() * 100) + "%";
+    s.style.top = (Math.random() * 100) + "%";
+    s.style.animationDuration = (2 + Math.random() * 3) + "s";
+    s.style.animationDelay = (-Math.random() * 4) + "s";
+    return s;
+  });
+  scatter(document.getElementById("flyLayer"), 26, () => {
+    const f = document.createElement("i");
+    f.className = "fly";
+    f.style.left = (Math.random() * 100) + "%";
+    f.style.top = (40 + Math.random() * 55) + "%";
+    f.style.animationDuration = (8 + Math.random() * 8) + "s";
+    f.style.animationDelay = (-Math.random() * 16) + "s";
+    return f;
+  });
+
+  // ── Hareketli atmosfer motoru — imlec-tasarim-rev9.html ile birebir aynı çizim mantığı ──
+  function createAtmosphereEngine(canvas, opts) {
+    opts = opts || {};
+    const ctx = canvas.getContext("2d");
+    let W = 1, H = 1;
+    const DPR = Math.min(devicePixelRatio || 1, 2);
+    function resize() {
+      const r = canvas.getBoundingClientRect();
+      W = Math.max(1, r.width); H = Math.max(1, r.height);
+      canvas.width = W * DPR; canvas.height = H * DPR;
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    resize();
+    new ResizeObserver(resize).observe(canvas);
+
+    let mx = 0.5, my = 0.3, ix = 0.5, iy = 0.3, mult = 1;
+    if (opts.parallax) {
+      const host = canvas.closest(".lw") || canvas;
+      host.addEventListener("pointermove", e => {
+        const r = canvas.getBoundingClientRect();
+        mx = (e.clientX - r.left) / W; my = (e.clientY - r.top) / H;
+      });
+    }
+
+    const THEMES = {
+      mavi:      [[86,136,255],[122,108,255],[74,170,255],[150,118,255],[96,150,255]],
+      mor:       [[168,102,255],[224,108,236],[132,92,255],[255,118,198],[192,110,255]],
+      zumrut:    [[52,200,160],[70,214,122],[58,182,204],[112,228,150],[42,160,190]],
+      gunbatimi: [[255,122,84],[255,92,140],[255,162,72],[242,104,122],[255,142,100]],
+      altin:     [[255,188,84],[255,158,62],[240,198,120],[222,142,52],[255,208,140]],
+      buz:       [[168,214,255],[196,232,255],[128,192,255],[214,240,255],[148,204,255]],
+    };
+    let PAL = THEMES.mavi.map(c => c.join(","));
+    function setTheme(name) { PAL = (THEMES[name] || THEMES.mavi).map(c => c.join(",")); }
+    function setMult(v) { mult = v; }
+    function mixCol(i, j, tt) {
+      const a = PAL[i].split(",").map(Number), b = PAL[j].split(",").map(Number);
+      return a.map((v, k) => Math.round(v + (b[k] - v) * tt)).join(",");
+    }
+    function fadeMask(mid, bottom) {
+      ctx.globalCompositeOperation = "destination-in";
+      const m = ctx.createLinearGradient(0, 0, 0, H);
+      m.addColorStop(0, "rgba(0,0,0,1)"); m.addColorStop(mid, "rgba(0,0,0,0.85)"); m.addColorStop(1, `rgba(0,0,0,${bottom})`);
+      ctx.fillStyle = m; ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    // 1 · Aurora
+    const blobs = [
+      { r: 0.66, a: 0.34, f1: 0.085, f2: 0.115, ph: 0.0, ox: 0.62, oy: 0.10, ax: 0.26, ay: 0.15 },
+      { r: 0.52, a: 0.26, f1: 0.065, f2: 0.095, ph: 2.1, ox: 0.24, oy: 0.24, ax: 0.20, ay: 0.13 },
+      { r: 0.46, a: 0.24, f1: 0.105, f2: 0.075, ph: 4.2, ox: 0.84, oy: 0.32, ax: 0.15, ay: 0.17 },
+      { r: 0.40, a: 0.20, f1: 0.055, f2: 0.085, ph: 1.2, ox: 0.44, oy: 0.04, ax: 0.30, ay: 0.10 },
+      { r: 0.34, a: 0.18, f1: 0.125, f2: 0.100, ph: 3.3, ox: 0.10, oy: 0.06, ax: 0.14, ay: 0.12 },
+    ];
+    function drawAurora(s) {
+      ctx.globalCompositeOperation = "lighter";
+      const baseR = Math.min(W, H);
+      for (let i = 0; i < blobs.length; i++) {
+        const b = blobs[i], c = PAL[i % 5];
+        const x = W * (b.ox + b.ax * Math.sin(s * b.f1 * 6.2832 + b.ph)) + (ix - 0.5) * 70;
+        const y = H * (b.oy + b.ay * Math.cos(s * b.f2 * 6.2832 + b.ph)) + (iy - 0.5) * 46;
+        const r = baseR * b.r;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, `rgba(${c},${b.a * mult})`);
+        g.addColorStop(1, `rgba(${c},0)`);
+        ctx.fillStyle = g;
+        ctx.fillRect(x - r, y - r, r * 2, r * 2);
+      }
+      fadeMask(0.6, 0.22);
+    }
+
+    // 2 · Renk Kumaşı (mesh)
+    const mcv = document.createElement("canvas");
+    mcv.width = 26; mcv.height = 15;
+    const mctx = mcv.getContext("2d");
+    const anchors = [
+      { a: 0.55, f1: 0.050, f2: 0.070, ph: 0.0, ox: 0.72, oy: 0.14, ax: 0.24, ay: 0.20 },
+      { a: 0.45, f1: 0.040, f2: 0.060, ph: 2.0, ox: 0.18, oy: 0.30, ax: 0.20, ay: 0.22 },
+      { a: 0.42, f1: 0.060, f2: 0.050, ph: 4.1, ox: 0.86, oy: 0.52, ax: 0.16, ay: 0.24 },
+      { a: 0.40, f1: 0.045, f2: 0.065, ph: 1.1, ox: 0.44, oy: 0.06, ax: 0.30, ay: 0.16 },
+      { a: 0.48, f1: 0, f2: 0, ph: 0, ox: -1, oy: -1, ax: 0, ay: 0 },
+    ];
+    function drawMesh(s) {
+      mctx.clearRect(0, 0, 26, 15);
+      mctx.globalCompositeOperation = "lighter";
+      for (let i = 0; i < anchors.length; i++) {
+        const p = anchors[i], c = PAL[i % 5];
+        let px, py;
+        if (p.ox < 0) { px = ix * 26; py = iy * 15; }
+        else {
+          px = (p.ox + p.ax * Math.sin(s * p.f1 * 6.2832 + p.ph)) * 26;
+          py = (p.oy + p.ay * Math.cos(s * p.f2 * 6.2832 + p.ph)) * 15;
+        }
+        const g = mctx.createRadialGradient(px, py, 0, px, py, 11);
+        g.addColorStop(0, `rgba(${c},${p.a * mult})`);
+        g.addColorStop(1, `rgba(${c},0)`);
+        mctx.fillStyle = g;
+        mctx.fillRect(0, 0, 26, 15);
+      }
+      mctx.globalCompositeOperation = "source-over";
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(mcv, 0, 0, W, H);
+      fadeMask(0.55, 0.12);
+    }
+
+    // 3 · İpek + 4 · Işıltı
+    const ribbons = [];
+    for (let i = 0; i < 5; i++) ribbons.push({
+      base: 0.15 + i * 0.075, amp: 34 + i * 12, k: 0.0016 + i * 0.0005,
+      sp: (0.25 + i * 0.07) * (i % 2 ? -1 : 1), w: 46 + i * 16, al: 0.11 - i * 0.008,
+    });
+    function ribbonPath(rb, s, lift, ampMul) {
+      const baseY = H * rb.base + lift;
+      const amp = rb.amp * ampMul;
+      ctx.beginPath();
+      ctx.moveTo(-70, baseY);
+      for (let x = -70; x <= W + 70; x += 14) {
+        const y = baseY + amp * Math.sin(x * rb.k + s * rb.sp * 2) + amp * 0.5 * Math.sin(x * rb.k * 2.3 - s * rb.sp * 1.3);
+        ctx.lineTo(x, y);
+      }
+      return baseY;
+    }
+    function drawSilk(s, shimmer) {
+      ctx.globalCompositeOperation = "lighter";
+      const lift = (iy - 0.5) * 44;
+      const ampMul = 1 + (ix - 0.5) * 0.5;
+      for (let i = 0; i < ribbons.length; i++) {
+        const rb = ribbons[i], c = PAL[i % 5];
+        const baseY = ribbonPath(rb, s, lift, ampMul);
+        const g = ctx.createLinearGradient(0, baseY - 100, 0, baseY + 100);
+        g.addColorStop(0, `rgba(${c},0)`);
+        g.addColorStop(0.5, `rgba(${c},${rb.al * (shimmer ? 0.9 : 1) * mult})`);
+        g.addColorStop(1, `rgba(${c},0)`);
+        ctx.strokeStyle = g; ctx.lineWidth = rb.w; ctx.stroke();
+        if (shimmer) {
+          const p = ((s * (0.055 + i * 0.014) + i * 0.27) % 1.3) - 0.15;
+          if (p > 0.02 && p < 0.98) {
+            const gx = ctx.createLinearGradient(0, 0, W, 0);
+            const c0 = Math.max(0, p - 0.09), c2 = Math.min(1, p + 0.09);
+            const SWEEP = PAL[0].split(",").map(Number).map(v => Math.min(255, v + 130)).join(",");
+            gx.addColorStop(0, `rgba(${SWEEP},0)`);
+            if (c0 > 0) gx.addColorStop(c0, `rgba(${SWEEP},0)`);
+            gx.addColorStop(p, `rgba(${SWEEP},${0.30 * mult})`);
+            if (c2 < 1) gx.addColorStop(c2, `rgba(${SWEEP},0)`);
+            gx.addColorStop(1, `rgba(${SWEEP},0)`);
+            ctx.strokeStyle = gx; ctx.lineWidth = Math.max(10, rb.w * 0.45); ctx.stroke();
+          }
+        }
+      }
+      fadeMask(0.65, 0.16);
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    // 5 · Ufuk
+    function drawHorizon(s) {
+      ctx.globalCompositeOperation = "lighter";
+      const col = mixCol(0, 1, (Math.sin(s * 0.1) + 1) / 2);
+      const cx = W * (0.5 + (ix - 0.5) * 0.22);
+      const cy = -H * (0.52 - (iy - 0.5) * 0.06);
+      const R = H * (1.06 + 0.03 * Math.sin(s * 0.25));
+      let g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.25);
+      g.addColorStop(0.58, `rgba(${col},0)`); g.addColorStop(0.78, `rgba(${col},${0.30 * mult})`);
+      g.addColorStop(0.92, `rgba(${col},${0.08 * mult})`); g.addColorStop(1, `rgba(${col},0)`);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.92);
+      g.addColorStop(0.66, `rgba(${col},0)`); g.addColorStop(1, `rgba(${col},${0.15 * mult})`);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      const rg = ctx.createLinearGradient(0, 0, 0, H * 0.85);
+      rg.addColorStop(0, `rgba(${col},${0.10 * mult})`); rg.addColorStop(1, `rgba(${col},0)`);
+      ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H * 0.85);
+      fadeMask(0.7, 0.28);
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    // 6 · Kutup
+    const curtains = [];
+    for (let i = 0; i < 4; i++) curtains.push({ x0: 0.13 + i * 0.24, w: 0.20 + (i % 2) * 0.06, f: 0.05 + i * 0.012, ph: i * 1.7, sway: 70 + i * 20 });
+    function drawPolar(s) {
+      ctx.globalCompositeOperation = "lighter";
+      const bg = ctx.createLinearGradient(0, 0, 0, H * 0.5);
+      bg.addColorStop(0, `rgba(${PAL[0]},${0.10 * mult})`); bg.addColorStop(1, `rgba(${PAL[0]},0)`);
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H * 0.5);
+      for (let ci = 0; ci < curtains.length; ci++) {
+        const ct = curtains[ci], col = PAL[ci % 5];
+        const bandW = W * ct.w;
+        const cxx = W * ct.x0 + Math.sin(s * ct.f * 6.2832 + ct.ph) * ct.sway + (ix - 0.5) * 60;
+        const topY = -40;
+        const botY = H * (0.62 + 0.07 * Math.sin(s * 0.2 + ct.ph));
+        const g = ctx.createLinearGradient(0, topY, 0, botY);
+        g.addColorStop(0, `rgba(${col},1)`); g.addColorStop(0.55, `rgba(${col},0.55)`); g.addColorStop(1, `rgba(${col},0)`);
+        ctx.fillStyle = g;
+        const step = 9;
+        for (let x = -bandW / 2; x < bandW / 2; x += step) {
+          const env = Math.cos((x / bandW) * Math.PI);
+          const wob = Math.sin(s * 1.2 + (x + cxx) * 0.014 + ct.ph);
+          const a = Math.max(0, env * (0.26 + 0.12 * wob)) * mult;
+          if (a < 0.004) continue;
+          ctx.globalAlpha = Math.min(1, a);
+          ctx.fillRect(cxx + x + wob * 18, topY, step - 2, botY - topY);
+        }
+        ctx.globalAlpha = 1;
+      }
+      fadeMask(0.62, 0.18);
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    // 7 · Küre
+    function drawOrb(s) {
+      ctx.globalCompositeOperation = "lighter";
+      const cx = W * (0.70 + (ix - 0.5) * 0.08);
+      const cy = H * (0.34 + (iy - 0.5) * 0.06);
+      const R = Math.min(W, H) * (0.24 + 0.012 * Math.sin(s * 0.45));
+      let g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 2.8);
+      g.addColorStop(0, `rgba(${PAL[0]},${0.34 * mult})`); g.addColorStop(0.4, `rgba(${PAL[1]},${0.12 * mult})`); g.addColorStop(1, `rgba(${PAL[1]},0)`);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.95);
+      g.addColorStop(0, `rgba(${PAL[2]},${0.30 * mult})`); g.addColorStop(1, `rgba(${PAL[2]},0)`);
+      ctx.fillStyle = g; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+      for (let k = 0; k < 2; k++) {
+        const ang = s * (0.10 + k * 0.06) * 6.2832 + k * 2.6;
+        const px = cx + Math.cos(ang) * R * 1.9, py = cy + Math.sin(ang) * R * 1.15;
+        const rr = 70 + k * 30;
+        const sg = ctx.createRadialGradient(px, py, 0, px, py, rr);
+        sg.addColorStop(0, `rgba(${PAL[3 + k]},${0.22 * mult})`); sg.addColorStop(1, `rgba(${PAL[3 + k]},0)`);
+        ctx.fillStyle = sg; ctx.fillRect(px - rr, py - rr, rr * 2, rr * 2);
+      }
+      const bg2 = ctx.createRadialGradient(W * 0.12, H * 0.05, 0, W * 0.12, H * 0.05, H * 0.5);
+      bg2.addColorStop(0, `rgba(${PAL[4]},${0.10 * mult})`); bg2.addColorStop(1, `rgba(${PAL[4]},0)`);
+      ctx.fillStyle = bg2; ctx.fillRect(0, 0, W, H);
+      fadeMask(0.7, 0.2);
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    // 8 · Şafak
+    function drawDawn(s) {
+      ctx.globalCompositeOperation = "lighter";
+      const w1 = 0.30 + 0.04 * Math.sin(s * 0.18), w2 = 0.58 + 0.04 * Math.sin(s * 0.14 + 2);
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, `rgba(${PAL[1]},${0.20 * mult})`); g.addColorStop(w1, `rgba(${PAL[0]},${0.16 * mult})`);
+      g.addColorStop(w2, `rgba(${PAL[2]},${0.10 * mult})`); g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      const sx = W * (0.5 + 0.18 * Math.sin(s * 0.05)) + (ix - 0.5) * 80;
+      const sy = H * (0.34 + 0.02 * Math.sin(s * 0.3)) + (iy - 0.5) * 30;
+      ctx.save(); ctx.translate(sx, sy); ctx.scale(1, 0.55);
+      const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, W * 0.28);
+      sg.addColorStop(0, `rgba(${PAL[3]},${0.30 * mult})`); sg.addColorStop(1, `rgba(${PAL[3]},0)`);
+      ctx.fillStyle = sg; ctx.fillRect(-W * 0.28, -W * 0.28, W * 0.56, W * 0.56);
+      ctx.restore();
+      fadeMask(0.75, 0.22);
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    let atmosphere = "off";
+    function setAtmosphere(a) { atmosphere = a; }
+    function frame(t) {
+      const s = t * 0.001;
+      ix += (mx - ix) * 0.05; iy += (my - iy) * 0.05;
+      ctx.clearRect(0, 0, W, H);
+      if (atmosphere === "off") return;
+      if (atmosphere === "mesh") drawMesh(s);
+      else if (atmosphere === "silk") drawSilk(s, false);
+      else if (atmosphere === "shimmer") drawSilk(s, true);
+      else if (atmosphere === "horizon") drawHorizon(s);
+      else if (atmosphere === "polar") drawPolar(s);
+      else if (atmosphere === "orb") drawOrb(s);
+      else if (atmosphere === "dawn") drawDawn(s);
+      else drawAurora(s);
+    }
+    return { setTheme, setMult, setAtmosphere, frame };
+  }
+
+  const bgEngine = createAtmosphereEngine(document.getElementById("bgCanvas"), { parallax: true });
+  const thumbEngines = [];
+  document.querySelectorAll(".thc[data-atmos]").forEach(card => {
+    const atmos = card.dataset.atmos;
+    if (atmos === "off") return;
+    const eng = createAtmosphereEngine(card.querySelector("canvas"), { parallax: false });
+    eng.setAtmosphere(atmos);
+    thumbEngines.push(eng);
+  });
+  (function runAtmosphereLoop(t) {
+    requestAnimationFrame(runAtmosphereLoop);
+    if (document.getElementById("lw").classList.contains("reduce-motion")) return; // son karede dondur
+    bgEngine.frame(t || 0);
+    thumbEngines.forEach(e => e.frame(t || 0));
+  })();
+
+  // Atmosfer kartı seçimi (Rev 9 canvas motoru) — Özel'i kapatır ki ikisi üst üste binmesin
+  document.querySelectorAll(".thc[data-atmos]").forEach(card => card.addEventListener("click", () => {
+    const atmos = card.dataset.atmos;
+    const lw = document.getElementById("lw");
+    const isOn = atmos !== "off";
+    lw.classList.toggle("live", isOn);
+    lw.dataset.liveKind = isOn ? "new" : "";
+    bgEngine.setAtmosphere(atmos);
+    livebg.dataset.active = "";
+    document.querySelectorAll(".thc").forEach(x => x.classList.remove("on"));
+    card.classList.add("on");
+  }));
+
+  // Renk seçimi — arkaplanı ve tüm mini önizlemeleri birlikte günceller
+  document.querySelectorAll(".swatch").forEach(sw => sw.addEventListener("click", () => {
+    bgEngine.setTheme(sw.dataset.color);
+    thumbEngines.forEach(e => e.setTheme(sw.dataset.color));
+    document.querySelectorAll(".swatch").forEach(x => x.classList.remove("on"));
+    sw.classList.add("on");
+  }));
+
+  // Yoğunluk seçimi
+  document.querySelectorAll(".seg button[data-mult]").forEach(btn => btn.addEventListener("click", () => {
+    bgEngine.setMult(parseFloat(btn.dataset.mult));
+    document.querySelectorAll(".seg button").forEach(x => x.classList.remove("on"));
+    btn.classList.add("on");
+  }));
+
+  // Anahtarlar
+  document.querySelectorAll(".swc").forEach(s => s.addEventListener("click", () => s.classList.toggle("on")));
+  document.getElementById("reduceMotionSwc")?.addEventListener("click", function () {
+    document.getElementById("lw").classList.toggle("reduce-motion", this.classList.contains("on"));
+  });
+
+  // Yayın döngüsü — 10 sn, ilerleme çubuğuyla
+  const slides = [
+    { badge: "LAUNCHER", title: "FİŞ260 yayımlandı.", body: "Fiş görsellerinden firma, VKN/TCKN, vergi dairesi, tarih, saat, fiş numarası, toplam tutar ve KDV bilgilerini otomatik çıkararak Excel çıktısı oluşturur.", img: "" },
+    { badge: "FİŞ260 · v0.2.0", title: "Toplu işleme %40 hızlandı.", body: "OCR kuyruğu artık paralel çalışıyor. 100 fişlik paketlerde işlem süresi belirgin şekilde kısaldı; Excel şablonlarına vergi dairesi sütunu eklendi.", img: "" },
+    { badge: "DUYURU", title: "ÇÖZVER geliştirme sürüyor.", body: "Finansal analiz ve spread hazırlığı için ikinci masaüstü ürünümüz test aşamasında. Yakında bu kitaplıkta yerini alacak.", img: "" },
+  ];
+  const heroImg = document.getElementById("heroImg"), hbadge = document.getElementById("hbadge"),
+        htitle = document.getElementById("htitle"), hbody = document.getElementById("hbody"),
+        hbar = document.getElementById("hbar"), hcount = document.getElementById("hcount"),
+        hdots = document.getElementById("hdots");
+  let si = 0, prog = 0, timer = null;
+  slides.forEach((_, k) => {
+    const d = document.createElement("i");
+    d.addEventListener("click", () => show(k));
+    hdots.appendChild(d);
+  });
+  const fallbacks = [
+    "radial-gradient(circle at 38% 42%, rgba(45, 190, 132, 0.24), transparent 38%), #070c0a",
+    "radial-gradient(circle at 18% 16%, rgba(70, 132, 245, 0.34), transparent 42%), #070a11",
+    "radial-gradient(circle at 82% 46%, rgba(155, 92, 225, 0.30), transparent 42%), #09070f",
+  ];
+  function show(k) {
+    si = (k + slides.length) % slides.length;
+    const s = slides[si];
+    heroImg.style.opacity = 0;
+    setTimeout(() => {
+      heroImg.style.background = (s.img ? `url('${s.img}') center/cover no-repeat, ` : "") + fallbacks[si];
+      heroImg.style.opacity = 1;
+    }, 180);
+    hbadge.textContent = s.badge;
+    htitle.textContent = s.title;
+    hbody.textContent = s.body;
+    hcount.textContent = (si + 1) + " / " + slides.length;
+    hdots.querySelectorAll("i").forEach((d, x) => d.classList.toggle("on", x === si));
+    prog = 0;
+  }
+  function tick() {
+    prog += 100 / (10000 / 120);
+    if (prog >= 100) { show(si + 1); }
+    hbar.style.width = Math.min(100, prog) + "%";
+  }
+  timer = setInterval(tick, 120);
+  document.getElementById("hnext").addEventListener("click", () => show(si + 1));
+  document.getElementById("hprev").addEventListener("click", () => show(si - 1));
+  document.getElementById("hero").addEventListener("mouseenter", () => clearInterval(timer));
+  document.getElementById("hero").addEventListener("mouseleave", () => { timer = setInterval(tick, 120); });
+  show(0);
+
+  // Web önizlemesi için başlangıç atmosferi: Renk Kumaşı · Mavi · Orta.
+  const embeddedLauncher = document.getElementById("lw");
+  embeddedLauncher.classList.add("live");
+  embeddedLauncher.dataset.liveKind = "new";
+  bgEngine.setTheme("mavi");
+  bgEngine.setMult(1);
+  bgEngine.setAtmosphere("mesh");
+</script>
+</body>
+</html>

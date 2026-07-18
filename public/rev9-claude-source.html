@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="tr" class="atmo-aurora">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<base target="_top">
+<title>İmleç Yazılım — Masaüstü yazılım platformu</title>
+<style>
+  :root {
+    --surface-0: oklch(0.14 0.005 250);
+    --surface-1: oklch(0.18 0.01 250);
+    --surface-2: oklch(0.22 0.01 250);
+    --surface-3: oklch(0.28 0.012 250);
+    --border-subtle: oklch(0.28 0.01 250 / 0.6);
+    --border-default: oklch(0.32 0.012 250);
+    --text-primary: oklch(0.96 0 0);
+    --text-secondary: oklch(0.72 0.01 250);
+    --text-tertiary: oklch(0.52 0.01 250);
+    --accent-brand: oklch(0.70 0.18 250);
+    --accent-fis260: oklch(0.72 0.16 220);
+    --accent-cozver: oklch(0.70 0.18 290);
+    --success: oklch(0.78 0.16 150);
+    --warning: oklch(0.80 0.16 80);
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; border-color: var(--border-subtle); }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--surface-0);
+    color: var(--text-primary);
+    font-family: "Geist", "Inter", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    overflow-x: hidden;
+  }
+  ::selection { background: oklch(0.70 0.18 250 / 0.3); }
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface-0); }
+
+  svg.ic { width: 1.05em; height: 1.05em; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+  /* ── Atmosferler: yumuşak, çizgisiz, organik ── */
+  .bg { position: fixed; inset: 0; z-index: -2; pointer-events: none; overflow: hidden; display: none; }
+  #aur { position: fixed; inset: 0; z-index: -2; pointer-events: none; }
+  html.atmo-a .bg-aurora { display: block; }
+  html.atmo-b .bg-minimal { display: block; }
+
+  /* A · Derin Aurora — nefes alan yumuşak ışık (önerilen) */
+  .bg-aurora .par { position: absolute; inset: -60px; transition: transform 1.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .bg-aurora i { position: absolute; border-radius: 50%; font-style: normal; will-change: transform; }
+  .bg-aurora .b1 {
+    width: 1150px; height: 940px; left: 50%; top: -440px; margin-left: -640px;
+    background: radial-gradient(ellipse at center, oklch(0.48 0.14 255 / 0.34), transparent 62%);
+    animation: brA 26s ease-in-out infinite alternate;
+  }
+  .bg-aurora .b2 {
+    width: 820px; height: 720px; right: -260px; top: -180px;
+    background: radial-gradient(circle, oklch(0.52 0.13 220 / 0.20), transparent 62%);
+    animation: brB 32s ease-in-out infinite alternate;
+  }
+  .bg-aurora .b3 {
+    width: 720px; height: 640px; left: -240px; top: 30px;
+    background: radial-gradient(circle, oklch(0.48 0.14 290 / 0.17), transparent 62%);
+    animation: brC 38s ease-in-out infinite alternate;
+  }
+  @keyframes brA { to { transform: translate(40px, 26px) scale(1.05); } }
+  @keyframes brB { to { transform: translate(-34px, 22px) scale(1.04); } }
+  @keyframes brC { to { transform: translate(26px, -18px) scale(0.97); } }
+
+  /* B · Saf Sade — tamamen durağan, yalnızca derinlik */
+  .bg-minimal::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 980px 500px at 50% -160px, oklch(0.44 0.11 250 / 0.26), transparent 70%),
+      radial-gradient(ellipse 700px 420px at 85% -60px, oklch(0.42 0.10 290 / 0.10), transparent 70%);
+  }
+
+  /* C · Işık Perdesi — çok yavaş nefes alan dikey huzmeler */
+  .bg-rays s { position: absolute; display: block; top: -30%; height: 160%; width: 340px;
+    background: linear-gradient(180deg, oklch(0.58 0.11 250 / 0.11), transparent 72%);
+    filter: blur(46px); transform: rotate(16deg); animation: ray 16s ease-in-out infinite alternate; }
+  .bg-rays .r1 { left: 14%; }
+  .bg-rays .r2 { left: 44%; width: 250px; animation-delay: 5s; }
+  .bg-rays .r3 { left: 71%; width: 300px; animation-delay: 9s; }
+  .bg-rays::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 900px 460px at 50% -140px, oklch(0.44 0.11 250 / 0.20), transparent 70%);
+  }
+  @keyframes ray { from { opacity: 0.35; } to { opacity: 1; } }
+
+  .vignette {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background: radial-gradient(ellipse 130% 110% at 50% 0%, transparent 55%, oklch(0.10 0.005 250 / 0.5) 100%);
+  }
+  body::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 999; opacity: 0.45;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  }
+
+  .preview-bar {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 8px 16px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    background: oklch(0.70 0.18 250 / 0.12); border-bottom: 1px solid oklch(0.70 0.18 250 / 0.25);
+    color: var(--accent-brand); font-family: ui-monospace, monospace;
+    backdrop-filter: blur(12px);
+    visibility: hidden;
+  }
+  .preview-bar b { color: var(--text-primary); font-weight: 600; }
+
+  header.site {
+    position: sticky; top: 33px; z-index: 90;
+    border-bottom: 1px solid var(--border-subtle);
+    background: oklch(0.14 0.005 250 / 0.72); backdrop-filter: blur(18px);
+  }
+  .header-in {
+    max-width: 1240px; margin: 0 auto; height: 70px;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 32px;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; color: inherit; font-weight: 600; letter-spacing: -0.01em; text-decoration: none; }
+  .logo small { display: block; font-size: 10.5px; font-weight: 400; color: var(--text-tertiary); margin-top: 2px; }
+  .logo-mark {
+    width: 40px; height: 40px; border-radius: 11px; overflow: hidden; display: grid; place-items: center;
+    border: 1px solid oklch(0.70 0.18 250 / 0.3); background: oklch(0 0 0 / 0.3);
+    box-shadow: 0 0 22px oklch(0.70 0.18 250 / 0.15);
+  }
+  .logo-mark img { width: 34px; height: 34px; object-fit: contain; }
+  nav.main { display: flex; gap: 28px; font-size: 14px; color: var(--text-secondary); }
+  nav.main a { color: inherit; cursor: pointer; text-decoration: none; transition: color .2s; position: relative; }
+  nav.main a::after { content: ""; position: absolute; left: 0; right: 100%; bottom: -6px; height: 1.5px; background: var(--accent-brand); transition: right .25s var(--ease-out-expo); }
+  nav.main a:hover { color: var(--text-primary); }
+  nav.main a:hover::after { right: 0; }
+
+  .btn {
+    position: relative; display: inline-flex; align-items: center; gap: 9px; cursor: pointer;
+    border-radius: 9px; font-size: 14px; font-weight: 500; border: 1px solid transparent;
+    padding: 11px 20px; transition: transform .25s var(--ease-out-expo), box-shadow .25s, background .2s, color .2s;
+    text-decoration: none; white-space: nowrap;
+  }
+  .btn-primary {
+    background: linear-gradient(180deg, oklch(0.74 0.17 250), oklch(0.66 0.19 252));
+    color: oklch(0.13 0.04 250); font-weight: 600;
+    box-shadow: 0 1px 0 oklch(1 0 0 / 0.22) inset, 0 6px 24px oklch(0.70 0.18 250 / 0.28);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 1px 0 oklch(1 0 0 / 0.22) inset, 0 10px 34px oklch(0.70 0.18 250 / 0.4); }
+  .btn-ghost { color: var(--text-secondary); border-color: var(--border-default); background: oklch(1 0 0 / 0.02); }
+  .btn-ghost:hover { color: var(--text-primary); background: oklch(1 0 0 / 0.06); transform: translateY(-1px); }
+  .btn .ar { transition: transform .25s var(--ease-out-expo); }
+  .btn:hover .ar { transform: translateX(3px); }
+
+  .hero-wrap { position: relative; }
+  .hero {
+    position: relative; max-width: 1240px; margin: 0 auto; padding: 96px 32px 92px;
+    display: grid; grid-template-columns: 0.93fr 1.07fr; gap: 56px; align-items: center;
+  }
+  .eyebrow {
+    font-family: ui-monospace, monospace; font-size: 12px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent-brand);
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .eyebrow::before { content: ""; width: 26px; height: 1px; background: linear-gradient(90deg, transparent, var(--accent-brand)); }
+  .eyebrow .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+
+  h1.display {
+    margin-top: 24px; font-size: clamp(40px, 4.7vw, 64px); line-height: 1.06;
+    letter-spacing: -0.032em; font-weight: 600;
+  }
+  h1 .w i { display: inline-block; font-style: normal; opacity: 0; transform: translateY(14px); animation: wordUp .7s var(--ease-out-expo) forwards; }
+  @keyframes wordUp { to { opacity: 1; transform: none; } }
+  h1 .grad, h2 .grad {
+    background: linear-gradient(100deg, oklch(0.80 0.13 250), oklch(0.84 0.11 220) 55%, oklch(0.78 0.13 290));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+
+  .hero p.lead { margin-top: 24px; font-size: 17px; line-height: 1.68; color: var(--text-secondary); max-width: 48ch; }
+  .hero p.lead b { color: var(--text-primary); font-weight: 500; }
+  .hero-ctas { margin-top: 34px; display: flex; gap: 12px; flex-wrap: wrap; }
+
+  .hero-stats { margin-top: 44px; display: flex; gap: 0; }
+  .hero-stat { padding: 0 30px; border-left: 1px solid var(--border-subtle); }
+  .hero-stat:first-child { padding-left: 0; border-left: none; }
+  .hero-stat b { display: block; font-size: 24px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .hero-stat span { display: block; margin-top: 3px; font-size: 12px; color: var(--text-tertiary); }
+  .hero-stat b em { font-style: normal; color: var(--accent-brand); }
+
+  /* Pencere — durağan, zarif çerçeve */
+  .gborder {
+    position: relative; border-radius: 18px; padding: 1px;
+    background: linear-gradient(165deg,
+      oklch(0.70 0.18 250 / 0.35), oklch(0.32 0.015 250 / 0.5) 38%,
+      oklch(0.30 0.012 250 / 0.4) 62%, oklch(0.70 0.16 290 / 0.22));
+  }
+  .window {
+    position: relative; border-radius: 17px; overflow: hidden;
+    background: linear-gradient(180deg, var(--surface-1), oklch(0.155 0.008 250));
+    box-shadow: 0 50px 110px oklch(0 0 0 / 0.6), 0 0 90px oklch(0.70 0.18 250 / 0.08);
+  }
+  .launcher-embed-shell {
+    position: relative; overflow: hidden; border-radius: 17px;
+    aspect-ratio: 1030 / 742; background: oklch(0.12 0.008 250);
+    box-shadow: 0 50px 110px oklch(0 0 0 / 0.6), 0 0 90px oklch(0.70 0.18 250 / 0.08);
+  }
+  .launcher-embed {
+    position: absolute; inset: 0 auto auto 0; width: 172.4138%; height: 172.4138%;
+    border: 0; background: transparent; transform: scale(0.58); transform-origin: top left;
+  }
+  .window-bar {
+    height: 42px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px; border-bottom: 1px solid var(--border-subtle); background: oklch(1 0 0 / 0.03);
+  }
+  .dots { display: flex; gap: 7px; }
+  .dots i { width: 10px; height: 10px; border-radius: 50%; }
+  .dots i:nth-child(1){ background:#ff5f57; } .dots i:nth-child(2){ background:#ffbd2e; } .dots i:nth-child(3){ background:#28c840; }
+  .window-title { font-family: ui-monospace, monospace; font-size: 11px; color: var(--text-tertiary); display: flex; align-items: center; gap: 7px; }
+
+  .float-chip {
+    position: absolute; z-index: 10; display: flex; align-items: center; gap: 7px;
+    padding: 8px 13px; border-radius: 10px; font-size: 11.5px; font-family: ui-monospace, monospace;
+    border: 1px solid oklch(0.78 0.16 150 / 0.3); background: oklch(0.17 0.01 250 / 0.88);
+    color: var(--success); backdrop-filter: blur(10px);
+    box-shadow: 0 12px 34px oklch(0 0 0 / 0.4);
+  }
+  .float-chip.b { border-color: oklch(0.70 0.18 250 / 0.35); color: oklch(0.80 0.1 250); }
+  .fc-a { top: -16px; right: 28px; }
+  .fc-b { bottom: -16px; left: -20px; }
+
+  .launcher-body { display: grid; grid-template-columns: 172px 1fr; min-height: 390px; }
+  .l-side {
+    border-right: 1px solid var(--border-subtle); background: oklch(0.15 0.006 250); padding: 14px 10px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .l-brand { display: flex; align-items: center; gap: 9px; padding: 6px 8px 14px; font-size: 13px; font-weight: 600; }
+  .l-brand img { width: 26px; height: 26px; object-fit: contain; border-radius: 7px; }
+  .l-nav {
+    display: flex; align-items: center; gap: 9px; padding: 8.5px 10px; border-radius: 8px;
+    font-size: 12.5px; color: var(--text-tertiary);
+  }
+  .l-nav.on { background: oklch(0.70 0.18 250 / 0.13); color: var(--text-primary); }
+  .l-nav svg.ic { width: 14px; height: 14px; }
+  .l-foot {
+    margin-top: auto; padding: 10px; border-radius: 9px; border: 1px solid oklch(0.78 0.16 150 / 0.25);
+    background: oklch(0.78 0.16 150 / 0.07); font-size: 10.5px; color: var(--success);
+    font-family: ui-monospace, monospace; line-height: 1.6;
+  }
+  .l-main { padding: 18px 18px 16px; display: flex; flex-direction: column; }
+  .l-head { display: flex; align-items: baseline; justify-content: space-between; }
+  .l-head h4 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .l-head span { font-family: ui-monospace, monospace; font-size: 10px; color: var(--text-tertiary); }
+  .l-tiles { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .l-tile {
+    border: 1px solid var(--border-subtle); border-radius: 12px; background: var(--surface-2);
+    padding: 14px; display: flex; flex-direction: column; gap: 10px; min-height: 140px;
+    transition: border-color .3s;
+  }
+  .l-tile:hover { border-color: var(--border-default); }
+  .lt-top { display: flex; align-items: center; justify-content: space-between; }
+  .lt-mark {
+    width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center;
+    font-family: ui-monospace, monospace; font-weight: 600; font-size: 16px;
+  }
+  .lt-fis .lt-mark { background: oklch(0.72 0.16 220 / 0.15); border: 1px solid oklch(0.72 0.16 220 / 0.35); color: var(--accent-fis260); }
+  .lt-coz .lt-mark { background: oklch(0.70 0.18 290 / 0.13); border: 1px solid oklch(0.70 0.18 290 / 0.3); color: var(--accent-cozver); }
+  .lt-name { font-size: 13.5px; font-weight: 600; }
+  .lt-name small { display: block; font-weight: 400; font-size: 10.5px; color: var(--text-tertiary); margin-top: 2px; }
+  .lt-badge { font-size: 9.5px; padding: 3px 9px; border-radius: 99px; font-family: ui-monospace, monospace; }
+  .lt-badge.on { background: oklch(0.78 0.16 150 / 0.12); border: 1px solid oklch(0.78 0.16 150 / 0.3); color: var(--success); }
+  .lt-badge.soon { background: oklch(0.80 0.16 80 / 0.10); border: 1px solid oklch(0.80 0.16 80 / 0.3); color: var(--warning); }
+
+  .lt-action { margin-top: auto; position: relative; height: 30px; }
+  .lt-progress {
+    position: absolute; inset: 0; border-radius: 7px; border: 1px solid oklch(0.72 0.16 220 / 0.35);
+    background: oklch(0.72 0.16 220 / 0.08); overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-family: ui-monospace, monospace; font-size: 10px; color: var(--accent-fis260);
+    animation: dlHide .45s ease 3.3s forwards;
+  }
+  .lt-progress::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 0;
+    background: linear-gradient(90deg, oklch(0.72 0.16 220 / 0.18), oklch(0.72 0.16 220 / 0.34));
+    animation: dlFill 2.7s var(--ease-out-expo) .5s forwards;
+  }
+  .lt-progress span { position: relative; z-index: 1; }
+  .lt-open {
+    position: absolute; inset: 0; border-radius: 7px; display: flex; align-items: center; justify-content: center; gap: 7px;
+    background: oklch(0.78 0.16 150 / 0.13); border: 1px solid oklch(0.78 0.16 150 / 0.35);
+    color: var(--success); font-size: 11.5px; font-weight: 500;
+    opacity: 0; transform: translateY(4px);
+    animation: settleIn .5s var(--ease-out-expo) 3.55s forwards;
+  }
+  @keyframes dlFill { to { width: 100%; } }
+  @keyframes dlHide { to { opacity: 0; visibility: hidden; } }
+  @keyframes settleIn { to { opacity: 1; transform: none; } }
+
+  .lt-soon-note { margin-top: auto; height: 30px; border-radius: 7px; border: 1px dashed var(--border-default);
+    display: flex; align-items: center; justify-content: center; font-size: 10.5px; color: var(--text-tertiary); }
+  .l-tile.ghost {
+    border-style: dashed; background: transparent; align-items: center; justify-content: center; gap: 8px;
+    color: var(--text-tertiary); font-size: 12px; text-align: center;
+  }
+  .l-tile.ghost b { font-size: 22px; font-weight: 300; display: block; color: var(--text-tertiary); }
+  .l-update-toast {
+    margin-top: 12px; display: flex; align-items: center; gap: 8px;
+    border: 1px solid oklch(0.70 0.18 250 / 0.3); background: oklch(0.70 0.18 250 / 0.08);
+    border-radius: 9px; padding: 8px 12px; font-size: 11px; color: var(--text-secondary);
+    font-family: ui-monospace, monospace; opacity: 0; transform: translateY(5px);
+    animation: settleIn .6s var(--ease-out-expo) 4.3s forwards;
+  }
+  .l-update-toast svg.ic { width: 13px; height: 13px; color: var(--accent-brand); }
+
+  .marquee {
+    border-block: 1px solid var(--border-subtle); background: oklch(0.16 0.008 250 / 0.7);
+    overflow: hidden; padding: 13px 0; position: relative;
+  }
+  .marquee::before, .marquee::after {
+    content: ""; position: absolute; top: 0; bottom: 0; width: 120px; z-index: 2; pointer-events: none;
+  }
+  .marquee::before { left: 0; background: linear-gradient(90deg, var(--surface-0), transparent); }
+  .marquee::after { right: 0; background: linear-gradient(-90deg, var(--surface-0), transparent); }
+  .marquee-track {
+    display: flex; gap: 0; width: max-content; align-items: center;
+    animation: scrollX 45s linear infinite; opacity: 0.9;
+  }
+  .marquee-group { display: flex; align-items: center; gap: 46px; padding-right: 46px; flex-shrink: 0; }
+  .marquee:hover .marquee-track { animation-play-state: paused; }
+  .mq-item { display: flex; align-items: center; gap: 9px; font-family: ui-monospace, monospace; font-size: 12px; color: var(--text-tertiary); white-space: nowrap; }
+  .mq-item svg.ic { width: 13px; height: 13px; color: var(--accent-brand); }
+  @keyframes scrollX { to { transform: translateX(-33.333333%); } }
+
+  section.block { max-width: 1240px; margin: 0 auto; padding: 84px 32px; position: relative; }
+  .sec-eyebrow { font-family: ui-monospace, monospace; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-brand); }
+  h2.sec { margin-top: 14px; font-size: clamp(27px, 3.1vw, 40px); letter-spacing: -0.022em; font-weight: 600; line-height: 1.14; }
+  p.sec-lead { margin-top: 15px; color: var(--text-secondary); font-size: 15.5px; line-height: 1.65; max-width: 62ch; }
+
+  .bento { margin-top: 44px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+  .cell {
+    position: relative; overflow: hidden; border-radius: 16px;
+    border: 1px solid var(--border-subtle); background: linear-gradient(180deg, var(--surface-1), oklch(0.16 0.008 250));
+    padding: 28px; transition: border-color .35s, transform .35s var(--ease-out-expo), box-shadow .35s;
+  }
+  .cell:hover { border-color: oklch(0.70 0.18 250 / 0.38); transform: translateY(-3px); box-shadow: 0 18px 48px oklch(0 0 0 / 0.35); }
+  .spot { position: absolute; inset: 0; opacity: 0; transition: opacity .35s; pointer-events: none;
+    background: radial-gradient(380px circle at var(--mx, 50%) var(--my, 50%), oklch(0.70 0.18 250 / 0.08), transparent 60%); }
+  .cell:hover .spot, .pcard:hover .spot { opacity: 1; }
+  .cell-icon {
+    width: 44px; height: 44px; border-radius: 11px; display: grid; place-items: center;
+    border: 1px solid var(--border-subtle); background: var(--surface-2); color: var(--accent-brand);
+  }
+  .cell-icon svg.ic { width: 20px; height: 20px; }
+  .cell h3 { margin-top: 19px; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+  .cell p { margin-top: 9px; font-size: 13.5px; line-height: 1.62; color: var(--text-secondary); }
+  .cell .chip {
+    display: inline-block; margin-top: 17px; padding: 4px 11px; border-radius: 6px;
+    border: 1px solid var(--border-subtle); background: var(--surface-2);
+    font-family: ui-monospace, monospace; font-size: 10.5px; color: var(--text-tertiary);
+  }
+  .cell.big { grid-column: span 3; grid-row: span 2; display: flex; flex-direction: column; }
+  .cell.wide { grid-column: span 3; }
+  .cell.std { grid-column: span 3; }
+  .big-num { font-size: 54px; font-weight: 650; letter-spacing: -0.03em; margin-top: auto; font-variant-numeric: tabular-nums;
+    background: linear-gradient(120deg, oklch(0.85 0.1 250), oklch(0.72 0.16 220));
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .flow-mini { margin-top: auto; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+  .flow-mini b { font-size: 12px; padding: 8px 13px; border-radius: 8px; font-weight: 500;
+    border: 1px solid var(--border-subtle); background: var(--surface-2); color: var(--text-secondary); }
+  .flow-mini svg.ic { width: 13px; height: 13px; color: var(--text-tertiary); }
+
+  .pcard {
+    position: relative; overflow: hidden; border-radius: 18px; padding: 30px;
+    border: 1px solid var(--border-subtle); background: linear-gradient(180deg, var(--surface-1), oklch(0.16 0.008 250));
+    transition: transform .35s var(--ease-out-expo), border-color .35s, box-shadow .35s;
+  }
+  .pcard:hover { transform: translateY(-3px); box-shadow: 0 22px 60px oklch(0 0 0 / 0.4); }
+  .pcard.fis .spot { background: radial-gradient(520px circle at var(--mx,50%) var(--my,50%), oklch(0.72 0.16 220 / 0.08), transparent 62%); }
+  .pcard.coz .spot { background: radial-gradient(420px circle at var(--mx,50%) var(--my,50%), oklch(0.70 0.18 290 / 0.10), transparent 62%); }
+  .pcard.next .spot { background: radial-gradient(420px circle at var(--mx,50%) var(--my,50%), oklch(0.70 0.18 250 / 0.08), transparent 62%); }
+  .pcard.fis:hover { border-color: oklch(0.72 0.16 220 / 0.4); }
+  .pcard.coz:hover { border-color: oklch(0.70 0.18 290 / 0.4); }
+  .pcard.next:hover { border-color: oklch(0.70 0.18 250 / 0.35); }
+
+  .fis-grid { margin-top: 44px; }
+  .pcard.fis { display: grid; grid-template-columns: 0.78fr 1.22fr; gap: 36px; align-items: center; }
+  .pcard-top { display: flex; justify-content: flex-start; gap: 14px; align-items: center; }
+  .pmark {
+    width: 54px; height: 54px; border-radius: 14px; display: grid; place-items: center;
+    font-family: ui-monospace, monospace; font-size: 23px; font-weight: 600;
+  }
+  .fis .pmark { background: oklch(0.72 0.16 220 / 0.14); border: 1px solid oklch(0.72 0.16 220 / 0.3); color: var(--accent-fis260); }
+  .coz .pmark { background: oklch(0.70 0.18 290 / 0.14); border: 1px solid oklch(0.70 0.18 290 / 0.3); color: var(--accent-cozver); }
+  .badge { font-size: 11px; padding: 5px 12px; border-radius: 99px; font-weight: 500; }
+  .badge.on { background: oklch(0.78 0.16 150 / 0.12); border: 1px solid oklch(0.78 0.16 150 / 0.3); color: var(--success); }
+  .badge.soon { background: oklch(0.80 0.16 80 / 0.10); border: 1px solid oklch(0.80 0.16 80 / 0.3); color: var(--warning); }
+  .pcard h3 { margin-top: 20px; font-size: 26px; letter-spacing: -0.018em; }
+  .plabel { font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 20px; }
+  .fis .plabel { color: var(--accent-fis260); } .coz .plabel { color: var(--accent-cozver); } .next .plabel { color: var(--accent-brand); }
+  .pcard p.desc { margin-top: 11px; color: var(--text-secondary); font-size: 14.5px; line-height: 1.68; }
+  .psteps { margin-top: 20px; display: flex; flex-direction: column; gap: 9px; }
+  .pstep { display: flex; align-items: center; gap: 11px; font-size: 13.5px; color: var(--text-secondary); }
+  .pstep b {
+    width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; flex-shrink: 0;
+    font-family: ui-monospace, monospace; font-size: 10.5px; font-weight: 500;
+    border: 1px solid oklch(0.72 0.16 220 / 0.3); background: oklch(0.72 0.16 220 / 0.08); color: var(--accent-fis260);
+  }
+  .ptags { margin-top: 20px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .ptags span { font-size: 12px; padding: 5px 11px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--surface-2); color: var(--text-secondary); }
+  .plink { margin-top: 22px; display: inline-flex; align-items: center; gap: 7px; font-size: 14px; color: var(--text-primary); cursor: pointer; text-decoration: none; }
+  .plink svg.ic { transition: transform .25s var(--ease-out-expo); }
+  .plink:hover svg.ic { transform: translateX(4px); }
+
+  .video-shell { position: relative; }
+  .video-shell .window { border-radius: 14px; }
+  .video-shell video { display: block; width: 100%; height: auto; background: #000; cursor: pointer; }
+  .video-cap {
+    position: absolute; left: 14px; bottom: 14px; z-index: 6;
+    display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 9px;
+    background: oklch(0.1 0.005 250 / 0.75); border: 1px solid oklch(1 0 0 / 0.12);
+    backdrop-filter: blur(8px); font-family: ui-monospace, monospace; font-size: 11px; color: var(--text-secondary);
+  }
+  .video-cap .rec { width: 8px; height: 8px; border-radius: 50%; background: oklch(0.65 0.22 25); }
+
+  .p-duo { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .pcard.next { border-style: dashed; }
+  .nmark {
+    width: 54px; height: 54px; border-radius: 14px; display: grid; place-items: center;
+    border: 1px dashed var(--border-default); color: var(--text-tertiary); font-size: 24px; font-weight: 300;
+  }
+
+  .cta-strip {
+    position: relative; border-top: 1px solid var(--border-subtle); overflow: hidden;
+    background: var(--surface-1);
+  }
+  .cta-glow {
+    position: absolute; left: 50%; bottom: -220px; width: 900px; height: 420px; transform: translateX(-50%);
+    background: radial-gradient(ellipse, oklch(0.55 0.17 250 / 0.24), transparent 65%); pointer-events: none;
+  }
+  .cta-in { position: relative; max-width: 1240px; margin: 0 auto; padding: 84px 32px; text-align: center; }
+  .cta-in h2 { font-size: clamp(30px, 3.6vw, 46px); letter-spacing: -0.025em; line-height: 1.12; }
+  .cta-in p { margin-top: 16px; color: var(--text-secondary); font-size: 15.5px; }
+  .cta-btns { margin-top: 32px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  footer { border-top: 1px solid var(--border-subtle); padding: 30px 32px; text-align: center; font-size: 12.5px; color: var(--text-tertiary); }
+  footer a { color: var(--text-secondary); text-decoration: none; transition: color .2s; }
+  footer a:hover { color: var(--text-primary); }
+
+  .reveal { transition: opacity .8s var(--ease-out-expo), transform .8s var(--ease-out-expo); }
+  .js .reveal { opacity: 0; transform: translateY(24px); }
+  .js .reveal.vis { opacity: 1; transform: none; }
+  .reveal.d1 { transition-delay: .09s; } .reveal.d2 { transition-delay: .18s; }
+
+  /* Atmosfer seçici */
+  #uiCtl {
+    position: fixed; right: 18px; bottom: 18px; z-index: 500;
+    display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+    font-family: ui-monospace, monospace;
+  }
+  #uiCtl .grp {
+    display: flex; align-items: center; gap: 4px; padding: 5px; flex-wrap: wrap; justify-content: flex-end;
+    max-width: min(94vw, 620px); border-radius: 20px;
+    border-radius: 99px; background: oklch(0.18 0.01 250 / 0.9); border: 1px solid var(--border-default);
+    backdrop-filter: blur(10px); box-shadow: 0 10px 30px oklch(0 0 0 / 0.4);
+  }
+  #uiCtl .lbl { font-size: 10.5px; color: var(--text-tertiary); padding: 0 8px 0 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+  #uiCtl button {
+    border: 1px solid transparent; background: transparent; color: var(--text-secondary);
+    font-family: inherit; font-size: 12px; padding: 6px 12px; border-radius: 99px; cursor: pointer;
+    transition: background .2s, color .2s;
+  }
+  #uiCtl button:hover { color: var(--text-primary); }
+  #uiCtl button.on { background: oklch(0.70 0.18 250 / 0.18); border-color: oklch(0.70 0.18 250 / 0.35); color: var(--text-primary); }
+
+  @media (max-width: 960px) {
+    .hero { grid-template-columns: 1fr; padding-top: 52px; gap: 44px; }
+    .bento { grid-template-columns: 1fr; }
+    .cell.big, .cell.wide, .cell.std { grid-column: span 1; }
+    .pcard.fis { grid-template-columns: 1fr; }
+    .p-duo { grid-template-columns: 1fr; }
+    nav.main { display: none; }
+    .launcher-body { grid-template-columns: 1fr; }
+    .l-side { display: none; }
+    .hero-stats { flex-wrap: wrap; gap: 18px; }
+    .hero-stat { border-left: none; padding: 0; }
+    .fc-b { left: 8px; }
+  }
+  @media (max-width: 600px) {
+    .header-in { height: 64px; gap: 8px; padding: 0 14px; }
+    .logo { min-width: 0; gap: 8px; font-size: 13px; line-height: 1.15; }
+    .logo-mark { width: 34px; height: 34px; border-radius: 9px; flex: 0 0 auto; }
+    .logo-mark img { width: 29px; height: 29px; }
+    .logo small { display: none; }
+    .header-in > div { flex: 0 0 auto; gap: 6px !important; }
+    #sessionLink { padding: 9px 11px; font-size: 12px; }
+    .header-in .btn-primary { gap: 6px; padding: 9px 11px; font-size: 0; }
+    .header-in .btn-primary::after { content: "İndir"; font-size: 12px; }
+    .header-in .btn-primary .ic { width: 14px; height: 14px; }
+    .hero { padding-inline: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="aur" aria-hidden="true"></canvas>
+<div class="bg bg-aurora" aria-hidden="true"><div class="par" id="auroraPar"><i class="b1"></i><i class="b2"></i><i class="b3"></i></div></div>
+<div class="bg bg-minimal" aria-hidden="true"></div>
+<div class="bg bg-rays" aria-hidden="true"><s class="r1"></s><s class="r2"></s><s class="r3"></s></div>
+<div class="vignette" aria-hidden="true"></div>
+
+<div class="preview-bar">Tasarım önizlemesi · <b>Rev 9 — 8 atmosfer × 6 renk teması</b> · sağ alttan karıştır</div>
+
+<header class="site">
+  <div class="header-in">
+    <a class="logo" href="/" aria-label="İmleç Yazılım ana sayfası">
+      <span class="logo-mark"><img src="/imlec-icon.png" alt="İmleç"></span>
+      <span>İmleç Yazılım<small>Masaüstü yazılım platformu</small></span>
+    </a>
+    <nav class="main" aria-label="Ana menü"><a href="#products" target="_self">Ürünler</a><a href="/changelog">Güncellemeler</a><a href="/uyelik">Üyelikler</a></nav>
+    <div style="display:flex; gap:10px;">
+      <a class="btn btn-ghost" id="sessionLink" href="/login">Giriş</a>
+      <a class="btn btn-primary" href="/api/downloads/launcher">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+        İmleç Launcher&#39;ı indir
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="hero-wrap">
+  <section class="hero">
+    <div>
+      <span class="eyebrow"><span class="pulse"></span>İmleç Yazılım · Platform yayında</span>
+      <h1 class="display">
+        <span class="w"><i style="animation-delay:.05s">Muhasebe</i></span>
+        <span class="w"><i style="animation-delay:.11s">ve</i></span>
+        <span class="w"><i style="animation-delay:.17s">finans</i></span>
+        <span class="w"><i style="animation-delay:.23s">ekipleri</i></span>
+        <span class="w"><i style="animation-delay:.29s">için</i></span><br>
+        <span class="w"><i style="animation-delay:.4s" class="grad">Türkiye&#39;nin</i></span>
+        <span class="w"><i style="animation-delay:.47s" class="grad">masaüstü</i></span>
+        <span class="w"><i style="animation-delay:.54s" class="grad">yazılım</i></span>
+        <span class="w"><i style="animation-delay:.61s" class="grad">platformu.</i></span>
+      </h1>
+      <p class="lead">Tek hesap; ürün erişimi, güvenli indirme, kurulum ve cihaz doğrulamayı yönetir. Uygulamalar <b>İmleç Launcher</b> üzerinden kurulur ve güncel kalır. İlk ürün <b>FİŞ260</b> yayında — yenileri yolda.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary" href="/api/downloads/launcher">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+          İmleç Launcher&#39;ı indir
+        </a>
+        <a class="btn btn-ghost" href="#products" target="_self">Ürünleri incele
+          <svg class="ic ar" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><b><em>1</em> hesap</b><span>tüm ürünler tek çatıda</span></div>
+        <div class="hero-stat"><b><em>1</em> launcher</b><span>kurulum + güncelleme</span></div>
+        <div class="hero-stat"><b><em>256</em>-bit</b><span>imzalı kurulum</span></div>
+      </div>
+    </div>
+
+    <div style="position:relative;">
+      <div class="float-chip fc-a">
+        <svg class="ic" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="M20 6 9 17l-5-5"/></svg>
+        İmza doğrulandı
+      </div>
+      <div class="float-chip b fc-b">
+        <svg class="ic" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+        Otomatik güncelleme
+      </div>
+      <div class="gborder">
+        <div class="launcher-embed-shell">
+          <iframe
+            class="launcher-embed"
+            src="/launcher-claude-source.html"
+            title="İmleç Launcher canlı önizlemesi"
+          ></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    <div class="marquee-group">
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Muhasebe OCR</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Excel aktarım</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>KVKK uyumlu</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>256-bit imzalı kurulum</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Cihaz doğrulama</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Otomatik güncelleme</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Windows 10/11</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Türkçe destek</span>
+    </div>
+    <div class="marquee-group" aria-hidden="true">
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Muhasebe OCR</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Excel aktarım</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>KVKK uyumlu</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>256-bit imzalı kurulum</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Cihaz doğrulama</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Otomatik güncelleme</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Windows 10/11</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Türkçe destek</span>
+    </div>
+    <div class="marquee-group" aria-hidden="true">
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Muhasebe OCR</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Excel aktarım</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>KVKK uyumlu</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>256-bit imzalı kurulum</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Cihaz doğrulama</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Otomatik güncelleme</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Windows 10/11</span>
+    <span class="mq-item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Türkçe destek</span>
+    </div>
+  </div>
+</div>
+
+<section class="block" id="platform">
+  <div class="reveal"><span class="sec-eyebrow">Platform yaklaşımı</span>
+  <h2 class="sec">Üyelik, indirme ve cihaz doğrulama<br><span class="grad">aynı hesapta birleşir.</span></h2>
+  <p class="sec-lead">Web platformu masaüstü ürünlerin dağıtım ve erişim katmanıdır. Kullanıcı launcher&#39;ı indirir, ürünü kurar ve aynı hesapla masaüstü oturumunu açar.</p></div>
+
+  <div class="bento">
+    <div class="cell big reveal"><div class="spot"></div>
+      <div class="cell-icon">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </div>
+      <h3>İmleç Launcher — tek merkez</h3>
+      <p>Tüm masaüstü ürünler tek kitaplıkta durur. İndirme, kurulum, sürüm güncelleme ve lisans doğrulama launcher içinden yönetilir; kullanıcı hiçbir kurulum dosyasıyla uğraşmaz.</p>
+      <div class="flow-mini">
+        <b>01 İndir</b>
+        <svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        <b>02 Giriş yap</b>
+        <svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        <b>03 Ürünü kur</b>
+        <svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        <b>04 Çalış</b>
+      </div>
+    </div>
+    <div class="cell std reveal d1"><div class="spot"></div>
+      <div class="cell-icon">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5"/></svg>
+      </div>
+      <h3>Ürün erişimi</h3>
+      <p>Satın alınan masaüstü ürünleri tek hesap altında görünür ve yönetilir.</p>
+      <span class="chip">Cihaz başına lisans</span>
+    </div>
+    <div class="cell std reveal d2"><div class="spot"></div>
+      <div class="cell-icon">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+      </div>
+      <h3>Güvenli indirme</h3>
+      <p>Kurulum dosyaları üyelik ve ürün erişimi kontrolünden sonra sunulur.</p>
+      <span class="chip">256-bit imzalı kurulum</span>
+    </div>
+    <div class="cell wide reveal d1"><div class="spot"></div>
+      <div class="cell-icon">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+      </div>
+      <h3>Cihaz yönetimi</h3>
+      <p>Desktop oturumları üyelik durumunu ve cihaz doğrulamasını web hesabıyla eşler. Şüpheli cihaz hareketleri loglanır.</p>
+      <span class="chip">30 günde bir doğrulama</span>
+    </div>
+    <div class="cell wide reveal d2"><div class="spot"></div>
+      <div class="cell-icon">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+      </div>
+      <h3>KVKK uyumlu altyapı</h3>
+      <p>Hesap ve cihaz verileri yalnızca ürün erişimi için sınırlı tutulur. Türkiye merkezli destek.</p>
+      <div class="big-num">%99.9</div>
+      <p style="margin-top:4px; font-size:12px;">imza doğrulama başarısı</p>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="products" style="border-top:1px solid var(--border-subtle);">
+  <div class="reveal"><span class="sec-eyebrow">Ürün ekosistemi</span>
+  <h2 class="sec">Büyüyen bir <span class="grad">masaüstü ürün kataloğu.</span></h2>
+  <p class="sec-lead">Her ürün kendi üyelik, erişim ve indirme akışına sahiptir. Hesap yapısı ortaktır; ürün sahipliği ayrı yönetilir.</p></div>
+
+  <div class="fis-grid reveal">
+    <div class="pcard fis"><div class="spot"></div>
+      <div>
+        <div class="pcard-top">
+          <div class="pmark">F</div>
+          <span class="badge on">Aktif · Beta v0.1.0</span>
+        </div>
+        <div class="plabel">Muhasebe OCR</div>
+        <h3>FİŞ260</h3>
+        <p class="desc">Fiş görsellerinden alanları çıkaran, kontrol akışıyla Excel çıktısı hazırlayan Windows uygulaması.</p>
+        <div class="psteps">
+          <div class="pstep"><b>01</b>Fiş görsellerini çalışma alanına yükleyin</div>
+          <div class="pstep"><b>02</b>Firma, VKN, tarih, KDV ve toplam otomatik çıkarılır</div>
+          <div class="pstep"><b>03</b>Alanları aktarım öncesi kontrol edin</div>
+          <div class="pstep"><b>04</b>Muhasebe akışına uygun Excel çıktısını alın</div>
+        </div>
+        <div class="ptags"><span>Muhasebe OCR</span><span>Excel aktarım</span><span>Windows 10/11</span></div>
+        <a class="plink" href="/fis260">FİŞ260 ürün sayfası
+          <svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+      <div class="video-shell">
+        <div class="gborder">
+          <div class="window">
+            <div class="window-bar">
+              <div class="dots"><i></i><i></i><i></i></div>
+              <span class="window-title">FİŞ260 — uygulama içi görüntü</span>
+              <span style="width:44px;"></span>
+            </div>
+            <video id="fisVideo" src="/fis260.mp4" poster="/fis260-preview.png" muted loop playsinline preload="metadata"></video>
+            <div class="video-cap"><span class="rec"></span>Gerçek ürün kaydı · 1:19</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-duo">
+      <div class="pcard coz reveal d1"><div class="spot"></div>
+        <div class="pcard-top">
+          <div class="pmark">Ç</div>
+          <span class="badge soon">Geliştiriliyor</span>
+        </div>
+        <div class="plabel">Finansal analiz</div>
+        <h3>ÇÖZVER</h3>
+        <p class="desc">Finansal analiz ve spread hazırlığı için geliştirilen ikinci masaüstü ürün.</p>
+        <div class="ptags"><span>Finansal analiz</span><span>Spread</span><span>Yakında</span></div>
+        <a class="plink" href="/cozver">Ürün sayfası
+          <svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+      <div class="pcard next reveal d2"><div class="spot"></div>
+        <div class="pcard-top"><div class="nmark">+</div></div>
+        <div class="plabel">Yol haritası</div>
+        <h3>Sırada ne var?</h3>
+        <p class="desc">Katalog büyüyor. Yeni masaüstü araçları aynı hesap ve launcher altında yayınlanacak. Önerin mi var? Özellik önerileri ekranından iletebilirsin.</p>
+        <a class="plink" href="/account">Öneri gönder
+          <svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="cta-strip reveal">
+  <div class="cta-glow"></div>
+  <div class="cta-in">
+    <span class="sec-eyebrow">İmleç Yazılım</span>
+    <h2 style="margin-top:14px;">Platforma bugün katılın,<br><span class="grad">FİŞ260&#39;ı deneyin.</span></h2>
+    <p>Kurulum 1 dakika sürer. Üyelik hesabınız web ve masaüstünde ortaktır.</p>
+    <div class="cta-btns">
+      <a class="btn btn-primary" href="/api/downloads/launcher">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+        İmleç Launcher&#39;ı indir
+      </a>
+      <a class="btn btn-ghost" href="#products" target="_self">Ürünleri incele
+        <svg class="ic ar" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+</div>
+
+<footer>İmleç Yazılım © 2026 · <a href="/security">Güvenlik</a> · <a href="/changelog">Değişiklikler</a></footer>
+
+<script>
+  document.documentElement.classList.add("js");
+
+  // Mevcut Auth.js oturumunu yalnızca navigasyon metni için tüketir.
+  fetch("/api/auth/session", { credentials: "same-origin" })
+    .then(response => response.ok ? response.json() : null)
+    .then(session => {
+      if (!session?.user) return;
+      const sessionLink = document.getElementById("sessionLink");
+      if (!sessionLink) return;
+      sessionLink.href = "/account";
+      sessionLink.textContent = "Hesabım";
+    })
+    .catch(() => {});
+
+  // Scroll reveal
+  const io = new IntersectionObserver((es) => {
+    for (const e of es) if (e.isIntersecting) { e.target.classList.add("vis"); io.unobserve(e.target); }
+  }, { threshold: 0.12 });
+  document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+
+  // Kart spotlight (yalnızca kartlarda, sayfada gezen ışık yok)
+  document.querySelectorAll(".cell, .pcard").forEach(card => {
+    card.addEventListener("pointermove", e => {
+      const r = card.getBoundingClientRect();
+      card.style.setProperty("--mx", (e.clientX - r.left) + "px");
+      card.style.setProperty("--my", (e.clientY - r.top) + "px");
+    });
+  });
+
+  // Aurora paralaks — hissedilir ama görünmez incelikte
+  const par = document.getElementById("auroraPar");
+  if (par) {
+    addEventListener("pointermove", e => {
+      const dx = (e.clientX / innerWidth - 0.5) * 36;
+      const dy = (e.clientY / innerHeight - 0.5) * 24;
+      par.style.transform = `translate(${dx}px, ${dy}px)`;
+    });
+  }
+
+  // Video: görünürken oynat, tıklayınca durdur/başlat
+  const video = document.getElementById("fisVideo");
+  if (video) {
+    const vio = new IntersectionObserver((es) => {
+      for (const e of es) e.isIntersecting ? video.play().catch(() => {}) : video.pause();
+    }, { threshold: 0.35 });
+    vio.observe(video);
+    video.addEventListener("click", () => video.paused ? video.play() : video.pause());
+  }
+
+  // ── Atmosfer motoru: sekiz canlı zemin × altı renk teması ──
+  (function () {
+    const canvas = document.getElementById("aur");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const DPR = Math.min(devicePixelRatio || 1, 2);
+    let W = 0, H = 0;
+    function size() {
+      W = innerWidth; H = innerHeight;
+      canvas.width = W * DPR; canvas.height = H * DPR;
+      canvas.style.width = W + "px"; canvas.style.height = H + "px";
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    size();
+    addEventListener("resize", size);
+
+    let mx = 0.5, my = 0.3, ix = 0.5, iy = 0.3, mult = 1;
+    addEventListener("pointermove", e => { mx = e.clientX / W; my = e.clientY / H; });
+    window.__aurMult = v => { mult = v; };
+
+    // Renk temaları — her tema 5 renkli palet
+    const THEMES = {
+      mavi:      [[86,136,255],[122,108,255],[74,170,255],[150,118,255],[96,150,255]],
+      mor:       [[168,102,255],[224,108,236],[132,92,255],[255,118,198],[192,110,255]],
+      zumrut:    [[52,200,160],[70,214,122],[58,182,204],[112,228,150],[42,160,190]],
+      gunbatimi: [[255,122,84],[255,92,140],[255,162,72],[242,104,122],[255,142,100]],
+      altin:     [[255,188,84],[255,158,62],[240,198,120],[222,142,52],[255,208,140]],
+      buz:       [[168,214,255],[196,232,255],[128,192,255],[214,240,255],[148,204,255]],
+    };
+    let PAL = THEMES.mavi.map(c => c.join(","));
+    let SWEEP = "220,235,255";
+    window.__aurTheme = name => {
+      const th = THEMES[name] || THEMES.mavi;
+      PAL = th.map(c => c.join(","));
+      SWEEP = th[0].map(v => Math.min(255, v + 130)).join(",");
+    };
+    function mixCol(i, j, tt) {
+      const a = PAL[i].split(",").map(Number), b = PAL[j].split(",").map(Number);
+      return a.map((v, k) => Math.round(v + (b[k] - v) * tt)).join(",");
+    }
+
+    const blooms = [];
+    addEventListener("click", e => {
+      if (!document.documentElement.classList.contains("atmo-off") && blooms.length < 3)
+        blooms.push({ x: e.clientX, y: e.clientY, r: 50, a: 0.20 });
+    });
+
+    function fadeMask(mid, bottom) {
+      ctx.globalCompositeOperation = "destination-in";
+      const m = ctx.createLinearGradient(0, 0, 0, H);
+      m.addColorStop(0, "rgba(0,0,0,1)");
+      m.addColorStop(mid, "rgba(0,0,0,0.85)");
+      m.addColorStop(1, `rgba(0,0,0,${bottom})`);
+      ctx.fillStyle = m;
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    // — 1 · Aurora —
+    const blobs = [
+      { r: 0.66, a: 0.34, f1: 0.085, f2: 0.115, ph: 0.0, ox: 0.62, oy: 0.10, ax: 0.26, ay: 0.15 },
+      { r: 0.52, a: 0.26, f1: 0.065, f2: 0.095, ph: 2.1, ox: 0.24, oy: 0.24, ax: 0.20, ay: 0.13 },
+      { r: 0.46, a: 0.24, f1: 0.105, f2: 0.075, ph: 4.2, ox: 0.84, oy: 0.32, ax: 0.15, ay: 0.17 },
+      { r: 0.40, a: 0.20, f1: 0.055, f2: 0.085, ph: 1.2, ox: 0.44, oy: 0.04, ax: 0.30, ay: 0.10 },
+      { r: 0.34, a: 0.18, f1: 0.125, f2: 0.100, ph: 3.3, ox: 0.10, oy: 0.06, ax: 0.14, ay: 0.12 },
+    ];
+    function drawAurora(s) {
+      ctx.globalCompositeOperation = "lighter";
+      const baseR = Math.min(W, H);
+      for (let i = 0; i < blobs.length; i++) {
+        const b = blobs[i], c = PAL[i % 5];
+        const x = W * (b.ox + b.ax * Math.sin(s * b.f1 * 6.2832 + b.ph)) + (ix - 0.5) * 70;
+        const y = H * (b.oy + b.ay * Math.cos(s * b.f2 * 6.2832 + b.ph)) + (iy - 0.5) * 46;
+        const r = baseR * b.r;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, `rgba(${c},${b.a * mult})`);
+        g.addColorStop(1, `rgba(${c},0)`);
+        ctx.fillStyle = g;
+        ctx.fillRect(x - r, y - r, r * 2, r * 2);
+      }
+      fadeMask(0.6, 0.22);
+    }
+
+    // — 2 · Renk Kumaşı —
+    const mcv = document.createElement("canvas");
+    mcv.width = 26; mcv.height = 15;
+    const mctx = mcv.getContext("2d");
+    const anchors = [
+      { a: 0.55, f1: 0.050, f2: 0.070, ph: 0.0, ox: 0.72, oy: 0.14, ax: 0.24, ay: 0.20 },
+      { a: 0.45, f1: 0.040, f2: 0.060, ph: 2.0, ox: 0.18, oy: 0.30, ax: 0.20, ay: 0.22 },
+      { a: 0.42, f1: 0.060, f2: 0.050, ph: 4.1, ox: 0.86, oy: 0.52, ax: 0.16, ay: 0.24 },
+      { a: 0.40, f1: 0.045, f2: 0.065, ph: 1.1, ox: 0.44, oy: 0.06, ax: 0.30, ay: 0.16 },
+      { a: 0.48, f1: 0, f2: 0, ph: 0, ox: -1, oy: -1, ax: 0, ay: 0 },
+    ];
+    function drawMesh(s) {
+      mctx.clearRect(0, 0, 26, 15);
+      mctx.globalCompositeOperation = "lighter";
+      for (let i = 0; i < anchors.length; i++) {
+        const p = anchors[i], c = PAL[i % 5];
+        let px, py;
+        if (p.ox < 0) { px = ix * 26; py = iy * 15; }
+        else {
+          px = (p.ox + p.ax * Math.sin(s * p.f1 * 6.2832 + p.ph)) * 26;
+          py = (p.oy + p.ay * Math.cos(s * p.f2 * 6.2832 + p.ph)) * 15;
+        }
+        const g = mctx.createRadialGradient(px, py, 0, px, py, 11);
+        g.addColorStop(0, `rgba(${c},${p.a * mult})`);
+        g.addColorStop(1, `rgba(${c},0)`);
+        mctx.fillStyle = g;
+        mctx.fillRect(0, 0, 26, 15);
+      }
+      mctx.globalCompositeOperation = "source-over";
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(mcv, 0, 0, W, H);
+      fadeMask(0.55, 0.12);
+    }
+
+    // — 3 · İpek + 4 · Işıltı —
+    const ribbons = [];
+    for (let i = 0; i < 5; i++) ribbons.push({
+      base: 0.15 + i * 0.075,
+      amp: 34 + i * 12,
+      k: 0.0016 + i * 0.0005,
+      sp: (0.25 + i * 0.07) * (i % 2 ? -1 : 1),
+      w: 46 + i * 16,
+      al: 0.11 - i * 0.008,
+    });
+    function ribbonPath(rb, s, lift, ampMul) {
+      const baseY = H * rb.base + lift;
+      const amp = rb.amp * ampMul;
+      ctx.beginPath();
+      ctx.moveTo(-70, baseY);
+      for (let x = -70; x <= W + 70; x += 14) {
+        const y = baseY
+          + amp * Math.sin(x * rb.k + s * rb.sp * 2)
+          + amp * 0.5 * Math.sin(x * rb.k * 2.3 - s * rb.sp * 1.3);
+        ctx.lineTo(x, y);
+      }
+      return baseY;
+    }
+    function drawSilk(s, shimmer) {
+      ctx.globalCompositeOperation = "lighter";
+      const lift = (iy - 0.5) * 44;
+      const ampMul = 1 + (ix - 0.5) * 0.5;
+      for (let i = 0; i < ribbons.length; i++) {
+        const rb = ribbons[i], c = PAL[i % 5];
+        const baseY = ribbonPath(rb, s, lift, ampMul);
+        const g = ctx.createLinearGradient(0, baseY - 100, 0, baseY + 100);
+        g.addColorStop(0, `rgba(${c},0)`);
+        g.addColorStop(0.5, `rgba(${c},${rb.al * (shimmer ? 0.9 : 1) * mult})`);
+        g.addColorStop(1, `rgba(${c},0)`);
+        ctx.strokeStyle = g;
+        ctx.lineWidth = rb.w;
+        ctx.stroke();
+        if (shimmer) {
+          const p = ((s * (0.055 + i * 0.014) + i * 0.27) % 1.3) - 0.15;
+          if (p > 0.02 && p < 0.98) {
+            const gx = ctx.createLinearGradient(0, 0, W, 0);
+            const c0 = Math.max(0, p - 0.09), c2 = Math.min(1, p + 0.09);
+            gx.addColorStop(0, `rgba(${SWEEP},0)`);
+            if (c0 > 0) gx.addColorStop(c0, `rgba(${SWEEP},0)`);
+            gx.addColorStop(p, `rgba(${SWEEP},${0.30 * mult})`);
+            if (c2 < 1) gx.addColorStop(c2, `rgba(${SWEEP},0)`);
+            gx.addColorStop(1, `rgba(${SWEEP},0)`);
+            ctx.strokeStyle = gx;
+            ctx.lineWidth = Math.max(10, rb.w * 0.45);
+            ctx.stroke();
+          }
+        }
+      }
+      fadeMask(0.65, 0.16);
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    // — 5 · Ufuk: yumuşak ışık kavisi —
+    function drawHorizon(s) {
+      ctx.globalCompositeOperation = "lighter";
+      const col = mixCol(0, 1, (Math.sin(s * 0.1) + 1) / 2);
+      const cx = W * (0.5 + (ix - 0.5) * 0.22);
+      const cy = -H * (0.52 - (iy - 0.5) * 0.06);
+      const R = H * (1.06 + 0.03 * Math.sin(s * 0.25));
+      let g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.25);
+      g.addColorStop(0.58, `rgba(${col},0)`);
+      g.addColorStop(0.78, `rgba(${col},${0.30 * mult})`);
+      g.addColorStop(0.92, `rgba(${col},${0.08 * mult})`);
+      g.addColorStop(1, `rgba(${col},0)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.92);
+      g.addColorStop(0.66, `rgba(${col},0)`);
+      g.addColorStop(1, `rgba(${col},${0.15 * mult})`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      const rg = ctx.createLinearGradient(0, 0, 0, H * 0.85);
+      rg.addColorStop(0, `rgba(${col},${0.10 * mult})`);
+      rg.addColorStop(1, `rgba(${col},0)`);
+      ctx.fillStyle = rg;
+      ctx.fillRect(0, 0, W, H * 0.85);
+      fadeMask(0.7, 0.28);
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    // — 6 · Kutup: belirgin kuzey ışığı perdeleri —
+    const curtains = [];
+    for (let i = 0; i < 4; i++) curtains.push({
+      x0: 0.13 + i * 0.24,
+      w: 0.20 + (i % 2) * 0.06,
+      f: 0.05 + i * 0.012,
+      ph: i * 1.7,
+      sway: 70 + i * 20,
+    });
+    function drawPolar(s) {
+      ctx.globalCompositeOperation = "lighter";
+      const bg = ctx.createLinearGradient(0, 0, 0, H * 0.5);
+      bg.addColorStop(0, `rgba(${PAL[0]},${0.10 * mult})`);
+      bg.addColorStop(1, `rgba(${PAL[0]},0)`);
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H * 0.5);
+      for (let ci = 0; ci < curtains.length; ci++) {
+        const ct = curtains[ci], col = PAL[ci % 5];
+        const bandW = W * ct.w;
+        const cxx = W * ct.x0 + Math.sin(s * ct.f * 6.2832 + ct.ph) * ct.sway + (ix - 0.5) * 60;
+        const topY = -40;
+        const botY = H * (0.62 + 0.07 * Math.sin(s * 0.2 + ct.ph));
+        const g = ctx.createLinearGradient(0, topY, 0, botY);
+        g.addColorStop(0, `rgba(${col},1)`);
+        g.addColorStop(0.55, `rgba(${col},0.55)`);
+        g.addColorStop(1, `rgba(${col},0)`);
+        ctx.fillStyle = g;
+        const step = 9;
+        for (let x = -bandW / 2; x < bandW / 2; x += step) {
+          const env = Math.cos((x / bandW) * Math.PI);
+          const wob = Math.sin(s * 1.2 + (x + cxx) * 0.014 + ct.ph);
+          const a = Math.max(0, env * (0.26 + 0.12 * wob)) * mult;
+          if (a < 0.004) continue;
+          ctx.globalAlpha = Math.min(1, a);
+          ctx.fillRect(cxx + x + wob * 18, topY, step - 2, botY - topY);
+        }
+        ctx.globalAlpha = 1;
+      }
+      fadeMask(0.62, 0.18);
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    // — 7 · Küre: nefes alan ışık küresi + yörünge parıltıları —
+    function drawOrb(s) {
+      ctx.globalCompositeOperation = "lighter";
+      const cx = W * (0.70 + (ix - 0.5) * 0.08);
+      const cy = H * (0.34 + (iy - 0.5) * 0.06);
+      const R = Math.min(W, H) * (0.24 + 0.012 * Math.sin(s * 0.45));
+      let g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 2.8);
+      g.addColorStop(0, `rgba(${PAL[0]},${0.34 * mult})`);
+      g.addColorStop(0.4, `rgba(${PAL[1]},${0.12 * mult})`);
+      g.addColorStop(1, `rgba(${PAL[1]},0)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.95);
+      g.addColorStop(0, `rgba(${PAL[2]},${0.30 * mult})`);
+      g.addColorStop(1, `rgba(${PAL[2]},0)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+      for (let k = 0; k < 2; k++) {
+        const ang = s * (0.10 + k * 0.06) * 6.2832 + k * 2.6;
+        const px = cx + Math.cos(ang) * R * 1.9;
+        const py = cy + Math.sin(ang) * R * 1.15;
+        const rr = 70 + k * 30;
+        const sg = ctx.createRadialGradient(px, py, 0, px, py, rr);
+        sg.addColorStop(0, `rgba(${PAL[3 + k]},${0.22 * mult})`);
+        sg.addColorStop(1, `rgba(${PAL[3 + k]},0)`);
+        ctx.fillStyle = sg;
+        ctx.fillRect(px - rr, py - rr, rr * 2, rr * 2);
+      }
+      const bg2 = ctx.createRadialGradient(W * 0.12, H * 0.05, 0, W * 0.12, H * 0.05, H * 0.5);
+      bg2.addColorStop(0, `rgba(${PAL[4]},${0.10 * mult})`);
+      bg2.addColorStop(1, `rgba(${PAL[4]},0)`);
+      ctx.fillStyle = bg2;
+      ctx.fillRect(0, 0, W, H);
+      fadeMask(0.7, 0.2);
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    // — 8 · Şafak: katmanlı gök ışıması + puslu güneş —
+    function drawDawn(s) {
+      ctx.globalCompositeOperation = "lighter";
+      const w1 = 0.30 + 0.04 * Math.sin(s * 0.18);
+      const w2 = 0.58 + 0.04 * Math.sin(s * 0.14 + 2);
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, `rgba(${PAL[1]},${0.20 * mult})`);
+      g.addColorStop(w1, `rgba(${PAL[0]},${0.16 * mult})`);
+      g.addColorStop(w2, `rgba(${PAL[2]},${0.10 * mult})`);
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      const sx = W * (0.5 + 0.18 * Math.sin(s * 0.05)) + (ix - 0.5) * 80;
+      const sy = H * (0.34 + 0.02 * Math.sin(s * 0.3)) + (iy - 0.5) * 30;
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.scale(1, 0.55);
+      const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, W * 0.28);
+      sg.addColorStop(0, `rgba(${PAL[3]},${0.30 * mult})`);
+      sg.addColorStop(1, `rgba(${PAL[3]},0)`);
+      ctx.fillStyle = sg;
+      ctx.fillRect(-W * 0.28, -W * 0.28, W * 0.56, W * 0.56);
+      ctx.restore();
+      fadeMask(0.75, 0.22);
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    function drawBlooms() {
+      ctx.globalCompositeOperation = "lighter";
+      for (let i = blooms.length - 1; i >= 0; i--) {
+        const bl = blooms[i];
+        bl.r += 5.5; bl.a *= 0.972;
+        if (bl.a < 0.008) { blooms.splice(i, 1); continue; }
+        const g = ctx.createRadialGradient(bl.x, bl.y, 0, bl.x, bl.y, bl.r);
+        g.addColorStop(0, `rgba(${PAL[0]},${bl.a * mult})`);
+        g.addColorStop(1, `rgba(${PAL[0]},0)`);
+        ctx.fillStyle = g;
+        ctx.fillRect(bl.x - bl.r, bl.y - bl.r, bl.r * 2, bl.r * 2);
+      }
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    function frame(t) {
+      requestAnimationFrame(frame);
+      if (document.hidden) return;
+      const html = document.documentElement;
+      ctx.clearRect(0, 0, W, H);
+      if (html.classList.contains("atmo-off")) return;
+      const s = t * 0.001;
+      ix += (mx - ix) * 0.035; iy += (my - iy) * 0.035;
+      if (html.classList.contains("atmo-mesh")) drawMesh(s);
+      else if (html.classList.contains("atmo-silk")) drawSilk(s, false);
+      else if (html.classList.contains("atmo-shimmer")) drawSilk(s, true);
+      else if (html.classList.contains("atmo-horizon")) drawHorizon(s);
+      else if (html.classList.contains("atmo-polar")) drawPolar(s);
+      else if (html.classList.contains("atmo-orb")) drawOrb(s);
+      else if (html.classList.contains("atmo-dawn")) drawDawn(s);
+      else drawAurora(s);
+      drawBlooms();
+    }
+    requestAnimationFrame(frame);
+  })();
+
+  // Web sürümünde atmosfer kullanıcı tarafından değiştirilemez.
+  document.documentElement.classList.add("atmo-aurora");
+  window.__aurTheme?.("mavi");
+  window.__aurMult?.(1.45);
+</script>
+</body>
+</html>

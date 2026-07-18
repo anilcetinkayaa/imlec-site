@@ -1,0 +1,21 @@
+export const VIDEO_PLACEHOLDER = false;
+
+export const FIS260_DEMO_VIDEO_SRC = "/fis260.mp4";
+
+export const FIS260_INSTALLER_VERSION = "v0.1.1";
+
+export const FIS260_INSTALLER_SIZE_BYTES = 457_448_542;
+
+export const FIS260_INSTALLER_SHA256 =
+  "72c008e9945e817dc3f3f829c341c857f4a9942a9ad625f5cea0b31a7db36f1e";
+
+export const LAUNCHER_INSTALLER_VERSION = "v0.1.2";
+
+export const LAUNCHER_INSTALLER_SIZE_BYTES = 49_759_796;
+
+export const LAUNCHER_INSTALLER_SHA256 =
+  "6077517eee31339246170e514edadce8a0c7f428cff762e61e3ebee071d0f2c5";
+
+export const MEMBERSHIP_PRICE_TRY = 500;
+
+export const MEMBERSHIP_CURRENCY = "TRY";
