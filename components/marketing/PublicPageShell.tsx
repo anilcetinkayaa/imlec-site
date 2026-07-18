@@ -24,7 +24,8 @@ export function PublicPageShell({
       style={style}
     >
       <Rev9Atmosphere />
-      <SiteHeader />
+      <div aria-hidden="true" className="h-[35px]" />
+      <SiteHeader rev9Aligned />
       <div className="relative z-10">{children}</div>
       <Footer />
     </main>

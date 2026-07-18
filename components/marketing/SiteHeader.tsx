@@ -8,6 +8,7 @@ import { MobileSiteMenu } from "@/components/marketing/MobileSiteMenu";
 
 type SiteHeaderProps = {
   compact?: boolean;
+  rev9Aligned?: boolean;
 };
 
 const navItems = [
@@ -15,16 +16,29 @@ const navItems = [
   { href: "/uyelik", label: "Abone ol" },
 ];
 
-export async function SiteHeader({ compact = false }: SiteHeaderProps) {
+export async function SiteHeader({
+  compact = false,
+  rev9Aligned = false,
+}: SiteHeaderProps) {
   const session = await auth();
   const userInitial =
     session?.user?.name?.charAt(0) ?? session?.user?.email?.charAt(0) ?? "İ";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--border-subtle)] bg-[var(--surface-0)]/82 backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--surface-0)]/72">
+    <header
+      className={
+        rev9Aligned
+          ? "sticky top-[33px] z-40 border-b border-[var(--border-subtle)] bg-[oklch(0.14_0.005_250/0.72)] backdrop-blur-[18px]"
+          : "sticky top-0 z-40 border-b border-[var(--border-subtle)] bg-[var(--surface-0)]/82 backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--surface-0)]/72"
+      }
+    >
       <div
-        className={`mx-auto flex max-w-7xl items-center justify-between px-6 sm:px-8 lg:px-10 ${
-          compact ? "h-16" : "h-20"
+        className={`mx-auto flex items-center justify-between ${
+          rev9Aligned
+            ? "h-16 max-w-[1240px] px-[14px] md:h-[70px] md:px-8"
+            : "max-w-7xl px-6 sm:px-8 lg:px-10"
+        } ${
+          rev9Aligned ? "" : compact ? "h-16" : "h-20"
         }`}
       >
         <div className="flex min-w-0 items-center gap-4">

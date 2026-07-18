@@ -37,9 +37,6 @@ export function Rev9Atmosphere() {
     }
 
     const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
     const intensity = 1.45;
     const blooms: Bloom[] = [];
     let width = 0;
@@ -123,9 +120,7 @@ export function Rev9Atmosphere() {
     };
 
     const drawFrame = (time: number) => {
-      if (!reduceMotion) {
-        animationFrame = window.requestAnimationFrame(drawFrame);
-      }
+      animationFrame = window.requestAnimationFrame(drawFrame);
 
       if (document.hidden) {
         return;
@@ -169,11 +164,7 @@ export function Rev9Atmosphere() {
     window.addEventListener("resize", resize);
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("click", handleClick);
-    if (reduceMotion) {
-      drawFrame(0);
-    } else {
-      animationFrame = window.requestAnimationFrame(drawFrame);
-    }
+    animationFrame = window.requestAnimationFrame(drawFrame);
 
     return () => {
       window.cancelAnimationFrame(animationFrame);
@@ -188,16 +179,16 @@ export function Rev9Atmosphere() {
       <style>{"html { background: transparent; }"}</style>
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-30 bg-[var(--surface-0)]"
+        className="pointer-events-none fixed inset-0 -z-10 bg-[var(--surface-0)]"
       />
       <canvas
         ref={canvasRef}
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-20"
+        className="pointer-events-none fixed inset-0 z-0"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_130%_110%_at_50%_0%,transparent_54%,oklch(0.10_0.005_250/0.56)_100%)]"
+        className="pointer-events-none fixed inset-0 z-[1] bg-[radial-gradient(ellipse_130%_110%_at_50%_0%,transparent_54%,oklch(0.10_0.005_250/0.56)_100%)]"
       />
     </>
   );
