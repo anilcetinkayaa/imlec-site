@@ -41,8 +41,9 @@ export function Rev9HomePage() {
     <>
       {/* This is the reviewed, local Rev 9 artifact rendered as the real page DOM. */}
       <style dangerouslySetInnerHTML={{ __html: source.styles }} />
+      <style>{"html { background: transparent; }"}</style>
       <div
-        className="contents"
+        className="rev9-page contents"
         dangerouslySetInnerHTML={{ __html: source.body }}
       />
       <Script

@@ -54,7 +54,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  html:not(:has(.rev9-page)) *,
+  html:not(:has(.rev9-page)) *::before,
+  html:not(:has(.rev9-page)) *::after {
     animation-duration: 0ms !important;
     transition-duration: 0ms !important;
   }
