@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Rev9HomePage } from "@/components/rev9/Rev9HomePage";
 
 export const metadata: Metadata = {
   title: "İmleç Yazılım | Masaüstü yazılım platformu",
@@ -7,12 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  return (
-    <iframe
-      aria-label="İmleç Yazılım ana sayfası"
-      className="fixed inset-0 h-dvh w-full border-0 bg-black"
-      src="/rev9-claude-source.html?mode=production"
-      title="İmleç Yazılım"
-    />
-  );
+  return <Rev9HomePage />;
 }
