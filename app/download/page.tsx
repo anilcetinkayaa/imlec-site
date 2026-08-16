@@ -248,6 +248,36 @@ function DownloadCard({
   );
 }
 
+function LauncherRepairNotice() {
+  return (
+    <Card className="p-6" variant="default">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex gap-4">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--warning)]/30 bg-[var(--warning)]/10 text-[var(--warning)]">
+            <ShieldCheck className="size-5" strokeWidth={1.5} />
+          </div>
+          <div>
+            <Badge variant="beta">Onarım kurulumu</Badge>
+            <h2 className="text-h4 mt-3">Launcher güncellemesi takılı kalırsa</h2>
+            <p className="text-body-s mt-2 max-w-3xl text-[var(--text-secondary)]">
+              Eski launcher sürümlerinde otomatik güncelleme tamamlandı görünse bile
+              açık dosya kilidi yüzünden eski sürüm tekrar açılabilir. Bu durumda
+              imzalı kurulum paketini indirip çalıştırın; mevcut FİŞ260 kurulumunuz
+              ve hesap bilgileriniz korunur.
+            </p>
+          </div>
+        </div>
+        <Button asChild className="shrink-0" variant="outline">
+          <Link href="/api/downloads/launcher">
+            <Download className="size-4" strokeWidth={1.5} />
+            İmzalı paketi indir
+          </Link>
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
 type DownloadPageProps = {
   searchParams: Promise<{
     reason?: string;
@@ -336,6 +366,7 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
           {showAccessRequiredNotice ? (
             <AccessRequiredNotice hasPendingRequest={hasPendingFis260Request} />
           ) : null}
+          <LauncherRepairNotice />
 
           {ownedProducts.length > 0 ? (
             ownedProducts.map((product) => (

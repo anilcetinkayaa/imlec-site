@@ -2873,7 +2873,28 @@ class LauncherWindow(QMainWindow):
             widgets["action"].setEnabled(True)
         self.launcher_update_worker = None
         self.launcher_update_thread = None
-        QMessageBox.critical(self, "Launcher güncelleme hatası", message)
+        recovery_url = f"{AUTH_BASE_URL}/api/downloads/launcher"
+        for product in self.products:
+            if safe_slug(str(product.get("slug") or "")) == "launcher":
+                recovery_url = str(product.get("installerUrl") or recovery_url)
+                break
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Critical)
+        box.setWindowTitle("Launcher güncelleme hatası")
+        box.setText("Otomatik launcher güncellemesi tamamlanamadı.")
+        box.setInformativeText(
+            f"{message}\n\n"
+            "İmzalı onarım kurulum paketini indirip çalıştırarak launcher'ı "
+            "güncelleyebilirsiniz. Mevcut FIS260 kurulumunuz ve hesap bilgileriniz korunur."
+        )
+        repair_button = box.addButton(
+            "İmzalı paketi indir",
+            QMessageBox.ButtonRole.AcceptRole,
+        )
+        box.addButton("Kapat", QMessageBox.ButtonRole.RejectRole)
+        box.exec()
+        if box.clickedButton() == repair_button:
+            QDesktopServices.openUrl(QUrl(recovery_url))
 
     @Slot(str, int, str)
     def on_install_progress(self, slug: str, percent: int, message: str):

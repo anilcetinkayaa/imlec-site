@@ -59,6 +59,10 @@ export async function GET(_request: Request, context: VersionRouteContext) {
     downloadUrl: latestVersion.filePath.startsWith("http")
       ? latestVersion.filePath
       : new URL(`/downloads/${latestVersion.filePath}`, _request.url).toString(),
+    installerUrl:
+      product.slug === "launcher"
+        ? new URL("/api/downloads/launcher", _request.url).toString()
+        : null,
     sha256: latestVersion.sha256,
     releasedAt: latestVersion.createdAt.toISOString(),
   });

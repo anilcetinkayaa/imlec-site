@@ -418,6 +418,9 @@ export async function GET(request: Request) {
                 deviceId: requestDeviceId ?? "launcher-public",
               })
             : null,
+        installerUrl: isLauncher
+          ? new URL("/api/downloads/launcher", request.url).toString()
+          : null,
         sha256: hasAccess ? latest?.sha256 ?? null : null,
         deviceStatus: deviceGate.status,
         releasedAt: latest?.createdAt.toISOString() ?? null,
