@@ -15,6 +15,7 @@
     "seed": "node prisma/seed.mjs",
     "sign:launcher": "powershell -NoProfile -ExecutionPolicy Bypass -File desktop-launcher/signing/sign-windows.ps1 -Root desktop-launcher",
     "verify:signatures": "powershell -NoProfile -ExecutionPolicy Bypass -File desktop-launcher/signing/verify-signed-artifacts.ps1 -Root desktop-launcher",
+    "package:signed-launcher": "powershell -NoProfile -ExecutionPolicy Bypass -File desktop-launcher/signing/package-signed-launcher.ps1 -Root desktop-launcher",
     "release:preflight": "powershell -NoProfile -ExecutionPolicy Bypass -File desktop-launcher/signing/release-preflight.ps1 -Root desktop-launcher"
   },
   "dependencies": {

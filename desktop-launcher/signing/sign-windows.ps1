@@ -3,7 +3,7 @@ param(
     [string[]]$Paths = @(),
     [string]$ReleaseVersion = "0.1.6",
     [ValidateSet("CodeSignTool", "SignTool")]
-    [string]$Backend = $(if ($env:IMLEC_SIGN_BACKEND) { $env:IMLEC_SIGN_BACKEND } else { "CodeSignTool" }),
+    [string]$Backend = $(if ($env:IMLEC_SIGN_BACKEND) { $env:IMLEC_SIGN_BACKEND } else { "SignTool" }),
     [string]$CodeSignToolRoot = $env:IMLEC_CODESIGNTOOL_ROOT,
     [string]$CredentialId = $env:IMLEC_ESIGNER_CREDENTIAL_ID,
     [string]$CertThumbprint = $env:IMLEC_SIGN_CERT_SHA1,
@@ -79,6 +79,10 @@ if ($Backend -eq "SignTool" -and -not $CertThumbprint -and -not $CertSubject) {
     throw "Sertifika secilmedi. IMLEC_SIGN_CERT_SHA1 veya IMLEC_SIGN_CERT_SUBJECT ayarlayin."
 }
 
+if ($Backend -eq "CodeSignTool") {
+    throw "CodeSignTool ile repo icinden kullanici adi/parola isteyen imzalama devre disi. SSL.com hesabi agent ortamindan acilmayacak. Imzalamayi kullanicinin yerel Windows oturumunda resmi SSL.com araci veya CKA + SignTool ile yapin."
+}
+
 $targets = @()
 
 if ($Paths.Count -gt 0) {
@@ -105,7 +109,7 @@ if ($WhatIf) {
     exit 0
 }
 
-if ($Backend -eq "CodeSignTool") {
+if ($false) {
     $toolRoot = Resolve-CodeSignToolRoot -ExplicitPath $CodeSignToolRoot
     $java = Join-Path $toolRoot "jdk-11.0.2\bin\java.exe"
     $javac = Join-Path $toolRoot "jdk-11.0.2\bin\javac.exe"
