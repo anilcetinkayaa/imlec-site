@@ -51,3 +51,8 @@ downloads/*.exe
 /desktop-launcher/installer/output/
 /desktop-launcher/**/__pycache__/
 *.pyc
+
+# SSL/code-signing local evidence and user-provided artifacts
+/release-manager/ssl-certification-dossier/*.pdf
+/release-manager/ssl-certification-dossier/*.txt
+/release-manager/ssl-certification-dossier/user-provided/**
