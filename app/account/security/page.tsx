@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { changeOwnPassword } from "./actions";
 
 export const metadata: Metadata = {
-  title: "Sifre ve Guvenlik | Imlec Yazilim",
+  title: "Şifre ve Güvenlik | İmleç Yazılım",
 };
 
 type AccountSecurityPageProps = {

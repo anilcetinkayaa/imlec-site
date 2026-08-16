@@ -69,25 +69,25 @@ async function main() {
 
   if (launcher) {
     await upsertVersion(launcher, {
-      version: "0.1.6",
+      version: "0.1.7",
       minimumVersion: "0.1.4",
       releaseNotes:
-        "Launcher guncellemesi Program Files kurulumlarinda yonetici izni alarak guvenli sekilde tamamlanir.",
+        "Launcher arayuzu ve oturum yenileme akisi iyilestirildi; yeni imzali guncelleme paketi yayinlandi.",
       filePath:
-        "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/ImlecLauncher-0.1.6-windows-x64.zip",
-      sha256: "fa4e8551042bcbc68bc0decb3d63cd095fa0bb8e10136bea446c73a25aa41cb2",
+        "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/ImlecLauncher-0.1.7-app-windows-x64.zip",
+      sha256: "69e96ad702809a91ed85ba399fb7539d26b2b425c4afb7ad5ea8963a3dc79eff",
     });
   }
 
   if (fis260) {
     await upsertVersion(fis260, {
-      version: "0.1.5",
+      version: "0.1.6",
       minimumVersion: "0.1.1",
       releaseNotes:
-        "Yeni kullanici arayuzu iyilestirmeleri, Ozellik Onerileri ekrani ve OCR iyilestirmeleri yayinlandi.",
+        "Performans iyilestirmeleri, OCR karar iyilestirmeleri ve kullanici arayuzu duzenlemeleri yayinlandi.",
       filePath:
-        "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/FIS260-0.1.5-windows-x64.zip",
-      sha256: "2fa54fac0b677a2766748c5ac883ae72e6af8993593c68eb5ce30149cfb061c1",
+        "https://github.com/anilcetinkayaa/imlec-site/releases/download/v0.1.1-launcher/FIS260-0.1.6-windows-x64.zip",
+      sha256: "953991dfdddba564b611a9208f20d64df44feea2e40626223e9770c736da6620",
     });
   }
 

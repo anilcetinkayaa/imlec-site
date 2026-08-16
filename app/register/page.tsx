@@ -53,13 +53,13 @@ export default async function RegisterPage({
 
             {params.error === "email-exists" ? (
               <p className="mt-5 rounded-lg border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">
-                Bu email ile kayıtlı bir hesap var.
+                Bu e-posta ile kayıtlı bir hesap var.
               </p>
             ) : null}
 
             {params.error === "invalid-input" ? (
               <p className="mt-5 rounded-lg border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">
-                Email zorunlu, şifre en az 8 karakter olmalı.
+                E-posta zorunlu, şifre en az 8 karakter olmalı.
               </p>
             ) : null}
 
@@ -71,19 +71,19 @@ export default async function RegisterPage({
                   type="text"
                   autoComplete="name"
                   className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-blue-300/50"
-                  placeholder="Ahmet Yılmaz"
+                  placeholder="Ad soyad"
                 />
               </label>
 
               <label className="grid gap-2 text-sm">
-                <span className="text-zinc-400">Email</span>
+                <span className="text-zinc-400">E-posta</span>
                 <input
                   name="email"
                   type="email"
                   autoComplete="email"
                   required
                   className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-blue-300/50"
-                  placeholder="demo@imlecyazilim.com"
+                  placeholder="E-posta adresi"
                 />
               </label>
 
@@ -96,7 +96,7 @@ export default async function RegisterPage({
                   minLength={8}
                   required
                   className="h-11 rounded-lg border border-white/[0.1] bg-[#0c0d10] px-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-blue-300/50"
-                  placeholder="En az 8 karakter"
+                  placeholder="Şifre"
                 />
               </label>
 

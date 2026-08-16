@@ -8,6 +8,7 @@ import {
   isEntitlementUsable,
   selectBestEntitlement,
 } from "@/src/server/entitlement-helpers";
+import { PRODUCT_DISPLAY_NAMES } from "@/src/server/products";
 
 export const runtime = "nodejs";
 
@@ -25,6 +26,9 @@ type DeviceRegisterBody = {
   os?: string;
   appVersion?: string;
   launcherVersion?: string;
+  // Cihaz kaydının hangi ürüne yazılacağı; eski FIS260 istemcileri bu alanı
+  // göndermediği için varsayılan "fis260" kalır.
+  productCode?: string;
 };
 
 function jsonError(error: string, status: number) {
@@ -49,8 +53,14 @@ function isDeviceRegisterBody(value: unknown): value is DeviceRegisterBody {
     (!("os" in value) || typeof value.os === "string") &&
     (!("appVersion" in value) || typeof value.appVersion === "string") &&
     (!("launcherVersion" in value) ||
-      typeof value.launcherVersion === "string")
+      typeof value.launcherVersion === "string") &&
+    (!("productCode" in value) || typeof value.productCode === "string")
   );
+}
+
+function normalizeProductCode(productCode: string | undefined) {
+  const slug = productCode?.trim().toLowerCase();
+  return slug || "fis260";
 }
 
 function isDesktopTokenPayload(value: unknown): value is DesktopTokenPayload {
@@ -175,16 +185,18 @@ async function writeSecurityLog({
   request,
   userId,
   reason,
+  productSlug,
 }: {
   request: Request;
   userId?: string;
   reason: string;
+  productSlug: string;
 }) {
   try {
     await prisma.downloadLog.create({
       data: {
         userId,
-        productSlug: "fis260",
+        productSlug,
         success: false,
         reason,
         ipAddress: getClientIp(request),
@@ -254,8 +266,10 @@ export async function POST(request: Request) {
     return jsonError("INVALID_TOKEN", 401);
   }
 
+  const productSlug = normalizeProductCode(body.productCode);
+
   const product = await prisma.product.findUnique({
-    where: { slug: "fis260" },
+    where: { slug: productSlug },
     select: { id: true },
   });
 
@@ -283,6 +297,7 @@ export async function POST(request: Request) {
       request,
       userId: user.id,
       reason: "DEVICE_REVOKED_REGISTER_ATTEMPT",
+      productSlug,
     });
     return jsonError("DEVICE_REVOKED", 403);
   }
@@ -305,6 +320,7 @@ export async function POST(request: Request) {
       request,
       userId: user.id,
       reason: "ENTITLEMENT_INACTIVE_REGISTER_ATTEMPT",
+      productSlug,
     });
     return jsonError("ENTITLEMENT_INACTIVE", 403);
   }
@@ -327,6 +343,7 @@ export async function POST(request: Request) {
       request,
       userId: user.id,
       reason: "DEVICE_SHARED_ACROSS_TOO_MANY_ACCOUNTS",
+      productSlug,
     });
     return Response.json(
       {
@@ -445,7 +462,7 @@ export async function POST(request: Request) {
         subject: "Yeni cihaz hesabınıza bağlandı",
         react: createElement(NewDeviceActivatedEmail, {
           deviceName: cleanOptionalText(body.deviceName),
-          productName: "FİŞ260",
+          productName: PRODUCT_DISPLAY_NAMES[productSlug] ?? productSlug.toUpperCase(),
         }),
       });
     } catch (error) {

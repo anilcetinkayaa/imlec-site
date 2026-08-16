@@ -7,3 +7,8 @@ export const PRODUCT_DOWNLOADS: Record<string, string> = {
   [PRODUCT_SLUGS.fis260]: "FİŞ260 Windows için indir",
   [PRODUCT_SLUGS.cozver]: "ÇÖZVER Windows için indir",
 };
+
+export const PRODUCT_DISPLAY_NAMES: Record<string, string> = {
+  [PRODUCT_SLUGS.fis260]: "FİŞ260",
+  [PRODUCT_SLUGS.cozver]: "ÇÖZVER",
+};
