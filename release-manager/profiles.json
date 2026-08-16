@@ -1,0 +1,47 @@
+{
+  "certificate": {
+    "publisher": "Anıl Çetinkaya",
+    "thumbprint": "0DEC1B63E2CA7216BEEBAAD6D94B30810ADB66B2",
+    "timestamp_url": "http://ts.ssl.com"
+  },
+  "products": [
+    {
+      "slug": "launcher",
+      "name": "İmleç Yazılım Merkezi",
+      "root": "C:/imlec-site/desktop-launcher",
+      "version": {
+        "file": "imlec_launcher.py",
+        "regex": "^LAUNCHER_VERSION\\s*=\\s*\"([^\"]+)\""
+      },
+      "build": {
+        "command": "pyinstaller C:/imlec-site/desktop-launcher/ImlecLauncher.spec --noconfirm --clean",
+        "cwd": "C:/imlec-site/desktop-launcher"
+      },
+      "artifacts": [
+        "dist/ImlecLauncher/ImlecLauncher.exe",
+        "dist/ImlecLauncher/ImlecLauncherUpdater.exe"
+      ],
+      "package": {
+        "command": "powershell -NoProfile -ExecutionPolicy Bypass -File C:/imlec-site/desktop-launcher/signing/package-signed-launcher.ps1 -Root C:/imlec-site/desktop-launcher -ReleaseVersion {version}",
+        "cwd": "C:/imlec-site"
+      }
+    },
+    {
+      "slug": "fis260",
+      "name": "FİŞ260",
+      "root": "C:/FIS260",
+      "version": {
+        "file": "version.txt",
+        "regex": "([0-9]+\\.[0-9]+\\.[0-9]+)"
+      },
+      "artifacts": [
+        "dist/FIS260/FIS260.exe",
+        "dist/FIS260/FIS260Updater.exe"
+      ],
+      "package": {
+        "command": "",
+        "cwd": "C:/FIS260"
+      }
+    }
+  ]
+}
