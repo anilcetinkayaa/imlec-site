@@ -124,9 +124,21 @@ if ($Backend -eq "CodeSignTool") {
     }
 
     $previousInput = $env:IMLEC_SIGN_INPUT
+    $previousInputDir = $env:IMLEC_SIGN_INPUT_DIR
+    $previousOutputDir = $env:IMLEC_SIGN_OUTPUT_DIR
     $previousCredential = $env:IMLEC_SIGN_CREDENTIAL_ID
+    $stagingRoot = Join-Path $env:TEMP ("imlec-signing-" + [guid]::NewGuid().ToString("N"))
+    $stagingInput = Join-Path $stagingRoot "input"
+    $stagingOutput = Join-Path $stagingRoot "output"
     try {
-        $env:IMLEC_SIGN_INPUT = $targets -join "|"
+        New-Item -ItemType Directory -Force -Path $stagingInput, $stagingOutput | Out-Null
+        foreach ($target in $targets) {
+            Copy-Item -LiteralPath $target -Destination (Join-Path $stagingInput (Split-Path -Leaf $target)) -Force
+        }
+
+        Remove-Item Env:IMLEC_SIGN_INPUT -ErrorAction SilentlyContinue
+        $env:IMLEC_SIGN_INPUT_DIR = $stagingInput
+        $env:IMLEC_SIGN_OUTPUT_DIR = $stagingOutput
         if ($CredentialId) {
             $env:IMLEC_SIGN_CREDENTIAL_ID = $CredentialId
         } else {
@@ -142,9 +154,20 @@ if ($Backend -eq "CodeSignTool") {
         } finally {
             Pop-Location
         }
+
+        foreach ($target in $targets) {
+            $signedFile = Join-Path $stagingOutput (Split-Path -Leaf $target)
+            if (-not (Test-Path -LiteralPath $signedFile)) {
+                throw "Imzali cikti bulunamadi: $signedFile"
+            }
+            Copy-Item -LiteralPath $signedFile -Destination $target -Force
+        }
     } finally {
         if ($null -eq $previousInput) { Remove-Item Env:IMLEC_SIGN_INPUT -ErrorAction SilentlyContinue } else { $env:IMLEC_SIGN_INPUT = $previousInput }
+        if ($null -eq $previousInputDir) { Remove-Item Env:IMLEC_SIGN_INPUT_DIR -ErrorAction SilentlyContinue } else { $env:IMLEC_SIGN_INPUT_DIR = $previousInputDir }
+        if ($null -eq $previousOutputDir) { Remove-Item Env:IMLEC_SIGN_OUTPUT_DIR -ErrorAction SilentlyContinue } else { $env:IMLEC_SIGN_OUTPUT_DIR = $previousOutputDir }
         if ($null -eq $previousCredential) { Remove-Item Env:IMLEC_SIGN_CREDENTIAL_ID -ErrorAction SilentlyContinue } else { $env:IMLEC_SIGN_CREDENTIAL_ID = $previousCredential }
+        Remove-Item -LiteralPath $stagingRoot -Recurse -Force -ErrorAction SilentlyContinue
     }
 } else {
     $signTool = Resolve-SignTool -ExplicitPath $SignToolPath
