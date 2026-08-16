@@ -65,12 +65,30 @@ if ($targets.Count -eq 0) {
 
 $signTool = Resolve-SignTool -ExplicitPath $SignToolPath
 $failed = New-Object System.Collections.Generic.List[string]
+$authenticodeAvailable = $true
+
+try {
+    Get-Command Get-AuthenticodeSignature -ErrorAction Stop | Out-Null
+} catch {
+    $authenticodeAvailable = $false
+    Write-Warning "Get-AuthenticodeSignature kullanilamiyor; signtool verify ile devam edilecek. Detay: $($_.Exception.Message)"
+}
 
 foreach ($target in $targets) {
-    $signature = Get-AuthenticodeSignature -LiteralPath $target
-    if ($signature.Status -ne "Valid") {
-        $failed.Add("$target :: Authenticode=$($signature.Status) :: $($signature.StatusMessage)")
-        continue
+    $verifiedByAuthenticode = $false
+
+    if ($authenticodeAvailable) {
+        try {
+            $signature = Get-AuthenticodeSignature -LiteralPath $target
+            if ($signature.Status -ne "Valid") {
+                $failed.Add("$target :: Authenticode=$($signature.Status) :: $($signature.StatusMessage)")
+                continue
+            }
+            $verifiedByAuthenticode = $true
+        } catch {
+            $authenticodeAvailable = $false
+            Write-Warning "Get-AuthenticodeSignature bu oturumda yuklenemedi; signtool verify ile devam edilecek. Detay: $($_.Exception.Message)"
+        }
     }
 
     if ($signTool) {
@@ -78,6 +96,8 @@ foreach ($target in $targets) {
         if ($LASTEXITCODE -ne 0) {
             $failed.Add("$target :: signtool verify failed")
         }
+    } elseif (-not $verifiedByAuthenticode) {
+        $failed.Add("$target :: dogrulama yapilamadi; Get-AuthenticodeSignature ve signtool kullanilamiyor")
     }
 }
 
