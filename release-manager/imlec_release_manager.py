@@ -293,7 +293,13 @@ class ReleaseManagerWindow(QMainWindow):
             if "NOT_FOUND" in text or not text:
                 self.cert_status.setText("Sertifika bulunamadı")
             elif "HasPrivateKey : True" in text or "HasPrivateKey: True" in text:
-                self.cert_status.setText("Sertifika hazır ve özel anahtar görünüyor")
+                certutil = run_command(f"certutil -user -store My {thumbprint}")
+                certutil_text = certutil.output.strip()
+                self.log_message(certutil_text)
+                if "Encryption test FAILED" in certutil_text:
+                    self.cert_status.setText("Sertifika var ama CKA özel anahtarı erişilemiyor")
+                else:
+                    self.cert_status.setText("Sertifika hazır ve özel anahtar erişilebilir")
             else:
                 self.cert_status.setText("Sertifika var ama özel anahtar doğrulanamadı")
             self.log_message(text)

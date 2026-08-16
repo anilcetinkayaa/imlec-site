@@ -81,3 +81,37 @@ Bu yol tekrar açılmamalı. Hesap girişini veya OTP akışını agent değil, 
 ## Sonuç
 
 Elindeki veriler code signing sertifikasının issued ve doğru türde olduğunu doğruluyor. Karışıklık, eSigner web/PDF imzalama ekranları ile Windows EXE imzalama hattının birbirine karışmasından kaynaklanmış. Ürün dağıtımı için esas hat CKA + SignTool + Release Manager olmalı.
+
+## 2026-08-16 Test Bulgusu
+
+Yerel testte sertifika Windows store altında göründü:
+
+- Store: `CurrentUser\My`
+- Thumbprint: `0DEC1B63E2CA7216BEEBAAD6D94B30810ADB66B2`
+- Provider: `eSignerKSP`
+- `HasPrivateKey`: True
+
+Ancak `certutil -user -store My <thumbprint>` çıktısında:
+
+```text
+Encryption test FAILED
+```
+
+SignTool debug çıktısında da:
+
+```text
+After Private Key filter, 0 certs were left.
+```
+
+Bu şu anlama gelir: sertifika store içinde görünüyor, fakat eSignerKSP/CKA özel anahtarı SignTool'a kullanılabilir şekilde açmıyor. Bu durumda yeni EXE imzası atılamaz.
+
+Muhtemel çözüm CKA tarafında yapılmalıdır:
+
+1. eSigner CKA açılır.
+2. Production account ve doğru certificate/credential seçilir.
+3. Sertifika yeniden Windows user certificate store'a yüklenir.
+4. Gerekirse SSL.com panelindeki certificate secret / PIN akışı CKA içinde tamamlanır.
+5. Sonrasında `certutil -user -store My <thumbprint>` çıktısında `Encryption test FAILED` kalkmalıdır.
+6. Ardından SignTool tekrar denenmelidir.
+
+Release Manager artık bu durumu "hazır" sanmayacak; `Encryption test FAILED` görürse sertifika erişim hatası olarak gösterecek.
