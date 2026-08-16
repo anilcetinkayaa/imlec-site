@@ -7,6 +7,7 @@ import sys
 import time
 import zipfile
 import ctypes
+import traceback
 from pathlib import Path
 
 
@@ -45,6 +46,12 @@ def wait_for_parent(parent_pid: int, timeout: float = 45.0) -> None:
         except OSError:
             return
         time.sleep(0.5)
+
+
+def append_log(log_path: Path, message: str) -> None:
+    timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
+    with log_path.open("a", encoding="utf-8") as handle:
+        handle.write(f"[{timestamp}] {message}\n")
 
 
 def find_payload_root(extract_dir: Path, exe_name: str) -> Path:
@@ -117,9 +124,11 @@ def main() -> int:
     log_path = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "ImlecYazilim" / "launcher_update.log"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     try:
+        append_log(log_path, f"update_start package={args.package} install_dir={install_dir} exe={args.exe_name} parent_pid={args.parent_pid}")
         if requires_elevation(install_dir) and not is_elevated():
             if not relaunch_elevated():
                 raise RuntimeError("Launcher güncellemesi için yönetici izni verilmedi.")
+            append_log(log_path, "elevation_requested")
             return 0
         wait_for_parent(args.parent_pid)
         install_update(Path(args.package).resolve(), install_dir, args.exe_name)
@@ -132,10 +141,11 @@ def main() -> int:
             encoding="utf-8",
         )
         exe = install_dir / args.exe_name
+        append_log(log_path, f"update_success launch={exe}")
         subprocess.Popen([str(exe)], cwd=str(install_dir), close_fds=True)
         return 0
     except Exception as exc:
-        log_path.write_text(str(exc), encoding="utf-8")
+        append_log(log_path, f"update_error {exc}\n{traceback.format_exc()}")
         return 1
 
 

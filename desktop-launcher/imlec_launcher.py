@@ -46,7 +46,7 @@ from living_background import CUSTOM_PRESETS, REV9_ATMOSPHERES, REV9_PALETTES, C
 
 
 AUTH_BASE_URL = os.environ.get("IMLEC_AUTH_BASE_URL", "https://imlecyazilim.com").rstrip("/")
-LAUNCHER_VERSION = "0.1.7"
+LAUNCHER_VERSION = "0.1.8"
 PRODUCT_EXE_NAMES = {
     "fis260": "FIS260.exe",
     "cozver": "Cozver.exe",
@@ -699,10 +699,16 @@ class LauncherSelfUpdateWorker(QObject):
             if not updater.is_file():
                 raise RuntimeError("Launcher güncelleme yardımcısı bulunamadı.")
 
+            update_run_dir = data_root() / "Updates" / f"_launcher_updater_{int(time.time())}"
+            update_run_dir.mkdir(parents=True, exist_ok=True)
+            temp_updater = update_run_dir / updater.name
+            shutil.copy2(updater, temp_updater)
+            log_debug(f"launcher_update_helper_copied source={updater} target={temp_updater}")
+
             self.progress.emit(95, "Launcher yeniden başlatmaya hazırlanıyor")
             subprocess.Popen(
                 [
-                    str(updater),
+                    str(temp_updater),
                     "--package",
                     str(package_path),
                     "--install-dir",
@@ -712,7 +718,7 @@ class LauncherSelfUpdateWorker(QObject):
                     "--parent-pid",
                     str(os.getpid()),
                 ],
-                cwd=str(app_root()),
+                cwd=str(update_run_dir),
                 close_fds=True,
             )
             self.finished.emit()
@@ -2855,7 +2861,7 @@ class LauncherWindow(QMainWindow):
         QMessageBox.information(
             self,
             "Launcher güncellemesi",
-            "Launcher güncellemesi indirildi. Uygulama kapanıp yeni sürümle tekrar açılacak.",
+            "Launcher güncellemesi başlatıldı. Uygulama kapanıp yeni sürümle tekrar açılacak.",
         )
         QApplication.quit()
 
