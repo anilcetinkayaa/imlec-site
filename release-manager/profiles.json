@@ -31,8 +31,8 @@
       "name": "FİŞ260",
       "root": "C:/FIS260",
       "version": {
-        "file": "version.txt",
-        "regex": "([0-9]+\\.[0-9]+\\.[0-9]+)"
+        "file": "gui_app.py",
+        "regex": "^APP_VERSION\\s*=\\s*\"([^\"]+)\""
       },
       "artifacts": [
         "dist/FIS260/FIS260.exe",

@@ -98,6 +98,14 @@ def artifact_paths(product: dict[str, Any]) -> list[Path]:
     return [resolve_path(root, item) for item in product.get("artifacts") or []]
 
 
+def ps_single_quote(value: str | Path) -> str:
+    return "'" + str(value).replace("'", "''") + "'"
+
+
+def ps_array(values: list[Path]) -> str:
+    return "@(" + ", ".join(ps_single_quote(value) for value in values) + ")"
+
+
 class CommandWorker(QThread):
     finished_with_result = Signal(str, int, str)
 
@@ -361,12 +369,11 @@ class ReleaseManagerWindow(QMainWindow):
         if not product:
             return
         paths = artifact_paths(product)
-        paths_arg = " ".join(f'"{path}"' for path in paths)
         command = (
             "powershell -NoProfile -ExecutionPolicy Bypass -File "
             f'"C:/imlec-site/desktop-launcher/signing/verify-signed-artifacts.ps1" '
             f'-Root "{product.get("root")}" -ReleaseVersion "{self.version_input.text().strip()}" '
-            f"-Paths {paths_arg}"
+            f"-Paths {ps_array(paths)}"
         )
         self.start_worker("İmza doğrulama", command)
 
