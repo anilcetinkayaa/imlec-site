@@ -19,7 +19,11 @@ function Resolve-SignTool {
     param([string]$ExplicitPath)
 
     if ($ExplicitPath -and (Test-Path -LiteralPath $ExplicitPath)) {
-        return (Resolve-Path -LiteralPath $ExplicitPath).Path
+        $resolved = (Resolve-Path -LiteralPath $ExplicitPath).Path
+        if ([System.IO.Path]::GetFileName($resolved) -ieq "signtool.exe") {
+            return $resolved
+        }
+        Write-Warning "SIGNTOOL_PATH signtool.exe degil, yok sayiliyor: $resolved"
     }
 
     $command = Get-Command signtool.exe -ErrorAction SilentlyContinue
