@@ -12,10 +12,8 @@ public final class SecureCodeSign {
 
     public static void main(String[] ignored) {
         String inputFiles = System.getenv("IMLEC_SIGN_INPUT");
-        String inputDir = System.getenv("IMLEC_SIGN_INPUT_DIR");
-        String outputDir = System.getenv("IMLEC_SIGN_OUTPUT_DIR");
-        if ((inputFiles == null || inputFiles.isBlank()) && (inputDir == null || inputDir.isBlank())) {
-            throw new IllegalStateException("IMLEC_SIGN_INPUT or IMLEC_SIGN_INPUT_DIR is not configured.");
+        if (inputFiles == null || inputFiles.isBlank()) {
+            throw new IllegalStateException("IMLEC_SIGN_INPUT is not configured.");
         }
 
         JTextField usernameField = new JTextField(28);
@@ -51,22 +49,6 @@ public final class SecureCodeSign {
 
         try {
             String credentialId = System.getenv("IMLEC_SIGN_CREDENTIAL_ID");
-            if (inputDir != null && !inputDir.isBlank()) {
-                ArrayList<String> arguments = new ArrayList<>();
-                arguments.add("batch_sign");
-                arguments.add("-username=" + username);
-                arguments.add("-password=" + password);
-                arguments.add("-input_dir_path=" + inputDir);
-                if (outputDir != null && !outputDir.isBlank()) {
-                    arguments.add("-output_dir_path=" + outputDir);
-                }
-                if (credentialId != null && !credentialId.isBlank()) {
-                    arguments.add("-credential_id=" + credentialId);
-                }
-                com.ssl.code.signing.tool.CodeSignTool.main(arguments.toArray(new String[0]));
-                return;
-            }
-
             for (String inputFile : inputFiles.split("\\|")) {
                 if (inputFile.isBlank()) {
                     continue;
