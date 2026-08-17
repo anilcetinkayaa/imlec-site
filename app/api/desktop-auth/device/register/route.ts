@@ -2,6 +2,7 @@ import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { DeviceStatus, EntitlementStatus, SessionType } from "@prisma/client";
 import { createElement } from "react";
 import { NewDeviceActivatedEmail } from "@/emails/NewDeviceActivatedEmail";
+import { staleDesktopSessionWhere } from "@/lib/desktop-session-policy";
 import { sendMail } from "@/lib/mail";
 import { prisma } from "@/src/db/prisma";
 import {
@@ -420,15 +421,12 @@ export async function POST(request: Request) {
 
   await prisma.$transaction([
     prisma.session.updateMany({
-      where: {
+      where: staleDesktopSessionWhere({
         userId: user.id,
         productId: product.id,
-        type: SessionType.DESKTOP,
-        revokedAt: null,
-        NOT: {
-          tokenHash,
-        },
-      },
+        deviceId: registeredDevice.id,
+        currentTokenHash: tokenHash,
+      }),
       data: {
         revokedAt: new Date(),
       },

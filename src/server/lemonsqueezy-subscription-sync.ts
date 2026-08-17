@@ -4,6 +4,7 @@ import {
   SubscriptionStatus,
   type Prisma,
 } from "@prisma/client";
+import { isTerminalUnpaidStatus } from "@/lib/lemonsqueezy-subscriptions";
 import type { LemonSqueezySubscriptionSnapshot } from "@/src/server/lemonsqueezy-api";
 import { upsertEntitlementBySource } from "@/src/server/entitlement-helpers";
 
@@ -12,13 +13,15 @@ type TransactionClient = Prisma.TransactionClient;
 export function mapLemonSqueezySubscriptionStatus(
   status: string,
 ): SubscriptionStatus {
+  if (isTerminalUnpaidStatus(status)) {
+    return SubscriptionStatus.EXPIRED;
+  }
   switch (status) {
     case "active":
       return SubscriptionStatus.ACTIVE;
     case "on_trial":
       return SubscriptionStatus.TRIALING;
     case "past_due":
-    case "unpaid":
       return SubscriptionStatus.PAST_DUE;
     case "cancelled":
       return SubscriptionStatus.CANCELED;

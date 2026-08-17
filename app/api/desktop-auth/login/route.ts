@@ -1,6 +1,11 @@
 import { createHmac } from "node:crypto";
 import { prisma } from "@/src/db/prisma";
 import { normalizeEmail, verifyPassword } from "@/src/server/auth/password";
+import {
+  clearRateLimit,
+  consumeRateLimit,
+  requestIp,
+} from "@/src/server/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -96,6 +101,34 @@ export async function POST(request: Request) {
     return invalidCredentialsResponse();
   }
 
+  const ip = requestIp(request);
+  const accountKey = `${ip}|${email}`;
+  const [accountLimit, ipLimit] = await Promise.all([
+    consumeRateLimit({
+      scope: "desktop-login-account",
+      identifier: accountKey,
+      limit: 8,
+      windowMs: 15 * 60 * 1000,
+    }),
+    consumeRateLimit({
+      scope: "desktop-login-ip",
+      identifier: ip,
+      limit: 40,
+      windowMs: 15 * 60 * 1000,
+    }),
+  ]);
+
+  if (!accountLimit.allowed || !ipLimit.allowed) {
+    const retryAfter = Math.max(
+      accountLimit.retryAfterSeconds,
+      ipLimit.retryAfterSeconds,
+    );
+    return Response.json(
+      { ok: false, error: "TOO_MANY_ATTEMPTS", retryAfter },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } },
+    );
+  }
+
   const user = await prisma.user.findUnique({
     where: { email },
     select: {
@@ -123,6 +156,8 @@ export async function POST(request: Request) {
   if (!desktopToken) {
     return serverMisconfiguredResponse();
   }
+
+  await clearRateLimit("desktop-login-account", accountKey);
 
   return Response.json({
     ok: true,

@@ -11,6 +11,7 @@ import { TrialStartedEmail } from "@/emails/TrialStartedEmail";
 import { isPaidOrderCreated } from "@/lib/billing-notifications";
 import { sendMail } from "@/lib/mail";
 import {
+  isTerminalUnpaidStatus,
   isSubscriptionLifecyclePayload,
   subscriptionAccessExpiresAt,
 } from "@/lib/lemonsqueezy-subscriptions";
@@ -97,13 +98,15 @@ function parseDate(value: unknown) {
 }
 
 function mapSubscriptionStatus(value: string | null): SubscriptionStatus {
+  if (isTerminalUnpaidStatus(value)) {
+    return SubscriptionStatus.EXPIRED;
+  }
   switch (value) {
     case "active":
       return SubscriptionStatus.ACTIVE;
     case "on_trial":
       return SubscriptionStatus.TRIALING;
     case "past_due":
-    case "unpaid":
       return SubscriptionStatus.PAST_DUE;
     case "cancelled":
       return SubscriptionStatus.CANCELED;

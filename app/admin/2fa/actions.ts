@@ -10,29 +10,16 @@ import {
 } from "@/lib/admin-2fa";
 import { prisma } from "@/src/db/prisma";
 import { getAdminSession } from "@/src/server/admin";
-
-const attempts = new Map<string, number[]>();
+import {
+  clearRateLimit,
+  consumeRateLimit,
+} from "@/src/server/rate-limit";
 
 export type Verify2FAState = {
   ok: boolean;
   error?: string;
   recoveryCodes?: string[];
 };
-
-function checkRateLimit(userId: string) {
-  const now = Date.now();
-  const windowStart = now - 60_000;
-  const recent = (attempts.get(userId) ?? []).filter((item) => item > windowStart);
-
-  if (recent.length >= 5) {
-    attempts.set(userId, recent);
-    return false;
-  }
-
-  recent.push(now);
-  attempts.set(userId, recent);
-  return true;
-}
 
 function safeHashEquals(left: string, right: string) {
   const leftBuffer = Buffer.from(left, "hex");
@@ -67,7 +54,13 @@ export async function verify2FAAction(
     };
   }
 
-  if (!checkRateLimit(admin.session.user.id)) {
+  const rateLimit = await consumeRateLimit({
+    scope: "admin-2fa",
+    identifier: admin.session.user.id,
+    limit: 5,
+    windowMs: 60_000,
+  });
+  if (!rateLimit.allowed) {
     return {
       ok: false,
       error: "Çok fazla deneme yapıldı. Bir dakika sonra tekrar deneyin.",
@@ -148,7 +141,7 @@ export async function verify2FAAction(
     },
   });
 
-  attempts.delete(admin.session.user.id);
+  await clearRateLimit("admin-2fa", admin.session.user.id);
 
   return { ok: true, recoveryCodes };
 }

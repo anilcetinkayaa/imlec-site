@@ -39,3 +39,7 @@ export function subscriptionAccessExpiresAt({
 }) {
   return status === "TRIALING" ? trialEndsAt : null;
 }
+
+export function isTerminalUnpaidStatus(status: string | null | undefined) {
+  return status === "unpaid";
+}

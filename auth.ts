@@ -4,6 +4,11 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/src/db/prisma";
 import { normalizeEmail, verifyPassword } from "@/src/server/auth/password";
 import { normalizeStaffUsername } from "@/src/server/admin-permissions";
+import {
+  clearRateLimit,
+  consumeRateLimit,
+  requestIp,
+} from "@/src/server/rate-limit";
 
 const ADMIN_PANEL_ROLES = new Set(["OWNER", "ADMIN", "SUPPORT"]);
 
@@ -24,7 +29,7 @@ export const authConfig = {
         email: { label: "Email or username", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const identifier =
           typeof credentials?.email === "string"
             ? credentials.email.trim()
@@ -41,6 +46,26 @@ export const authConfig = {
             : "";
 
         if ((!email && !username) || !password) {
+          return null;
+        }
+
+        const ip = requestIp(request);
+        const accountKey = `${ip}|${email || username}`;
+        const [accountLimit, ipLimit] = await Promise.all([
+          consumeRateLimit({
+            scope: "web-login-account",
+            identifier: accountKey,
+            limit: 8,
+            windowMs: 15 * 60 * 1000,
+          }),
+          consumeRateLimit({
+            scope: "web-login-ip",
+            identifier: ip,
+            limit: 40,
+            windowMs: 15 * 60 * 1000,
+          }),
+        ]);
+        if (!accountLimit.allowed || !ipLimit.allowed) {
           return null;
         }
 
@@ -70,6 +95,8 @@ export const authConfig = {
         if (!passwordMatches) {
           return null;
         }
+
+        await clearRateLimit("web-login-account", accountKey);
 
         return {
           id: user.id,
