@@ -218,6 +218,20 @@ export async function POST(request: Request) {
     return notFoundResponse("PRODUCT_NOT_FOUND");
   }
 
+  const subscription = await prisma.subscription.findFirst({
+    where: {
+      userId: user.id,
+      productId: dbProduct.id,
+    },
+    orderBy: { updatedAt: "desc" },
+    select: {
+      status: true,
+      trialEndsAt: true,
+      renewsAt: true,
+      endsAt: true,
+    },
+  });
+
   const deviceLimit = desktopDeviceLimit();
   let deviceAllowed = true;
   let deviceStatus: string | null = null;
@@ -302,6 +316,14 @@ export async function POST(request: Request) {
     offlineUntil,
     entitlementStatus: product.entitlementStatus,
     expiresAt: product.expiresAt,
+    subscription: subscription
+      ? {
+          status: subscription.status,
+          trialEndsAt: subscription.trialEndsAt,
+          renewsAt: subscription.renewsAt,
+          endsAt: subscription.endsAt,
+        }
+      : null,
     user: {
       id: user.id,
       email: user.email,
