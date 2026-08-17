@@ -315,6 +315,7 @@ export async function POST(request: Request) {
     registeredDeviceLimit: deviceLimit,
     offlineUntil,
     entitlementStatus: product.entitlementStatus,
+    entitlementSource: product.entitlementSource,
     expiresAt: product.expiresAt,
     subscription: subscription
       ? {
