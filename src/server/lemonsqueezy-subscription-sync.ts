@@ -67,9 +67,13 @@ export async function syncLemonSqueezySubscription({
       providerCustomerId: snapshot.providerCustomerId,
       providerVariantId: snapshot.providerVariantId,
       status,
+      testMode: snapshot.testMode,
       renewsAt: snapshot.renewsAt,
       endsAt: snapshot.endsAt,
       trialEndsAt: snapshot.trialEndsAt,
+      ...(status === SubscriptionStatus.TRIALING || snapshot.trialEndsAt
+        ? { trialUsedAt: now }
+        : {}),
     },
     create: {
       userId,
@@ -79,9 +83,14 @@ export async function syncLemonSqueezySubscription({
       providerSubscriptionId: snapshot.providerSubscriptionId,
       providerVariantId: snapshot.providerVariantId,
       status,
+      testMode: snapshot.testMode,
       renewsAt: snapshot.renewsAt,
       endsAt: snapshot.endsAt,
       trialEndsAt: snapshot.trialEndsAt,
+      trialUsedAt:
+        status === SubscriptionStatus.TRIALING || snapshot.trialEndsAt
+          ? now
+          : null,
     },
   });
 

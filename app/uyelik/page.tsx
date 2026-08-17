@@ -58,11 +58,18 @@ function priceLabel() {
   return `${formattedPrice} / ay`;
 }
 
-export default async function MembershipPage() {
+export default async function MembershipPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ checkout?: string }>;
+}) {
+  const params = await searchParams;
   const session = await auth();
   const lemonSqueezyMode = getLemonSqueezyMode();
   const checkoutConfigured = Boolean(
-    process.env.LEMONSQUEEZY_FIS260_CHECKOUT_URL,
+    process.env.LEMONSQUEEZY_API_KEY &&
+      process.env.LEMONSQUEEZY_STORE_ID &&
+      process.env.LEMONSQUEEZY_FIS260_VARIANT_ID,
   );
 
   return (
@@ -73,6 +80,23 @@ export default async function MembershipPage() {
             <Badge variant="beta">Test modu</Badge>
             <p className="text-body-s text-[var(--text-secondary)]">
               Bu ortamda Lemon Squeezy test ödeme akışı kullanılmaktadır.
+            </p>
+          </div>
+        ) : null}
+
+        {params.checkout === "trial_used" ? (
+          <div className="mb-8 rounded-[var(--radius-lg)] border border-amber-400/30 bg-amber-400/10 px-4 py-3">
+            <p className="text-body-s text-[var(--text-primary)]">
+              Ücretsiz deneme hakkı hesap başına bir kez kullanılabilir. Yeniden
+              abonelik bağlantısı hazırlanırken destek ekibimiz yardımcı olabilir.
+            </p>
+          </div>
+        ) : null}
+
+        {params.checkout === "verify_email" ? (
+          <div className="mb-8 rounded-[var(--radius-lg)] border border-amber-400/30 bg-amber-400/10 px-4 py-3">
+            <p className="text-body-s text-[var(--text-primary)]">
+              Ücretsiz denemeyi başlatmadan önce e-posta adresinizi doğrulayın.
             </p>
           </div>
         ) : null}

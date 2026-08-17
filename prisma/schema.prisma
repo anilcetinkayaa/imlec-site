@@ -301,9 +301,11 @@ model Subscription {
   providerSubscriptionId String
   providerVariantId      String?
   status                 SubscriptionStatus
+  testMode               Boolean            @default(false)
   renewsAt               DateTime?
   endsAt                 DateTime?
   trialEndsAt            DateTime?
+  trialUsedAt            DateTime?
   trialEndingEmailSentAt DateTime?
   trialEndedEmailSentAt  DateTime?
   canceledEmailSentAt    DateTime?
@@ -322,6 +324,7 @@ model Subscription {
   @@index([provider, providerCustomerId])
   @@index([userId, productId])
   @@index([status])
+  @@index([testMode, trialUsedAt])
 }
 
 model LemonSqueezyCustomer {

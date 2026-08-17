@@ -16,7 +16,10 @@ import {
 } from "@/lib/lemonsqueezy-subscriptions";
 import { prisma } from "@/src/db/prisma";
 import { upsertEntitlementBySource } from "@/src/server/entitlement-helpers";
-import { getLemonSqueezySubscriptionById } from "@/src/server/lemonsqueezy-api";
+import {
+  cancelLemonSqueezySubscription,
+  getLemonSqueezySubscriptionById,
+} from "@/src/server/lemonsqueezy-api";
 import { sendCancellationConfirmation } from "@/src/server/subscription-email-lifecycle";
 
 type LemonSqueezyPayload = {
@@ -374,6 +377,15 @@ async function upsertSubscription({
     return null;
   }
 
+  const status = mapSubscriptionStatus(asString(attributes.status));
+  const trialEndsAt = parseDate(attributes.trial_ends_at);
+  const testMode =
+    payload.meta?.test_mode === true || attributes.test_mode === true;
+  const trialUsedAt =
+    status === SubscriptionStatus.TRIALING || trialEndsAt
+      ? parseDate(attributes.created_at) ?? new Date()
+      : undefined;
+
   return prisma.subscription.upsert({
     where: {
       provider_providerSubscriptionId: {
@@ -384,10 +396,12 @@ async function upsertSubscription({
     update: {
       providerCustomerId: asProviderString(attributes.customer_id),
       providerVariantId: asProviderString(attributes.variant_id),
-      status: mapSubscriptionStatus(asString(attributes.status)),
+      status,
+      testMode,
       renewsAt: parseDate(attributes.renews_at),
       endsAt: parseDate(attributes.ends_at),
-      trialEndsAt: parseDate(attributes.trial_ends_at),
+      trialEndsAt,
+      ...(trialUsedAt ? { trialUsedAt } : {}),
     },
     create: {
       userId,
@@ -396,10 +410,12 @@ async function upsertSubscription({
       providerCustomerId: asProviderString(attributes.customer_id),
       providerSubscriptionId,
       providerVariantId: asProviderString(attributes.variant_id),
-      status: mapSubscriptionStatus(asString(attributes.status)),
+      status,
+      testMode,
       renewsAt: parseDate(attributes.renews_at),
       endsAt: parseDate(attributes.ends_at),
-      trialEndsAt: parseDate(attributes.trial_ends_at),
+      trialEndsAt,
+      trialUsedAt: trialUsedAt ?? null,
     },
   });
 }
@@ -590,6 +606,50 @@ export async function processLemonSqueezyEvent(payload: LemonSqueezyPayload) {
 
   if (!product) {
     throw new Error("PRODUCT_NOT_FOUND");
+  }
+
+  const attributes = payload.data?.attributes ?? {};
+  const isTrialCreation =
+    eventName === "subscription_created" &&
+    asString(attributes.status) === "on_trial";
+
+  if (isTrialCreation) {
+    const custom = payload.meta?.custom_data;
+    const testMode =
+      payload.meta?.test_mode === true || attributes.test_mode === true;
+    const authorizedCheckout =
+      custom?.user_id === user.id &&
+      custom.product_slug === product.slug &&
+      custom.source === "web";
+    const previousTrial = authorizedCheckout
+      ? await prisma.subscription.findFirst({
+          where: {
+            userId: user.id,
+            productId: product.id,
+            provider: "lemonsqueezy",
+            testMode,
+            trialUsedAt: { not: null },
+            providerSubscriptionId: { not: payload.data?.id },
+          },
+          select: { id: true },
+        })
+      : null;
+
+    if (!authorizedCheckout || previousTrial) {
+      if (payload.data?.id) {
+        await cancelLemonSqueezySubscription(payload.data.id);
+      }
+      console.warn(
+        "[LEMONSQUEEZY TRIAL REJECTED]",
+        authorizedCheckout ? "TRIAL_ALREADY_USED" : "UNAUTHORIZED_CHECKOUT",
+      );
+      return {
+        processed: false,
+        reason: authorizedCheckout
+          ? "TRIAL_ALREADY_USED"
+          : "UNAUTHORIZED_CHECKOUT",
+      };
+    }
   }
 
   await upsertCustomer({ payload, userId: user.id });

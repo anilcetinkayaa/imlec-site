@@ -1,5 +1,6 @@
 import {
   cancelSubscription,
+  createCheckout,
   getSubscription,
   issueOrderRefund,
   issueSubscriptionInvoiceRefund,
@@ -21,6 +22,51 @@ export type LemonSqueezySubscriptionSnapshot = {
   updatePaymentMethodUrl: string;
   customerPortalUrl: string;
 };
+
+export async function createFis260Checkout({
+  email,
+  userId,
+  skipTrial,
+  testMode,
+}: {
+  email: string;
+  userId: string;
+  skipTrial: boolean;
+  testMode: boolean;
+}) {
+  const apiKey = process.env.LEMONSQUEEZY_API_KEY?.trim();
+  const storeId = process.env.LEMONSQUEEZY_STORE_ID?.trim();
+  const variantId = process.env.LEMONSQUEEZY_FIS260_VARIANT_ID?.trim();
+
+  if (!apiKey || !storeId || !variantId) {
+    throw new Error("LEMONSQUEEZY_CHECKOUT_CONFIG_MISSING");
+  }
+
+  lemonSqueezySetup({ apiKey });
+  const response = await createCheckout(storeId, variantId, {
+    checkoutOptions: {
+      skipTrial,
+    },
+    checkoutData: {
+      email,
+      custom: {
+        user_id: userId,
+        product_slug: "fis260",
+        source: "web",
+      },
+    },
+    expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+    testMode,
+  });
+
+  const url = response.data?.data.attributes.url;
+
+  if (response.error || !url) {
+    throw new Error("LEMONSQUEEZY_CHECKOUT_CREATE_FAILED");
+  }
+
+  return url;
+}
 
 export async function cancelLemonSqueezySubscription(
   providerSubscriptionId: string,

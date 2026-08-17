@@ -2,7 +2,6 @@ const requiredVariables = [
   "LEMONSQUEEZY_API_KEY",
   "LEMONSQUEEZY_WEBHOOK_SECRET",
   "LEMONSQUEEZY_STORE_ID",
-  "LEMONSQUEEZY_FIS260_CHECKOUT_URL",
   "LEMONSQUEEZY_FIS260_PRODUCT_ID",
   "LEMONSQUEEZY_FIS260_VARIANT_ID",
   "LEMONSQUEEZY_MODE",
@@ -60,15 +59,6 @@ async function main() {
       item.attributes?.url ===
       "https://imlecyazilim.com/api/webhooks/lemonsqueezy",
   );
-  const checkoutUrl = new URL(
-    process.env.LEMONSQUEEZY_FIS260_CHECKOUT_URL,
-  );
-  const providerBuyNowUrl =
-    variant.body?.data?.attributes?.buy_now_url ??
-    product.body?.data?.attributes?.buy_now_url;
-  const providerCheckoutUrl = providerBuyNowUrl
-    ? new URL(providerBuyNowUrl)
-    : null;
   const report = {
     mode: process.env.LEMONSQUEEZY_MODE ?? "MISSING",
     product: {
@@ -87,9 +77,7 @@ async function main() {
       trialDays: variant.body?.data?.attributes?.trial_interval_count ?? null,
     },
     checkout: {
-      host: checkoutUrl.host,
-      matchesProduct:
-        providerCheckoutUrl?.pathname === checkoutUrl.pathname,
+      strategy: "server_generated",
     },
     webhook: {
       found: Boolean(webhook),
@@ -110,7 +98,6 @@ async function main() {
     report.variant.reachable &&
     report.variant.published &&
     report.variant.subscription === true &&
-    report.checkout.matchesProduct === true &&
     report.webhook.found &&
     report.webhook.missingEvents.length === 0 &&
     providerModeMatches;
