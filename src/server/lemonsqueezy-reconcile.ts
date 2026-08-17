@@ -5,6 +5,7 @@ import {
   getLemonSqueezySubscriptionForEmail,
 } from "@/src/server/lemonsqueezy-api";
 import { syncLemonSqueezySubscription } from "@/src/server/lemonsqueezy-subscription-sync";
+import { sendSubscriptionLifecycleEmails } from "@/src/server/subscription-email-lifecycle";
 
 export async function reconcileLemonSqueezySubscriptions() {
   const localSubscriptions = await prisma.subscription.findMany({
@@ -86,10 +87,13 @@ export async function reconcileLemonSqueezySubscriptions() {
     }
   }
 
+  const emails = await sendSubscriptionLifecycleEmails();
+
   return {
     checked: localSubscriptions.length + orphanEntitlements.length,
     synchronized,
     failed,
+    emails,
   };
 }
 

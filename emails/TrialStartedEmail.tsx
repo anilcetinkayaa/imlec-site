@@ -1,12 +1,21 @@
 import { Text } from "@react-email/components";
 import { BaseEmail, text } from "./BaseEmail";
 
-export function TrialStartedEmail({ productName }: { productName: string }) {
+export function TrialStartedEmail({
+  productName,
+  trialEndsAt,
+}: {
+  productName: string;
+  trialEndsAt?: string;
+}) {
   return (
-    <BaseEmail preview="Test erişiminiz başladı." title="Test erişiminiz başladı.">
+    <BaseEmail preview="Ücretsiz denemeniz başladı." title="Ücretsiz denemeniz başladı.">
       <Text style={text}>
-        {productName} için test erişiminiz hesabınıza tanımlandı. Kurulum
-        dosyasını indirme merkezinden alabilirsiniz.
+        {productName} için ücretsiz deneme erişiminiz hesabınıza tanımlandı.
+        {trialEndsAt
+          ? ` Deneme süreniz ${trialEndsAt} tarihinde sona erecek.`
+          : ""}{" "}
+        Bu tarihten önce iptal ederseniz ücret alınmaz.
       </Text>
     </BaseEmail>
   );

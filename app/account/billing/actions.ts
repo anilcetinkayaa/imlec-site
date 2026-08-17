@@ -16,6 +16,7 @@ import {
   cancelLemonSqueezySubscription,
   getLemonSqueezySubscriptionById,
 } from "@/src/server/lemonsqueezy-api";
+import { sendCancellationConfirmation } from "@/src/server/subscription-email-lifecycle";
 
 const requestTypes = new Set(Object.values(BillingRequestType));
 const requestReasons = new Set(Object.values(BillingRequestReason));
@@ -230,6 +231,8 @@ export async function cancelSubscriptionNow(formData: FormData) {
       },
     });
   });
+
+  await sendCancellationConfirmation(subscription.id);
 
   revalidatePath("/account/billing");
   revalidatePath("/admin/accounting");

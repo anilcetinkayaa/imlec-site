@@ -8,6 +8,7 @@ import { createElement } from "react";
 import { PaymentFailedEmail } from "@/emails/PaymentFailedEmail";
 import { PaymentSuccessEmail } from "@/emails/PaymentSuccessEmail";
 import { TrialStartedEmail } from "@/emails/TrialStartedEmail";
+import { isPaidOrderCreated } from "@/lib/billing-notifications";
 import { sendMail } from "@/lib/mail";
 import {
   isSubscriptionLifecyclePayload,
@@ -16,6 +17,7 @@ import {
 import { prisma } from "@/src/db/prisma";
 import { upsertEntitlementBySource } from "@/src/server/entitlement-helpers";
 import { getLemonSqueezySubscriptionById } from "@/src/server/lemonsqueezy-api";
+import { sendCancellationConfirmation } from "@/src/server/subscription-email-lifecycle";
 
 type LemonSqueezyPayload = {
   meta?: {
@@ -289,6 +291,10 @@ async function upsertPayment({
     asNumber(attributes.amount) ??
     asNumber(attributes.subtotal) ??
     0;
+
+  if (!isPaidOrderCreated(eventName, amount)) {
+    return null;
+  }
   const currency =
     asString(attributes.currency) ??
     asString(attributes.currency_code) ??
@@ -532,16 +538,18 @@ async function sendPaymentEmail({
   userEmail,
   productName,
   amount,
+  amountMinor,
 }: {
   eventName: string;
   userEmail: string;
   productName: string;
   amount?: string;
+  amountMinor: number;
 }) {
   if (
     eventName === "subscription_payment_success" ||
     eventName === "subscription_payment_recovered" ||
-    eventName === "order_created"
+    (eventName === "order_created" && amountMinor > 0)
   ) {
     await sendMail({
       to: userEmail,
@@ -696,6 +704,10 @@ export async function processLemonSqueezyEvent(payload: LemonSqueezyPayload) {
         productId: product.id,
       });
     }
+
+    if (subscription) {
+      await sendCancellationConfirmation(subscription.id);
+    }
   }
 
   if (
@@ -728,21 +740,36 @@ export async function processLemonSqueezyEvent(payload: LemonSqueezyPayload) {
     const total =
       asString(attributes.total_formatted) ??
       asString(attributes.subtotal_formatted);
+    const amountMinor =
+      asNumber(attributes.total) ??
+      asNumber(attributes.amount) ??
+      asNumber(attributes.subtotal) ??
+      0;
 
     await sendPaymentEmail({
       eventName,
       userEmail: user.email,
       productName: product.name,
       amount: total ?? undefined,
+      amountMinor,
     });
   }
 
-  if (eventName === "subscription_created") {
+  if (
+    eventName === "subscription_created" &&
+    subscription?.status === SubscriptionStatus.TRIALING
+  ) {
     await sendMail({
       to: user.email,
       subject: `${product.name} erişiminiz başladı`,
       react: createElement(TrialStartedEmail, {
         productName: product.name,
+        trialEndsAt: subscription.trialEndsAt?.toLocaleDateString("tr-TR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          timeZone: "Europe/Istanbul",
+        }),
       }),
     });
   }

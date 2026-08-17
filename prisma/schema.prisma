@@ -304,6 +304,9 @@ model Subscription {
   renewsAt               DateTime?
   endsAt                 DateTime?
   trialEndsAt            DateTime?
+  trialEndingEmailSentAt DateTime?
+  trialEndedEmailSentAt  DateTime?
+  canceledEmailSentAt    DateTime?
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
