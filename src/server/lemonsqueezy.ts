@@ -566,8 +566,9 @@ async function sendPaymentEmail({
   amountMinor: number;
 }) {
   if (
-    eventName === "subscription_payment_success" ||
-    eventName === "subscription_payment_recovered" ||
+    ((eventName === "subscription_payment_success" ||
+      eventName === "subscription_payment_recovered") &&
+      amountMinor > 0) ||
     (eventName === "order_created" && amountMinor > 0)
   ) {
     await sendMail({
