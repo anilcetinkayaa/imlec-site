@@ -1,10 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createElement } from "react";
-import { WelcomeEmail } from "@/emails/WelcomeEmail";
-import { sendMail } from "@/lib/mail";
 import { prisma } from "@/src/db/prisma";
+import { sendEmailVerification } from "@/src/server/auth/email-verification";
 import { hashPassword, normalizeEmail } from "@/src/server/auth/password";
 
 export async function registerAction(formData: FormData) {
@@ -43,15 +41,12 @@ export async function registerAction(formData: FormData) {
     },
   });
 
-  try {
-    await sendMail({
-      to: user.email,
-      subject: "İmleç Yazılım hesabınız oluşturuldu",
-      react: createElement(WelcomeEmail, { name: user.name }),
-    });
-  } catch (error) {
-    console.error("[WELCOME EMAIL ERROR]", error);
-  }
+  const verificationSent = await sendEmailVerification({
+    userId: user.id,
+    email: user.email,
+  });
 
-  redirect("/login?registered=1");
+  redirect(
+    `/login?registered=1&verification=${verificationSent ? "sent" : "failed"}`,
+  );
 }

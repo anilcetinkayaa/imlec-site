@@ -8,11 +8,14 @@ export type SendMailInput = {
 };
 
 export function getMailFromAddress() {
-  return (
+  const configured =
     process.env.EMAIL_FROM ??
     process.env.MAIL_FROM ??
-    "İmleç Yazılım <bildirim@imlecyazilim.com>"
-  );
+    "bildirim@imlecyazilim.com";
+  const bracketedAddress = configured.match(/<\s*([^>]+)\s*>/)?.[1];
+  const address = (bracketedAddress ?? configured).trim();
+
+  return `İmleç Yazılım <${address}>`;
 }
 
 export function isMailConfigured() {

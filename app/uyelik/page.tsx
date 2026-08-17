@@ -17,7 +17,10 @@ import {
   MEMBERSHIP_PRICE_TRY,
 } from "@/lib/config";
 import { getLemonSqueezyMode } from "@/lib/lemonsqueezy-config";
-import { startFis260Checkout } from "@/app/uyelik/actions";
+import {
+  resendEmailVerification,
+  startFis260Checkout,
+} from "@/app/uyelik/actions";
 
 export const metadata: Metadata = {
   title: "Abone ol | İmleç Yazılım",
@@ -94,9 +97,40 @@ export default async function MembershipPage({
         ) : null}
 
         {params.checkout === "verify_email" ? (
-          <div className="mb-8 rounded-[var(--radius-lg)] border border-amber-400/30 bg-amber-400/10 px-4 py-3">
+          <div className="mb-8 flex flex-col gap-3 rounded-[var(--radius-lg)] border border-amber-400/30 bg-amber-400/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-body-s text-[var(--text-primary)]">
               Ücretsiz denemeyi başlatmadan önce e-posta adresinizi doğrulayın.
+            </p>
+            <form action={resendEmailVerification}>
+              <Button size="sm" type="submit" variant="outline">
+                Doğrulama e-postasını gönder
+              </Button>
+            </form>
+          </div>
+        ) : null}
+
+        {params.checkout === "verification_sent" ? (
+          <div className="mb-8 rounded-[var(--radius-lg)] border border-emerald-400/30 bg-emerald-400/10 px-4 py-3">
+            <p className="text-body-s text-[var(--text-primary)]">
+              Doğrulama bağlantısı e-posta adresinize gönderildi. Gelen kutusu ve
+              gereksiz klasörünü kontrol edin.
+            </p>
+          </div>
+        ) : null}
+
+        {params.checkout === "verification_failed" ? (
+          <div className="mb-8 rounded-[var(--radius-lg)] border border-red-400/30 bg-red-400/10 px-4 py-3">
+            <p className="text-body-s text-[var(--text-primary)]">
+              Doğrulama e-postası gönderilemedi. Lütfen biraz sonra tekrar deneyin.
+            </p>
+          </div>
+        ) : null}
+
+        {params.checkout === "verification_rate_limited" ? (
+          <div className="mb-8 rounded-[var(--radius-lg)] border border-amber-400/30 bg-amber-400/10 px-4 py-3">
+            <p className="text-body-s text-[var(--text-primary)]">
+              Kısa sürede çok fazla gönderim istendi. Lütfen 15 dakika sonra
+              tekrar deneyin.
             </p>
           </div>
         ) : null}

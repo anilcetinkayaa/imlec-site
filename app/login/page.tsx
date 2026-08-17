@@ -13,6 +13,8 @@ type LoginPageProps = {
     error?: string;
     registered?: string;
     reset?: string;
+    verification?: string;
+    verified?: string;
   }>;
 };
 
@@ -78,6 +80,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               }
               registered={Boolean(params.registered)}
               passwordReset={params.reset === "1"}
+              verificationStatus={params.verification}
+              emailVerified={params.verified === "1"}
             />
           </div>
         </section>

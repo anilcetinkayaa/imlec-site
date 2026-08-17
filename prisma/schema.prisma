@@ -172,26 +172,27 @@ model User {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  sessions               Session[]
-  subscriptions          Subscription[]
-  lemonSqueezyCustomers  LemonSqueezyCustomer[]
-  entitlements           Entitlement[]
-  devices                Device[]
-  payments               Payment[]
-  invoices               Invoice[]
-  billingProfiles        BillingProfile[]
-  billingRequests        BillingRequest[]
-  accessRequests         AccessRequest[]
-  supportTickets         SupportTicket[]
-  featureSuggestions     FeatureSuggestion[]
-  featureSuggestionVotes FeatureSuggestionVote[]
-  memberships            Membership[]
-  adminActions           AdminAction[]           @relation("AdminActionsByUser")
-  targetedActions        AdminAction[]           @relation("AdminActionsForUser")
-  admin2FA               Admin2FA?
-  auditEvents            AuditLog[]              @relation("AuditActor")
-  targetedEvents         AuditLog[]              @relation("AuditTarget")
-  passwordResetTokens    PasswordResetToken[]
+  sessions                Session[]
+  subscriptions           Subscription[]
+  lemonSqueezyCustomers   LemonSqueezyCustomer[]
+  entitlements            Entitlement[]
+  devices                 Device[]
+  payments                Payment[]
+  invoices                Invoice[]
+  billingProfiles         BillingProfile[]
+  billingRequests         BillingRequest[]
+  accessRequests          AccessRequest[]
+  supportTickets          SupportTicket[]
+  featureSuggestions      FeatureSuggestion[]
+  featureSuggestionVotes  FeatureSuggestionVote[]
+  memberships             Membership[]
+  adminActions            AdminAction[]            @relation("AdminActionsByUser")
+  targetedActions         AdminAction[]            @relation("AdminActionsForUser")
+  admin2FA                Admin2FA?
+  auditEvents             AuditLog[]               @relation("AuditActor")
+  targetedEvents          AuditLog[]               @relation("AuditTarget")
+  passwordResetTokens     PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
 
   @@index([role])
   @@index([username])
@@ -199,6 +200,20 @@ model User {
 }
 
 model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+}
+
+model EmailVerificationToken {
   id        String    @id @default(cuid())
   userId    String
   tokenHash String    @unique
