@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import {
   Check,
   Download,
   MonitorCheck,
   ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 import { auth } from "@/auth";
 import { PublicPageShell } from "@/components/marketing/PublicPageShell";
@@ -149,9 +149,13 @@ export default async function MembershipPage({
         <Card className="mx-auto mt-10 max-w-2xl p-6 sm:p-8" variant="elevated">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-4">
-              <div className="flex size-14 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--accent-fis260)]/30 bg-[var(--accent-fis260)]/12 text-[var(--accent-fis260)]">
-                <Sparkles className="size-6" strokeWidth={1.5} />
-              </div>
+              <Image
+                src="/products/fis260-mark.png"
+                alt="FİŞ260 amblemi"
+                width={56}
+                height={56}
+                className="size-14 shrink-0 object-contain"
+              />
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-h3">FİŞ260</h2>
