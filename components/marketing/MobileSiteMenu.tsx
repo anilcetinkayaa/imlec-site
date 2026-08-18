@@ -6,6 +6,7 @@ import { Menu, X } from "lucide-react";
 
 const navItems = [
   { href: "/products", label: "Ürünler" },
+  { href: "/hakkimizda", label: "Hakkımızda" },
   { href: "/uyelik", label: "Abone ol" },
 ];
 
