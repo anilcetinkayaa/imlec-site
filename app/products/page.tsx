@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
+import { auth } from "@/auth";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { PublicPageShell } from "@/components/marketing/PublicPageShell";
@@ -154,7 +155,10 @@ function ProductCard({ product }: { product: ProductPreview }) {
   );
 }
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const session = await auth();
+  const signedIn = Boolean(session?.user);
+
   return (
     <PublicPageShell>
       <section className="mx-auto w-full max-w-7xl px-6 pb-24 pt-16 sm:px-8 lg:px-10">
@@ -179,21 +183,46 @@ export default function ProductsPage() {
         </div>
 
         <div className="mt-16 flex flex-col items-center gap-4 rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--surface-1)] px-8 py-10 text-center">
-          <h2 className="text-h3 text-[var(--text-primary)]">
-            Hangi ürünün size uygun olduğundan emin değil misiniz?
-          </h2>
-          <p className="max-w-xl text-body text-[var(--text-secondary)]">
-            Hesap oluşturun; ürünler aktif oldukça hesap panelinizden tek yerden
-            erişir, üyelikleri ürün bazında başlatırsınız.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <Button asChild variant="brand" size="md">
-              <Link href="/register">Hesap oluştur</Link>
-            </Button>
-            <Button asChild variant="outline" size="md">
-              <Link href="/uyelik">FİŞ260 üyeliğini incele</Link>
-            </Button>
-          </div>
+          {signedIn ? (
+            <>
+              <h2 className="text-h3 text-[var(--text-primary)]">
+                Hesabınız hazır — ürün erişimleri tek yerden.
+              </h2>
+              <p className="max-w-xl text-body text-[var(--text-secondary)]">
+                Üyelikleri ürün bazında hesap panelinizden başlatır ve
+                yönetirsiniz; yeni ürünler aktif oldukça aynı panelde görünür.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <Button asChild variant="brand" size="md">
+                  <Link href="/uyelik">FİŞ260 üyeliğini başlat</Link>
+                </Button>
+                <Button asChild variant="outline" size="md">
+                  <Link href="/account/products">Hesap panelim</Link>
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-h3 text-[var(--text-primary)]">
+                Hangi ürünün size uygun olduğundan emin değil misiniz?
+              </h2>
+              <p className="max-w-xl text-body text-[var(--text-secondary)]">
+                Hesap oluşturun; ürünler aktif oldukça hesap panelinizden tek
+                yerden erişir, üyelikleri ürün bazında başlatırsınız.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <Button asChild variant="brand" size="md">
+                  <Link href="/register">Hesap oluştur</Link>
+                </Button>
+                <Button asChild variant="outline" size="md">
+                  <Link href="/login">Giriş yap</Link>
+                </Button>
+                <Button asChild variant="ghost" size="md">
+                  <Link href="/uyelik">FİŞ260 üyeliğini incele</Link>
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </section>
     </PublicPageShell>

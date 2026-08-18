@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, MessageCircle } from "lucide-react";
+import { AlertTriangle, ArrowDown, Download, MessageCircle } from "lucide-react";
 import { AutoDownload } from "@/components/marketing/AutoDownload";
 import { PublicPageShell } from "@/components/marketing/PublicPageShell";
 import {
@@ -44,7 +44,40 @@ export default function IndirPage() {
           </div>
         </div>
 
-        <div className="mt-12">
+        {/* Dikkat cekici yonlendirme: "indirmeniz basladi"yi goren asagiyi
+            okumayabilir — uyari renkli, zipar oklu serit asagiya cagirir */}
+        <div className="mt-12 rounded-[var(--radius-lg)] border-2 border-[color-mix(in_oklch,var(--warning),transparent_35%)] bg-[color-mix(in_oklch,var(--warning),transparent_88%)] p-6 shadow-[0_0_50px_color-mix(in_oklch,var(--warning),transparent_80%)]">
+          <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
+            <AlertTriangle
+              className="size-10 shrink-0 text-[var(--warning)]"
+              strokeWidth={1.75}
+              aria-hidden="true"
+            />
+            <div className="flex-1">
+              <p className="text-h4 text-[var(--text-primary)]">
+                DURUN — kurmadan önce bunu bilin:
+              </p>
+              <p className="mt-1 text-body text-[var(--text-secondary)]">
+                İndirilen dosyayı açtığınızda Windows{" "}
+                <strong className="text-[var(--text-primary)]">
+                  mavi bir güvenlik penceresi
+                </strong>{" "}
+                gösterecek. Bu normaldir ve{" "}
+                <strong className="text-[var(--text-primary)]">
+                  aşağıdaki 2 adımla
+                </strong>{" "}
+                geçilir.
+              </p>
+            </div>
+            <ArrowDown
+              className="size-9 shrink-0 animate-bounce text-[var(--warning)]"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+
+        <div className="mt-8">
           <SmartScreenTrustBanner />
         </div>
 
