@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowDown, Download, MessageCircle, ShieldCheck } from "lucide-react";
+import { ArrowDown, ClipboardCheck, Download, MessageCircle } from "lucide-react";
 import { AutoDownload } from "@/components/marketing/AutoDownload";
 import { PublicPageShell } from "@/components/marketing/PublicPageShell";
 import { SmartScreenSteps } from "@/components/marketing/SmartScreenSteps";
@@ -40,31 +40,31 @@ export default function IndirPage() {
           </div>
         </div>
 
-        {/* Goze carpan ama SAKINLESTIREN rehber karti (18.08 geri bildirimi:
-            "DURUN"lu turuncu uyari endiselendiriyordu — yesil "guvenli" tonu,
-            "her sey yolunda" dili) */}
-        <div className="mt-12 rounded-[var(--radius-lg)] border border-[color-mix(in_oklch,var(--success),transparent_50%)] bg-[color-mix(in_oklch,var(--success),transparent_90%)] p-7 shadow-[0_0_60px_color-mix(in_oklch,var(--success),transparent_86%)]">
+        {/* Ton dengesi (18.08, 3. deneme): "DURUN" korkutuyordu, "her sey
+            yolunda" ise okunmuyordu. Orta yol = GEREKLILIK dili: marka mavisi,
+            "kurulumun parcasi, yapilmasi gerekiyor" cercevesi. */}
+        <div className="mt-12 rounded-[var(--radius-lg)] border-2 border-[color-mix(in_oklch,var(--accent-brand),transparent_40%)] bg-[color-mix(in_oklch,var(--accent-brand),transparent_88%)] p-7 shadow-[0_0_55px_color-mix(in_oklch,var(--accent-brand),transparent_82%)]">
           <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
-            <ShieldCheck
-              className="size-11 shrink-0 text-[var(--success)]"
+            <ClipboardCheck
+              className="size-11 shrink-0 text-[var(--accent-brand)]"
               strokeWidth={1.5}
               aria-hidden="true"
             />
             <div className="flex-1">
               <p className="text-h4 text-[var(--text-primary)]">
-                Her şey yolunda — kurulum 2 küçük adım sürer.
+                Kurulum için aşağıdaki 2 adım gerekli.
               </p>
               <p className="mt-1.5 text-body text-[var(--text-secondary)]">
-                Windows, yeni tanıdığı her programda mavi bir onay penceresi
-                gösterir; İmleç Yazılım kurulum dosyası{" "}
+                İndirilen dosyayı açtığınızda Windows mavi bir onay penceresi
+                gösterir; kurulumun tamamlanması için penceredeki{" "}
                 <strong className="text-[var(--text-primary)]">
-                  dijital olarak imzalıdır
+                  “Ek bilgi” → “Yine de çalıştır”
                 </strong>{" "}
-                ve bu pencere tamamen normaldir. Aşağıdaki iki resimli adımla
-                saniyeler içinde geçersiniz.
+                adımlarını uygulamanız gerekir. Resimli anlatım hemen aşağıda —
+                dosya dijital imzalıdır, güvendesiniz.
               </p>
             </div>
-            <div className="flex flex-col items-center gap-1 text-[var(--success)]">
+            <div className="flex flex-col items-center gap-1 text-[var(--accent-brand)]">
               <span className="text-label">Adımlar</span>
               <ArrowDown
                 className="size-7 animate-bounce"

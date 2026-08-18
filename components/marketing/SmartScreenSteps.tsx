@@ -1,6 +1,15 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { ArrowDown, ImageIcon, ShieldCheck } from "lucide-react";
+import {
+  ArrowDown,
+  BadgeCheck,
+  CheckCircle2,
+  HelpCircle,
+  ImageIcon,
+  ShieldCheck,
+  Sparkles,
+  TrendingUp,
+} from "lucide-react";
 
 // Kullanıcının aldığı gerçek ekran görüntüleri; dosya yoksa şık yer tutucu.
 const GUIDE_DIR = "guides/smartscreen";
@@ -79,12 +88,80 @@ export function SmartScreenTrustBanner() {
   );
 }
 
+export function WhyThisWarning() {
+  const reasons = [
+    {
+      icon: Sparkles,
+      title: "Program yeni",
+      text: "İmleç Launcher kısa süre önce yayımlandı. Microsoft, KİM yayımlarsa yayımlasın, her yeni programı bir süre bu pencereyle karşılar.",
+    },
+    {
+      icon: TrendingUp,
+      title: "Tanınma süreci",
+      text: "Program daha çok bilgisayara kuruldukça Microsoft onu tanır. Dünyadaki her yeni Windows programı bu aşamadan geçer.",
+    },
+    {
+      icon: CheckCircle2,
+      title: "Kendiliğinden biter",
+      text: "Microsoft programı tanıdığında bu pencere artık hiç çıkmaz. Sizin bir şey yapmanıza gerek kalmaz.",
+    },
+  ];
+
+  return (
+    <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-1)] p-7">
+      <div className="flex items-center gap-3">
+        <HelpCircle
+          className="size-7 shrink-0 text-[var(--accent-brand)]"
+          strokeWidth={1.5}
+          aria-hidden="true"
+        />
+        <h2 className="text-h3 text-[var(--text-primary)]">
+          Bu pencere neden çıkıyor?
+        </h2>
+      </div>
+      <p className="mt-3 text-body text-[var(--text-secondary)]">
+        Bu pencerenin çıkması programın güvensiz olduğu anlamına{" "}
+        <strong className="text-[var(--text-primary)]">gelmez</strong>. Bu,
+        Microsoft&apos;un yeni yayımcılara uyguladığı{" "}
+        <strong className="text-[var(--text-primary)]">
+          standart tanıma prosedürüdür
+        </strong>
+        :
+      </p>
+      <div className="mt-5 grid gap-4 sm:grid-cols-3">
+        {reasons.map((reason) => (
+          <div
+            key={reason.title}
+            className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-0)] p-5"
+          >
+            <reason.icon
+              className="size-6 text-[var(--accent-brand)]"
+              strokeWidth={1.5}
+              aria-hidden="true"
+            />
+            <p className="mt-3 text-body font-semibold text-[var(--text-primary)]">
+              {reason.title}
+            </p>
+            <p className="mt-1.5 text-body-s text-[var(--text-secondary)]">
+              {reason.text}
+            </p>
+          </div>
+        ))}
+      </div>
+      <p className="mt-5 text-body font-semibold text-[var(--text-primary)]">
+        Kısacası: bu pencere “güvensiz” demek değil, “yeni” demektir.
+      </p>
+    </div>
+  );
+}
+
 export function SmartScreenSteps() {
   const videoSrc = guideAsset("kurulum.mp4");
   const gifSrc = guideAsset("kurulum.gif");
 
   return (
     <div className="grid gap-10">
+      <WhyThisWarning />
       {steps.map((step, index) => (
         <div key={step.number} className="grid gap-5">
           <div className="flex items-center gap-5">
@@ -103,6 +180,26 @@ export function SmartScreenSteps() {
             alt={step.title}
             note={step.assetNote}
           />
+          {index === 1 ? (
+            <div className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color-mix(in_oklch,var(--accent-brand),transparent_60%)] bg-[color-mix(in_oklch,var(--accent-brand),transparent_92%)] p-5">
+              <BadgeCheck
+                className="mt-0.5 size-5 shrink-0 text-[var(--accent-brand)]"
+                strokeWidth={1.5}
+                aria-hidden="true"
+              />
+              <p className="text-body-s text-[var(--text-secondary)]">
+                Bu pencerede <strong className="text-[var(--text-primary)]">Yayımcı</strong>{" "}
+                satırında <strong className="text-[var(--text-primary)]">“Anıl Çetinkaya”</strong>{" "}
+                adını görürsünüz. İmleç Yazılım bir şahıs şirketidir; dijital
+                imza sertifikaları yasal olarak şirket kurucusunun adına
+                düzenlenir. Bu adı görmeniz, dosyanın{" "}
+                <strong className="text-[var(--text-primary)]">
+                  gerçekten İmleç Yazılım&apos;a ait ve değiştirilmemiş
+                </strong>{" "}
+                olduğunun kanıtıdır.
+              </p>
+            </div>
+          ) : null}
           {index === 0 ? (
             <div className="flex justify-center text-[var(--text-tertiary)]">
               <ArrowDown aria-hidden="true" strokeWidth={1.5} />
