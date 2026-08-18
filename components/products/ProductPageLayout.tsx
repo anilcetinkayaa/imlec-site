@@ -72,6 +72,8 @@ export type ProductPageConfig = {
   slug: string;
   name: string;
   accent: string;
+  /** public/ altindaki urun amblemi; yoksa iki harfli monogram gosterilir */
+  icon?: string;
   status: {
     label: string;
     variant: StatusVariant;
@@ -108,10 +110,20 @@ type ProductPageLayoutProps = {
   config: ProductPageConfig;
 };
 
-function ProductIcon({ name }: { name: string }) {
+function ProductIcon({ name, icon }: { name: string; icon?: string }) {
   return (
     <div className="flex size-14 items-center justify-center rounded-[var(--radius-md)] border border-[color-mix(in_oklch,var(--product-accent),transparent_62%)] bg-[color-mix(in_oklch,var(--product-accent),transparent_88%)] text-[var(--text-primary)] shadow-[0_0_36px_color-mix(in_oklch,var(--product-accent),transparent_82%)]">
-      <span className="font-mono text-sm font-semibold">{name.slice(0, 2)}</span>
+      {icon ? (
+        <Image
+          src={icon}
+          alt={`${name} amblemi`}
+          width={44}
+          height={44}
+          className="size-11 object-contain"
+        />
+      ) : (
+        <span className="font-mono text-sm font-semibold">{name.slice(0, 2)}</span>
+      )}
     </div>
   );
 }
@@ -203,7 +215,7 @@ export function ProductPageLayout({ config }: ProductPageLayoutProps) {
       <section className="relative mx-auto grid max-w-7xl gap-12 px-6 pb-16 pt-16 sm:px-8 lg:grid-cols-[0.92fr_1.08fr] lg:px-10 lg:pb-20 lg:pt-20">
         <div className="flex flex-col justify-center">
           <div className="mb-6 flex items-center gap-3">
-            <ProductIcon name={config.name} />
+            <ProductIcon name={config.name} icon={config.icon} />
             <div>
               <p className="text-label text-[color-mix(in_oklch,var(--product-accent),white_18%)]">
                 {config.hero.eyebrow}

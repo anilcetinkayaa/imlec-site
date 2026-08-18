@@ -1,5 +1,6 @@
 ﻿import type { Metadata } from "next";
 import type { CSSProperties } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
@@ -16,6 +17,7 @@ type ProductPreview = {
   slug: string;
   name: string;
   accent: string;
+  icon?: string;
   eyebrow: string;
   status: { label: string; variant: "active" | "coming-soon" };
   lead: string;
@@ -29,6 +31,7 @@ const products: ProductPreview[] = [
     slug: "fis260",
     name: "FİŞ260",
     accent: "var(--accent-fis260)",
+    icon: "/products/fis260-mark.png",
     eyebrow: "Fiş işleme ve Excel",
     status: { label: "Satışta", variant: "active" },
     lead: "Kağıt fişleri fotoğraftan okur, muhasebenin beklediği alanları çıkarır ve tek tıkla Excel'e döker.",
@@ -44,6 +47,7 @@ const products: ProductPreview[] = [
     slug: "cozver",
     name: "ÇÖZVER",
     accent: "var(--accent-cozver)",
+    icon: "/products/cozver-mark.png",
     eyebrow: "Finansal analiz",
     status: { label: "Çok yakında", variant: "coming-soon" },
     lead: "Finansal analiz ve spread hazırlığını tek masaüstü yüzeyinde düzenleyen ikinci İmleç ürünü.",
@@ -84,9 +88,19 @@ function ProductCard({ product }: { product: ProductPreview }) {
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="flex size-12 items-center justify-center rounded-[var(--radius-md)] border border-[color-mix(in_oklch,var(--product-accent),transparent_62%)] bg-[color-mix(in_oklch,var(--product-accent),transparent_88%)] shadow-[0_0_28px_color-mix(in_oklch,var(--product-accent),transparent_84%)]">
-              <span className="font-mono text-sm font-semibold text-[var(--text-primary)]">
-                {product.name.slice(0, 2)}
-              </span>
+              {product.icon ? (
+                <Image
+                  src={product.icon}
+                  alt={`${product.name} amblemi`}
+                  width={38}
+                  height={38}
+                  className="size-9.5 object-contain"
+                />
+              ) : (
+                <span className="font-mono text-sm font-semibold text-[var(--text-primary)]">
+                  {product.name.slice(0, 2)}
+                </span>
+              )}
             </div>
             <div>
               <p className="text-label font-mono text-[color-mix(in_oklch,var(--product-accent),white_18%)]">

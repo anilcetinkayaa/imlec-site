@@ -14,6 +14,7 @@ const cozverConfig: ProductPageConfig = {
   slug: "cozver",
   name: "ÇÖZVER",
   accent: "var(--accent-cozver)",
+  icon: "/products/cozver-mark.png",
   status: {
     label: "Geliştirme aşamasında",
     variant: "coming-soon",

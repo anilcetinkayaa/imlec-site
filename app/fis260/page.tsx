@@ -15,6 +15,7 @@ const fis260Config: ProductPageConfig = {
   slug: "fis260",
   name: "FİŞ260",
   accent: "var(--accent-fis260)",
+  icon: "/products/fis260-mark.png",
   status: {
     label: "Beta v0.1.0",
     variant: "beta",
