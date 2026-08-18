@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, ArrowDown, Download, MessageCircle } from "lucide-react";
+import { ArrowDown, Download, MessageCircle, ShieldCheck } from "lucide-react";
 import { AutoDownload } from "@/components/marketing/AutoDownload";
 import { PublicPageShell } from "@/components/marketing/PublicPageShell";
-import {
-  SmartScreenSteps,
-  SmartScreenTrustBanner,
-} from "@/components/marketing/SmartScreenSteps";
+import { SmartScreenSteps } from "@/components/marketing/SmartScreenSteps";
 import { Button } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
@@ -31,8 +28,7 @@ export default function IndirPage() {
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-body-l text-[var(--text-secondary)]">
             İndirme kendiliğinden başlamadıysa aşağıdaki düğmeyi kullanın.
-            Kurulum sırasında Windows mavi bir güvenlik uyarısı gösterirse
-            endişelenmeyin — bu sayfadaki iki adımla geçilir.
+            Dosya inince açın; kurulum bu sayfadaki iki küçük adımla tamamlanır.
           </p>
           <div className="mt-7 flex justify-center">
             <Button asChild variant="brand" size="lg">
@@ -44,41 +40,39 @@ export default function IndirPage() {
           </div>
         </div>
 
-        {/* Dikkat cekici yonlendirme: "indirmeniz basladi"yi goren asagiyi
-            okumayabilir — uyari renkli, zipar oklu serit asagiya cagirir */}
-        <div className="mt-12 rounded-[var(--radius-lg)] border-2 border-[color-mix(in_oklch,var(--warning),transparent_35%)] bg-[color-mix(in_oklch,var(--warning),transparent_88%)] p-6 shadow-[0_0_50px_color-mix(in_oklch,var(--warning),transparent_80%)]">
-          <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
-            <AlertTriangle
-              className="size-10 shrink-0 text-[var(--warning)]"
-              strokeWidth={1.75}
+        {/* Goze carpan ama SAKINLESTIREN rehber karti (18.08 geri bildirimi:
+            "DURUN"lu turuncu uyari endiselendiriyordu — yesil "guvenli" tonu,
+            "her sey yolunda" dili) */}
+        <div className="mt-12 rounded-[var(--radius-lg)] border border-[color-mix(in_oklch,var(--success),transparent_50%)] bg-[color-mix(in_oklch,var(--success),transparent_90%)] p-7 shadow-[0_0_60px_color-mix(in_oklch,var(--success),transparent_86%)]">
+          <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
+            <ShieldCheck
+              className="size-11 shrink-0 text-[var(--success)]"
+              strokeWidth={1.5}
               aria-hidden="true"
             />
             <div className="flex-1">
               <p className="text-h4 text-[var(--text-primary)]">
-                DURUN — kurmadan önce bunu bilin:
+                Her şey yolunda — kurulum 2 küçük adım sürer.
               </p>
-              <p className="mt-1 text-body text-[var(--text-secondary)]">
-                İndirilen dosyayı açtığınızda Windows{" "}
+              <p className="mt-1.5 text-body text-[var(--text-secondary)]">
+                Windows, yeni tanıdığı her programda mavi bir onay penceresi
+                gösterir; İmleç Yazılım kurulum dosyası{" "}
                 <strong className="text-[var(--text-primary)]">
-                  mavi bir güvenlik penceresi
+                  dijital olarak imzalıdır
                 </strong>{" "}
-                gösterecek. Bu normaldir ve{" "}
-                <strong className="text-[var(--text-primary)]">
-                  aşağıdaki 2 adımla
-                </strong>{" "}
-                geçilir.
+                ve bu pencere tamamen normaldir. Aşağıdaki iki resimli adımla
+                saniyeler içinde geçersiniz.
               </p>
             </div>
-            <ArrowDown
-              className="size-9 shrink-0 animate-bounce text-[var(--warning)]"
-              strokeWidth={2}
-              aria-hidden="true"
-            />
+            <div className="flex flex-col items-center gap-1 text-[var(--success)]">
+              <span className="text-label">Adımlar</span>
+              <ArrowDown
+                className="size-7 animate-bounce"
+                strokeWidth={1.75}
+                aria-hidden="true"
+              />
+            </div>
           </div>
-        </div>
-
-        <div className="mt-8">
-          <SmartScreenTrustBanner />
         </div>
 
         <div className="mt-12">
