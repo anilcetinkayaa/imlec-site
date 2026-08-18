@@ -88,6 +88,8 @@ export type ProductPageConfig = {
   audience: string[];
   steps: ProductStep[];
   screenshots: ProductScreen[];
+  /** Ekran turu altinda gosterilen yasal/temsililik notu */
+  screenshotsNote?: string;
   specs: Array<[string, string]>;
   membership: {
     eyebrow: string;
@@ -370,6 +372,11 @@ export function ProductPageLayout({ config }: ProductPageLayoutProps) {
               </TabsContent>
             ))}
           </Tabs>
+        ) : null}
+        {config.screenshotsNote ? (
+          <p className="mt-5 max-w-3xl text-body-s italic text-[var(--text-tertiary)]">
+            {config.screenshotsNote}
+          </p>
         ) : null}
       </section>
 

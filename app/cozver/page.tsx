@@ -3,6 +3,9 @@ import {
   ProductPageLayout,
   type ProductPageConfig,
 } from "@/components/products/ProductPageLayout";
+import shotGenelBakis from "./shots/cozver-genel-bakis.png";
+import shotOranlar from "./shots/cozver-oranlar.png";
+import shotSpread from "./shots/cozver-spread.png";
 
 export const metadata: Metadata = {
   title: "ÇÖZVER | İmleç Yazılım",
@@ -63,29 +66,34 @@ const cozverConfig: ProductPageConfig = {
   screenshots: [
     {
       id: "workspace",
-      label: "Çalışma alanı",
+      label: "Genel Bakış",
       title: "Analiz çalışma alanı",
       description:
-        "ÇÖZVER ekran turu ürün arayüzü netleştikçe bu alana gerçek uygulama görüntüleriyle eklenecek.",
-      placeholder: "Geliştirme aşamasında",
-    },
-    {
-      id: "classification",
-      label: "Sınıflandırma",
-      title: "Veri sınıflandırma",
-      description:
-        "Finansal veri sınıflandırma akışı, ürün erişimi hazır olduğunda ayrıntılı olarak gösterilecek.",
-      placeholder: "Ekran görüntüsü bekleniyor",
+        "Sol menü, mali analizin tüm aşamalarını tek akışta toplar: Genel Bakış, Firma Kimliği, Spread, Oranlar, Findeks, Risk Merkezi, Grup Analizi ve Sektör Kıyası. Dönem ve kaynak bağlamı her an görünür.",
+      image: shotGenelBakis,
+      alt: "ÇÖZVER Genel Bakış ekranı — grup dosyası ve analiz aşamaları",
     },
     {
       id: "spread",
       label: "Spread",
-      title: "Spread hazırlığı",
+      title: "Mali Tablolar / Spread",
       description:
-        "Spread çıktısı ve kontrol adımları, beta sürüm kapsamı netleştiğinde bu turda yer alacak.",
-      placeholder: "Demo yakında",
+        "Dönemler yan yana, hesap düzeyinde kırılım ve değişim yüzdeleriyle. Terazi şeridi aktif-pasif eşitliğini kuruş düzeyinde doğrular; her rakamın kaynak zinciri hücre detayında açılır.",
+      image: shotSpread,
+      alt: "ÇÖZVER Spread ekranı — iki dönem karşılaştırmalı bilanço",
+    },
+    {
+      id: "ratios",
+      label: "Oranlar",
+      title: "Oranlar ve Trendler",
+      description:
+        "Likidite, kaldıraç ve kârlılık oranları dönemler arası trendleriyle birlikte; dikkat isteyen kalemler tek tıkla Spread'te ilgili hesaba götürür.",
+      image: shotOranlar,
+      alt: "ÇÖZVER Oranlar ve Trendler ekranı",
     },
   ],
+  screenshotsNote:
+    "Ekran görüntülerindeki firma ve kuruluş adları tamamen temsilîdir; gerçek kişi veya kuruluşları ifade etmez. Görüntülenen tutar ve oranlar yalnızca tanıtım amacıyla oluşturulmuş örnek verilerdir.",
   specs: [
     ["Platform", "Windows 10/11"],
     ["Durum", "Geliştirme aşamasında"],
