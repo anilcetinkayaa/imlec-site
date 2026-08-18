@@ -6,6 +6,7 @@ const columns = [
     links: [
       { href: "/fis260", label: "FİŞ260" },
       { href: "/cozver", label: "ÇÖZVER" },
+      { href: "/kuyvera", label: "KUYVERA" },
       { href: "/api/downloads/launcher", label: "Windows için indir" },
     ],
   },
@@ -13,7 +14,7 @@ const columns = [
     title: "Şirket",
     links: [
       { href: "/", label: "Platform" },
-      { href: "/#products", label: "Ürünler" },
+      { href: "/products", label: "Ürünler" },
       { href: "/uyelik", label: "Abone ol" },
     ],
   },
@@ -28,6 +29,7 @@ const columns = [
   {
     title: "Destek",
     links: [
+      { href: "/kurulum", label: "Kurulum rehberi" },
       { href: "mailto:info@imlecyazilim.com", label: "E-posta" },
       { href: "/login", label: "Giriş" },
       { href: "/register", label: "Hesap oluştur" },

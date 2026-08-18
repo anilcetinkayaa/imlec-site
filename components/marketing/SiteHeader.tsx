@@ -12,7 +12,7 @@ type SiteHeaderProps = {
 };
 
 const navItems = [
-  { href: "/#products", label: "Ürünler" },
+  { href: "/products", label: "Ürünler" },
   { href: "/uyelik", label: "Abone ol" },
 ];
 

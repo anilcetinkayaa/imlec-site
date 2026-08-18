@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
 const navItems = [
-  { href: "/#products", label: "Ürünler" },
+  { href: "/products", label: "Ürünler" },
   { href: "/uyelik", label: "Abone ol" },
 ];
 

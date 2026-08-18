@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import {
   ProductPageLayout,
   type ProductPageConfig,
@@ -24,7 +24,7 @@ const cozverConfig: ProductPageConfig = {
     lead: "ÇÖZVER, finansal analiz, spread hazırlığı ve belge tabanlı çalışma adımlarını tek masaüstü yüzeyinde düzenlemek için geliştirilen ikinci İmleç Yazılım ürünüdür.",
     secondaryAction: {
       label: "Platform ürünlerini incele",
-      href: "/#products",
+      href: "/products",
       variant: "outline",
     },
   },
@@ -166,10 +166,18 @@ const cozverConfig: ProductPageConfig = {
     {
       name: "FİŞ260",
       href: "/fis260",
-      status: "Beta",
+      status: "Satışta",
       description:
         "Fiş görsellerinden OCR ile veri çıkaran ve Excel çıktısı hazırlayan aktif masaüstü ürün.",
       accent: "var(--accent-fis260)",
+    },
+    {
+      name: "KUYVERA",
+      href: "/kuyvera",
+      status: "Geliştirmede",
+      description:
+        "Kuyumcuların günlük işleyişi için geliştirilen üçüncü İmleç ürünü.",
+      accent: "var(--accent-kuyvera)",
     },
   ],
 };

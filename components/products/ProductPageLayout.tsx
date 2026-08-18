@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+﻿import type { CSSProperties } from "react";
 import type { StaticImageData } from "next/image";
 import Image from "next/image";
 import Link from "next/link";
@@ -477,7 +477,7 @@ export function ProductPageLayout({ config }: ProductPageLayoutProps) {
             <h2 className="text-h2 mt-4">Aynı hesap altında ürün ailesi.</h2>
           </div>
           <Button asChild variant="outline">
-            <Link href="/#products">
+            <Link href="/products">
               Platform ürünleri
               <ChevronRight className="size-4" strokeWidth={1.5} />
             </Link>
@@ -538,7 +538,7 @@ export function ProductPageLayout({ config }: ProductPageLayoutProps) {
               </Button>
             ) : (
               <Button asChild size="lg" variant="outline">
-                <Link href="/#products">Platformu incele</Link>
+                <Link href="/products">Platformu incele</Link>
               </Button>
             )}
             <Button asChild size="lg" variant="ghost">

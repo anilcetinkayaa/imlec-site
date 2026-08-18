@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { Home, Search } from "lucide-react";
 import { Footer } from "@/components/marketing/Footer";
 import { Button } from "@/components/ui/Button";
@@ -35,7 +35,7 @@ export default function NotFound() {
               </Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/#products">
+              <Link href="/products">
                 <Search className="size-4" strokeWidth={1.5} />
                 Ürünleri incele
               </Link>
