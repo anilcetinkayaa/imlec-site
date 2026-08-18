@@ -65,6 +65,16 @@ export async function createFis260Checkout({
     throw new Error("LEMONSQUEEZY_CHECKOUT_CREATE_FAILED");
   }
 
+  // Guvenlik kilidi: canli mod isterken saglayici test checkout dondururse
+  // (or. test API anahtari / test variant ID'si kalmis) musteriye ASLA test
+  // odeme sayfasi gosterme — sessiz sahte satistan iyi olan acik hatadir.
+  const createdTestMode = response.data?.data.attributes.test_mode;
+  if (typeof createdTestMode === "boolean" && createdTestMode !== testMode) {
+    throw new Error(
+      `LEMONSQUEEZY_MODE_MISMATCH: requested ${testMode ? "test" : "live"} but provider returned ${createdTestMode ? "test" : "live"} (API anahtari/variant ID modu yanlis olabilir)`,
+    );
+  }
+
   return url;
 }
 
