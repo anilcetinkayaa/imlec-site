@@ -196,7 +196,14 @@ export function SmartScreenSteps() {
                 <strong className="text-[var(--text-primary)]">
                   gerçekten İmleç Yazılım&apos;a ait ve değiştirilmemiş
                 </strong>{" "}
-                olduğunun kanıtıdır.
+                olduğunun kanıtıdır. Şirket bilgilerimizi{" "}
+                <a
+                  href="/hakkimizda"
+                  className="font-medium text-[var(--accent-brand)] underline-offset-2 hover:underline"
+                >
+                  Hakkımızda
+                </a>{" "}
+                sayfasından doğrulayabilirsiniz.
               </p>
             </div>
           ) : null}

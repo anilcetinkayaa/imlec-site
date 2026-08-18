@@ -14,6 +14,7 @@ const columns = [
     title: "Şirket",
     links: [
       { href: "/", label: "Platform" },
+      { href: "/hakkimizda", label: "Hakkımızda" },
       { href: "/products", label: "Ürünler" },
       { href: "/uyelik", label: "Abone ol" },
     ],
