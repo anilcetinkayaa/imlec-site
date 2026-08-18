@@ -368,6 +368,30 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
           ) : null}
           <LauncherRepairNotice />
 
+          <Card className="p-5" variant="default">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <ShieldCheck
+                  className="mt-0.5 size-5 shrink-0 text-[var(--accent-brand)]"
+                  strokeWidth={1.5}
+                  aria-hidden="true"
+                />
+                <div>
+                  <p className="text-body font-semibold text-[var(--text-primary)]">
+                    Windows mavi bir güvenlik uyarısı gösterirse panik yok.
+                  </p>
+                  <p className="text-body-s mt-1 text-[var(--text-secondary)]">
+                    Yeni programlarda herkese çıkan standart bir uyarıdır; iki
+                    tıkla geçilir. Resimli rehberimiz adım adım gösteriyor.
+                  </p>
+                </div>
+              </div>
+              <Button asChild variant="outline" className="sm:min-w-44">
+                <Link href="/kurulum">Kurulum rehberini aç</Link>
+              </Button>
+            </div>
+          </Card>
+
           {ownedProducts.length > 0 ? (
             ownedProducts.map((product) => (
               <DownloadCard key={product.id} product={product} />
