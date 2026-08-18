@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { BadgeCheck, Building2, Mail, MapPin } from "lucide-react";
 import { PublicPageShell } from "@/components/marketing/PublicPageShell";
@@ -23,8 +23,8 @@ const facts = [
   {
     icon: Mail,
     label: "İletişim",
-    value: "info@imlecyazilim.com",
-    href: "mailto:info@imlecyazilim.com",
+    value: "bilgi@imlecyazilim.com",
+    href: "mailto:bilgi@imlecyazilim.com",
   },
 ];
 

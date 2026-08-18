@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -57,7 +57,7 @@ export default function KurulumPage() {
           </p>
           <div className="mt-2 flex flex-wrap gap-3">
             <Button asChild variant="brand" size="md">
-              <Link href="mailto:info@imlecyazilim.com?subject=Kurulum yardımı">
+              <Link href="mailto:bilgi@imlecyazilim.com?subject=Kurulum yardımı">
                 <MessageCircle aria-hidden="true" strokeWidth={1.5} />
                 Destek isteyin
               </Link>

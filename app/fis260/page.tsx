@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import shotAyarlar from "./shots/fis260-ayarlar-performans.png";
 import shotBitti from "./shots/fis260-islem-bitti.png";
 import shotIsleniyor from "./shots/fis260-isleniyor.png";
@@ -19,16 +19,16 @@ const fis260Config: ProductPageConfig = {
   accent: "var(--accent-fis260)",
   icon: "/products/fis260-mark.png",
   status: {
-    label: "Beta v0.1.0",
-    variant: "beta",
+    label: "Satışta",
+    variant: "active",
   },
   hero: {
     eyebrow: "Windows OCR + Excel",
     title: "Fişten Excel'e kısa ve kontrollü akış.",
     lead: "FİŞ260, muhasebe ekiplerinin fiş görsellerinden veri çıkarması, alanları kontrol etmesi ve Excel çıktısını denetlenebilir biçimde hazırlaması için geliştirilmiş masaüstü uygulamadır.",
     primaryAction: {
-      label: "Imlec Yazilim Merkezi'ni indir",
-      href: "/api/downloads/launcher",
+      label: "İmleç Launcher'ı indir",
+      href: "/indir",
       variant: "primary",
     },
     secondaryAction: {
@@ -146,7 +146,7 @@ const fis260Config: ProductPageConfig = {
           "Ürün yol haritası görüşmesi",
         ],
         ctaLabel: "Kurumsal görüşme talep et",
-        ctaHref: "mailto:info@imlecyazilim.com?subject=FİŞ260 kurumsal görüşme",
+        ctaHref: "mailto:bilgi@imlecyazilim.com?subject=FİŞ260 kurumsal görüşme",
       },
     ],
   },

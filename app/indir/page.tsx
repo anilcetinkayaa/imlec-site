@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowDown, ClipboardCheck, Download, MessageCircle } from "lucide-react";
 import { AutoDownload } from "@/components/marketing/AutoDownload";
@@ -85,7 +85,7 @@ export default function IndirPage() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Button asChild variant="outline" size="md">
-              <Link href="mailto:info@imlecyazilim.com?subject=Kurulum yardımı">
+              <Link href="mailto:bilgi@imlecyazilim.com?subject=Kurulum yardımı">
                 <MessageCircle aria-hidden="true" strokeWidth={1.5} />
                 Destek isteyin
               </Link>

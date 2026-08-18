@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Check,
@@ -132,7 +132,7 @@ function AccessRequiredNotice({ hasPendingRequest }: { hasPendingRequest: boolea
         <div className="flex shrink-0 flex-col gap-3 sm:min-w-48">
           <AccessRequestButton disabled={hasPendingRequest} />
           <Button asChild variant="outline">
-            <Link href="mailto:info@imlecyazilim.com">
+            <Link href="mailto:bilgi@imlecyazilim.com">
               <MessageCircle className="size-4" strokeWidth={1.5} />
               Destek ile iletişime geç
             </Link>
@@ -417,7 +417,7 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
                 <div className="flex flex-col gap-3 sm:min-w-48">
                   <AccessRequestButton disabled={hasPendingFis260Request} />
                   <Button asChild variant="outline">
-                    <Link href="mailto:info@imlecyazilim.com">
+                    <Link href="mailto:bilgi@imlecyazilim.com">
                       <MessageCircle className="size-4" strokeWidth={1.5} />
                       Destek ile iletişime geç
                     </Link>

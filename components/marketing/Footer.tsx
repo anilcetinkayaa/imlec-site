@@ -31,7 +31,7 @@ const columns = [
     title: "Destek",
     links: [
       { href: "/kurulum", label: "Kurulum rehberi" },
-      { href: "mailto:info@imlecyazilim.com", label: "E-posta" },
+      { href: "mailto:bilgi@imlecyazilim.com", label: "E-posta" },
       { href: "/login", label: "Giriş" },
       { href: "/register", label: "Hesap oluştur" },
     ],
