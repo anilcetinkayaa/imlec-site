@@ -28,10 +28,6 @@ const kuyveraConfig: ProductPageConfig = {
       variant: "outline",
     },
   },
-  waitlist: {
-    action: null,
-    note: "KUYVERA duyuruları hazır olduğunda bu alandan bekleme listesine katılım açılacak.",
-  },
   audience: [
     "Kuyumcu işletmelerinin günlük işleyişi için planlanıyor.",
     "Ürün erişimi diğer İmleç ürünlerinden ayrı, İmleç hesabı altında yönetilecek.",
@@ -119,18 +115,18 @@ const kuyveraConfig: ProductPageConfig = {
         disabled: true,
       },
       {
-        name: "Görüşme",
-        price: "İletişim",
-        period: "ile",
+        name: "Kurumsal",
+        price: "Planlanıyor",
+        period: "",
         description:
-          "Kuyumcu işletmenizin ihtiyacını şimdiden iletmek isterseniz bize yazın.",
+          "Çok şubeli kuyumcu işletmeleri için kurumsal plan, kapsam netleşince duyurulacak.",
         features: [
-          "İhtiyaç değerlendirmesi",
+          "Çok şube / çok kullanıcı",
           "Kapsam önerisi",
-          "Yol haritası bilgisi",
+          "Yol haritası",
         ],
-        ctaLabel: "Görüşme talep et",
-        ctaHref: "mailto:info@imlecyazilim.com?subject=KUYVERA ürün bilgisi",
+        ctaLabel: "Yakında",
+        disabled: true,
       },
     ],
   },
@@ -154,24 +150,6 @@ const kuyveraConfig: ProductPageConfig = {
       question: "KUYVERA da masaüstü uygulama mı olacak?",
       answer:
         "Evet. Windows masaüstü uygulaması ve web hesabıyla yönetilen ürün erişimi üzerine kuruludur.",
-    },
-  ],
-  related: [
-    {
-      name: "FİŞ260",
-      href: "/fis260",
-      status: "Satışta",
-      description:
-        "Fiş görsellerinden OCR ile veri çıkaran ve Excel çıktısı hazırlayan aktif masaüstü ürün.",
-      accent: "var(--accent-fis260)",
-    },
-    {
-      name: "ÇÖZVER",
-      href: "/cozver",
-      status: "Çok yakında",
-      description:
-        "Finansal analiz ve spread hazırlığı için geliştirilen ikinci İmleç ürünü.",
-      accent: "var(--accent-cozver)",
     },
   ],
 };

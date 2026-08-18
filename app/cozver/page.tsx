@@ -4,8 +4,9 @@ import {
   type ProductPageConfig,
 } from "@/components/products/ProductPageLayout";
 import shotGenelBakis from "./shots/cozver-genel-bakis.png";
-import shotOranlar from "./shots/cozver-oranlar.png";
-import shotSpread from "./shots/cozver-spread.png";
+import shotSektor from "./shots/cozver-sektor.png";
+import shotSpreadAnatomi from "./shots/cozver-spread-anatomi.png";
+import shotSpreadKarsilikli from "./shots/cozver-spread-karsilikli.png";
 
 export const metadata: Metadata = {
   title: "ÇÖZVER | İmleç Yazılım",
@@ -31,10 +32,6 @@ const cozverConfig: ProductPageConfig = {
       href: "/products",
       variant: "outline",
     },
-  },
-  waitlist: {
-    action: null,
-    note: "Bekleme listesi endpoint'i belirlendiğinde bu form aynı tasarım içinde aktif hale getirilecek.",
   },
   audience: [
     "Finansal analiz hazırlığını düzenli ve izlenebilir yapmak için planlanıyor.",
@@ -75,21 +72,30 @@ const cozverConfig: ProductPageConfig = {
     },
     {
       id: "spread",
-      label: "Spread",
-      title: "Mali Tablolar / Spread",
+      label: "Spread — Karşılıklı",
+      title: "Mali Tablolar / Spread — Üç Kanat",
       description:
-        "Dönemler yan yana, hesap düzeyinde kırılım ve değişim yüzdeleriyle. Terazi şeridi aktif-pasif eşitliğini kuruş düzeyinde doğrular; her rakamın kaynak zinciri hücre detayında açılır.",
-      image: shotSpread,
-      alt: "ÇÖZVER Spread ekranı — iki dönem karşılaştırmalı bilanço",
+        "Aktif, pasif ve gelir tablosu üç kanat halinde yan yana; dönemler karşılaştırmalı, değişimler yüzdeleriyle. Terazi şeridi aktif-pasif eşitliğini kuruş düzeyinde doğrular.",
+      image: shotSpreadKarsilikli,
+      alt: "ÇÖZVER Spread Karşılıklı görünümü — aktif, pasif ve gelir tablosu yan yana",
     },
     {
-      id: "ratios",
-      label: "Oranlar",
-      title: "Oranlar ve Trendler",
+      id: "anatomi",
+      label: "Anatomi",
+      title: "Bilanço Anatomisi",
       description:
-        "Likidite, kaldıraç ve kârlılık oranları dönemler arası trendleriyle birlikte; dikkat isteyen kalemler tek tıkla Spread'te ilgili hesaba götürür.",
-      image: shotOranlar,
-      alt: "ÇÖZVER Oranlar ve Trendler ekranı",
+        "Bilançonun orantılı kompozisyonu tek bakışta: hangi kalem ne kadar yer tutuyor, aktif ile pasif nasıl dengeleniyor. Bloklara tıklayınca hesap detayına inilir.",
+      image: shotSpreadAnatomi,
+      alt: "ÇÖZVER Anatomi görünümü — bilançonun orantılı kompozisyonu",
+    },
+    {
+      id: "sektor",
+      label: "Sektör Kıyası",
+      title: "Sektör Kıyası",
+      description:
+        "Firmanın oranları, TCMB ve TÜİK sektör istatistikleriyle kartil tablosunda kıyaslanır: firma değeri, sektör alt çeyreği, medyanı ve üst çeyreği yan yana — her satırda konum hükmüyle.",
+      image: shotSektor,
+      alt: "ÇÖZVER Sektör Kıyası ekranı — firma ve sektör kartil tablosu",
     },
   ],
   screenshotsNote:
@@ -136,16 +142,16 @@ const cozverConfig: ProductPageConfig = {
       },
       {
         name: "Kurumsal",
-        price: "Görüşme",
-        period: "ile",
+        price: "Planlanıyor",
+        period: "",
         description: "Ürün kapsamı olgunlaştığında kurumsal ihtiyaçlar ayrıca ele alınacak.",
         features: [
-          "Kapsam değerlendirmesi",
+          "Şirket hesabı altında çok kullanıcı",
           "Dağıtım planı",
-          "Yol haritası görüşmesi",
+          "Yol haritası",
         ],
-        ctaLabel: "Görüşme talep et",
-        ctaHref: "mailto:info@imlecyazilim.com?subject=ÇÖZVER ürün bilgisi",
+        ctaLabel: "Yakında",
+        disabled: true,
       },
     ],
   },
@@ -169,24 +175,6 @@ const cozverConfig: ProductPageConfig = {
       question: "ÇÖZVER de masaüstü uygulama mı olacak?",
       answer:
         "Evet. Planlanan ürün yapısı Windows masaüstü uygulaması ve web hesabıyla yönetilen ürün erişimi üzerine kuruludur.",
-    },
-  ],
-  related: [
-    {
-      name: "FİŞ260",
-      href: "/fis260",
-      status: "Satışta",
-      description:
-        "Fiş görsellerinden OCR ile veri çıkaran ve Excel çıktısı hazırlayan aktif masaüstü ürün.",
-      accent: "var(--accent-fis260)",
-    },
-    {
-      name: "KUYVERA",
-      href: "/kuyvera",
-      status: "Geliştirmede",
-      description:
-        "Kuyumcuların günlük işleyişi için geliştirilen üçüncü İmleç ürünü.",
-      accent: "var(--accent-kuyvera)",
     },
   ],
 };

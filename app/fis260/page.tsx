@@ -168,24 +168,6 @@ const fis260Config: ProductPageConfig = {
         "İmleç hesabı ortaktır, ancak ürün erişimleri ürün bazında ayrı yönetilir. ÇÖZVER aktif olduğunda kendi ürün erişimiyle görünür.",
     },
   ],
-  related: [
-    {
-      name: "ÇÖZVER",
-      href: "/cozver",
-      status: "Yakında",
-      description:
-        "Finansal analiz ve spread hazırlığı için geliştirme aşamasındaki masaüstü ürün.",
-      accent: "var(--accent-cozver)",
-    },
-    {
-      name: "KUYVERA",
-      href: "/kuyvera",
-      status: "Geliştirmede",
-      description:
-        "Kuyumcuların günlük işleyişi için geliştirilen üçüncü İmleç ürünü.",
-      accent: "var(--accent-kuyvera)",
-    },
-  ],
 };
 
 export default function Fis260Page() {

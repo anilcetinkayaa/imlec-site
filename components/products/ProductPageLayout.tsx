@@ -5,11 +5,8 @@ import Link from "next/link";
 import {
   ArrowRight,
   Check,
-  ChevronRight,
   Download,
-  FileSpreadsheet,
   LockKeyhole,
-  MonitorDown,
   Sparkles,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
@@ -101,7 +98,8 @@ export type ProductPageConfig = {
     question: string;
     answer: string;
   }>;
-  related: RelatedProduct[];
+  /** Kullanilmiyor (18.08: urunler farkli mesleklere hitap eder, capraz satis yok) */
+  related?: RelatedProduct[];
   waitlist?: {
     action?: string | null;
     note: string;
@@ -344,30 +342,53 @@ export function ProductPageLayout({ config }: ProductPageLayoutProps) {
             {config.screenshots.map((screen) => (
               <TabsContent key={screen.id} value={screen.id}>
                 <WindowFrame title={screen.title}>
-                  <div className="grid gap-0 bg-[var(--surface-0)] lg:grid-cols-[1.12fr_0.88fr]">
-                    <div className="p-3">
-                      {screen.image ? (
+                  {screen.image ? (
+                    <div className="bg-[var(--surface-0)]">
+                      {/* Okunabilirlik: gorsel tam genislik; tiklayinca tam boyut acilir */}
+                      <a
+                        href={screen.image.src}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Tam boyut görmek için tıklayın"
+                        className="block cursor-zoom-in p-3"
+                      >
                         <Image
                           src={screen.image}
                           alt={screen.alt ?? screen.title}
                           className="h-auto w-full rounded-[var(--radius-md)] border border-[var(--border-subtle)]"
                         />
-                      ) : (
+                      </a>
+                      <div className="border-t border-[var(--border-subtle)] px-6 py-5">
+                        <p className="text-label text-[var(--text-tertiary)]">
+                          {screen.label}
+                        </p>
+                        <h3 className="text-h4 mt-2">{screen.title}</h3>
+                        <p className="text-body-s mt-2 max-w-3xl text-[var(--text-secondary)]">
+                          {screen.description}
+                        </p>
+                        <p className="text-body-s mt-3 text-[var(--text-tertiary)]">
+                          Görsele tıklayarak tam boyut inceleyebilirsiniz.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid gap-0 bg-[var(--surface-0)] lg:grid-cols-[1.12fr_0.88fr]">
+                      <div className="p-3">
                         <div className="flex aspect-video items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-2)]">
                           <p className="text-body-s text-[var(--text-tertiary)]">
                             {screen.placeholder}
                           </p>
                         </div>
-                      )}
+                      </div>
+                      <div className="border-t border-[var(--border-subtle)] p-6 lg:border-l lg:border-t-0">
+                        <p className="text-label text-[var(--text-tertiary)]">{screen.label}</p>
+                        <h3 className="text-h3 mt-4">{screen.title}</h3>
+                        <p className="text-body mt-4 text-[var(--text-secondary)]">
+                          {screen.description}
+                        </p>
+                      </div>
                     </div>
-                    <div className="border-t border-[var(--border-subtle)] p-6 lg:border-l lg:border-t-0">
-                      <p className="text-label text-[var(--text-tertiary)]">{screen.label}</p>
-                      <h3 className="text-h3 mt-4">{screen.title}</h3>
-                      <p className="text-body mt-4 text-[var(--text-secondary)]">
-                        {screen.description}
-                      </p>
-                    </div>
-                  </div>
+                  )}
                 </WindowFrame>
               </TabsContent>
             ))}
@@ -487,61 +508,8 @@ export function ProductPageLayout({ config }: ProductPageLayoutProps) {
         </Accordion>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-16 sm:px-8 lg:px-10">
-        <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-label text-[color-mix(in_oklch,var(--product-accent),white_18%)]">
-              İlgili ürünler
-            </p>
-            <h2 className="text-h2 mt-4">Aynı hesap altında ürün ailesi.</h2>
-          </div>
-          <Button asChild variant="outline">
-            <Link href="/products">
-              Platform ürünleri
-              <ChevronRight className="size-4" strokeWidth={1.5} />
-            </Link>
-          </Button>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          {config.related.map((product) => (
-            <Card
-              key={product.name}
-              className="p-5"
-              style={{ "--related-accent": product.accent } as CSSProperties}
-              variant="interactive"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex gap-4">
-                  <div className="flex size-12 items-center justify-center rounded-[var(--radius-md)] border border-[color-mix(in_oklch,var(--related-accent),transparent_62%)] bg-[color-mix(in_oklch,var(--related-accent),transparent_88%)]">
-                    {product.name === "FİŞ260" ? (
-                      <FileSpreadsheet className="size-5" strokeWidth={1.5} />
-                    ) : (
-                      <MonitorDown className="size-5" strokeWidth={1.5} />
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="text-h4">{product.name}</h3>
-                    <p className="text-body-s mt-2 max-w-xl text-[var(--text-secondary)]">
-                      {product.description}
-                    </p>
-                  </div>
-                </div>
-                <span className="text-mono rounded-[var(--radius-sm)] border border-[var(--border-subtle)] px-2 py-1 text-[var(--text-tertiary)]">
-                  {product.status}
-                </span>
-              </div>
-              <Link
-                className="mt-5 inline-flex items-center gap-2 text-body-s font-medium text-[var(--text-primary)] transition-colors hover:text-[color-mix(in_oklch,var(--related-accent),white_18%)]"
-                href={product.href}
-              >
-                Ürün sayfası
-                <ArrowRight className="size-4" strokeWidth={1.5} />
-              </Link>
-            </Card>
-          ))}
-        </div>
-      </section>
-
+      {/* "Urun ailesi / ilgili urunler" bolumu bilinçli KALDIRILDI (18.08):
+          her urun farkli meslek grubuna hitap eder, capraz gecis olmaz. */}
       <section className="border-t border-[var(--border-subtle)] bg-[var(--surface-1)]">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-14 sm:px-8 md:flex-row md:items-center md:justify-between lg:px-10">
           <div>
