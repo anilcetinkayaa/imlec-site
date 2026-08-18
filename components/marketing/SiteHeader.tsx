@@ -78,7 +78,7 @@ export async function SiteHeader({
 
         <div className="flex items-center gap-3">
           <Button asChild variant="brand" size="md" className="hidden lg:inline-flex">
-            <Link href="/api/downloads/launcher">
+            <Link href="/indir">
               <Download aria-hidden="true" strokeWidth={1.5} />
               İmleç Launcher&apos;ı indir
             </Link>

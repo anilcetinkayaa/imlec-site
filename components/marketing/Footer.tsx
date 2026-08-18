@@ -7,7 +7,7 @@ const columns = [
       { href: "/fis260", label: "FİŞ260" },
       { href: "/cozver", label: "ÇÖZVER" },
       { href: "/kuyvera", label: "KUYVERA" },
-      { href: "/api/downloads/launcher", label: "Windows için indir" },
+      { href: "/indir", label: "Windows için indir" },
     ],
   },
   {

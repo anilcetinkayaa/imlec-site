@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import fis260Preview from "@/public/fis260-preview.png";
+import shotAyarlar from "./shots/fis260-ayarlar-performans.png";
+import shotBitti from "./shots/fis260-islem-bitti.png";
+import shotIsleniyor from "./shots/fis260-isleniyor.png";
 import {
   ProductPageLayout,
   type ProductPageConfig,
@@ -66,31 +68,33 @@ const fis260Config: ProductPageConfig = {
     {
       id: "processing",
       label: "İşleme",
-      title: "Fiş işleme ekranı",
+      title: "Fişler okunurken",
       description:
-        "Yüklenen fişler, OCR ilerlemesi ve durum bilgileri aynı masaüstü çalışma yüzeyinde izlenir.",
-      image: fis260Preview,
-      alt: "FİŞ260 fiş işleme ekran görüntüsü",
+        "Üç adımlı akış: Yükle → İşle → Excel. Fişler okunurken ilerleme, sıradaki fiş ve tahmini süre büyük ve sade Türkçeyle gösterilir; program o sırada kullanılmaya devam edilebilir.",
+      image: shotIsleniyor,
+      alt: "FİŞ260 fiş işleme ekranı — ilerleme ve tahmini süre",
     },
     {
-      id: "control",
-      label: "Kontrol",
-      title: "Alan kontrolü",
+      id: "results",
+      label: "Sonuç ve kontrol",
+      title: "Sonuç tablosu ve Excel",
       description:
-        "OCR sonucunda çıkarılan alanlar Excel'e aktarılmadan önce kullanıcı tarafından doğrulanır.",
-      image: fis260Preview,
-      alt: "FİŞ260 alan kontrol ekranı",
+        "Her fişin firması, tarihi, toplamı ve KDV'si tabloda; işlem bitince Excel dosyası hazırdır. Sistem emin olamadığı alanı boş bırakır ve Excel'de 'KONTROL EDİN' diye işaretler — sessiz yanlış rakam üretmez.",
+      image: shotBitti,
+      alt: "FİŞ260 sonuç tablosu — işlenen fişler ve hazır Excel",
     },
     {
-      id: "export",
-      label: "Excel",
-      title: "Excel aktarımı",
+      id: "performance",
+      label: "Performans",
+      title: "Bilgisayarınızı yormayan ayar",
       description:
-        "Onaylanan kayıtlar muhasebe ekibinin kullanabileceği düzenli Excel çıktısına dönüştürülür.",
-      image: fis260Preview,
-      alt: "FİŞ260 Excel aktarım ekranı",
+        "Tek kaydırıcı: sola çektikçe bilgisayar rahatlar, sağa çektikçe tam hız. Doğruluk her kademede aynıdır. Tema tercihi launcher ile ortaktır.",
+      image: shotAyarlar,
+      alt: "FİŞ260 Ayarlar — performans kaydırıcısı ve temalar",
     },
   ],
+  screenshotsNote:
+    "Ekran görüntülerindeki firma adları tamamen temsilîdir; gerçek kişi veya kuruluşları ifade etmez. Görüntülenen tutarlar yalnızca tanıtım amacıyla oluşturulmuş örnek verilerdir.",
   specs: [
     ["Platform", "Windows 10/11"],
     ["Dağıtım", "Yetkili web hesabı üzerinden"],
