@@ -15,6 +15,10 @@ const products = [
     slug: "cozver",
     name: "COZVER",
   },
+  {
+    slug: "kuyvera",
+    name: "KUYVERA",
+  },
 ];
 
 async function upsertVersion(product, version) {
@@ -150,7 +154,7 @@ async function main() {
     console.log(`Dev entitlement olusturuldu: ${user.email} -> FIS260`);
   }
 
-  console.log("Product seed tamamlandi: launcher, FIS260, COZVER");
+  console.log("Product seed tamamlandi: launcher, FIS260, COZVER, KUYVERA");
 }
 
 main()

@@ -51,6 +51,7 @@ PRODUCT_EXE_NAMES = {
     "fis260": "FIS260.exe",
     "cozver": "Cozver.exe",
     "çözver": "Cozver.exe",
+    "kuyvera": "KUYVERA.exe",
 }
 DEFAULT_THEME = "gece"
 STATIC_THEMES = {
@@ -381,6 +382,8 @@ def friendly_error(exc: Exception) -> str:
             if "/api/desktop-auth/login" in url:
                 return "E-posta veya şifre hatalı. Bilgileri kontrol edip tekrar deneyin."
             return "Oturum süreniz doldu. Lütfen yeniden giriş yapın."
+        if status == 429:
+            return "Çok fazla giriş denemesi yapıldı. Güvenlik için 15 dakika sonra tekrar deneyin."
         if status == 404 and "/api/desktop/products" in url:
             return (
                 "Canlı site henüz launcher ürün endpoint'ini içermiyor.\n\n"
