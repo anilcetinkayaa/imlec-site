@@ -62,7 +62,13 @@ export async function createFis260Checkout({
   const url = response.data?.data.attributes.url;
 
   if (response.error || !url) {
-    throw new Error("LEMONSQUEEZY_CHECKOUT_CREATE_FAILED");
+    // Saglayici hatasinin GERCEK sebebi loglara dussun (401 anahtar mi,
+    // 404 variant mi) — tek tip mesajla teshis koreltilmesin.
+    const detail = response.error
+      ? response.error.message ?? JSON.stringify(response.error)
+      : "NO_CHECKOUT_URL";
+    console.error("[LEMONSQUEEZY CHECKOUT CREATE FAILED]", detail);
+    throw new Error(`LEMONSQUEEZY_CHECKOUT_CREATE_FAILED: ${detail}`);
   }
 
   // Guvenlik kilidi: canli mod isterken saglayici test checkout dondururse

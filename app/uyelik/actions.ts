@@ -119,10 +119,8 @@ export async function startFis260Checkout() {
       testMode,
     });
   } catch (error) {
-    console.error(
-      "[LEMONSQUEEZY CHECKOUT ERROR]",
-      error instanceof Error ? error.message : "UNKNOWN_ERROR",
-    );
+    // Tam hata (stack dahil) loglansin; kullanici gorunur bantla bilgilendirilir
+    console.error("[LEMONSQUEEZY CHECKOUT ERROR]", error);
     redirect("/uyelik?checkout=unavailable");
   }
 

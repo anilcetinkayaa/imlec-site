@@ -126,6 +126,22 @@ export default async function MembershipPage({
           </div>
         ) : null}
 
+        {params.checkout === "unavailable" ? (
+          <div className="mb-8 rounded-[var(--radius-lg)] border border-red-400/30 bg-red-400/10 px-4 py-3">
+            <p className="text-body-s text-[var(--text-primary)]">
+              Ödeme sayfası şu anda açılamadı. Lütfen birkaç dakika sonra tekrar
+              deneyin; sorun sürerse{" "}
+              <a
+                className="font-medium underline underline-offset-2"
+                href="mailto:bilgi@imlecyazilim.com?subject=Abonelik başlatılamıyor"
+              >
+                bilgi@imlecyazilim.com
+              </a>{" "}
+              adresine yazın — hızlıca yardımcı olalım.
+            </p>
+          </div>
+        ) : null}
+
         {params.checkout === "verification_rate_limited" ? (
           <div className="mb-8 rounded-[var(--radius-lg)] border border-amber-400/30 bg-amber-400/10 px-4 py-3">
             <p className="text-body-s text-[var(--text-primary)]">
