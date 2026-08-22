@@ -5,6 +5,7 @@ import os
 import re
 import subprocess
 import sys
+import webbrowser
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -30,6 +31,11 @@ from PySide6.QtWidgets import (
 
 APP_DIR = Path(__file__).resolve().parent
 PROFILE_PATH = APP_DIR / "profiles.json"
+CKA_INSTALL_DIR = Path(r"C:\Program Files (x86)\SSL Corp eSigner CKA")
+CKA_EXE = CKA_INSTALL_DIR / "eSigner CKA.exe"
+CKA_TOOL_EXE = CKA_INSTALL_DIR / "eSignerCKATool.exe"
+CKA_DOWNLOAD_URL = "https://www.ssl.com/downloads/"
+MINIMUM_CKA_VERSION = (1, 1, 2)
 
 
 @dataclass
@@ -64,6 +70,26 @@ def resolve_path(root: str | Path, value: str) -> Path:
     return Path(root) / path
 
 
+def version_tuple(value: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in re.findall(r"\d+", value))
+
+
+def installed_cka_version() -> str:
+    command = run_command(
+        [
+            "powershell",
+            "-NoProfile",
+            "-Command",
+            "Get-ItemProperty "
+            "'HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*' "
+            "-ErrorAction SilentlyContinue | "
+            "Where-Object DisplayName -Match 'eSigner Cloud Key Adapter' | "
+            "Select-Object -First 1 -ExpandProperty DisplayVersion",
+        ]
+    )
+    return command.output.strip()
+
+
 def find_signtool() -> str | None:
     command = run_command(
         "powershell -NoProfile -Command \"(Get-Command signtool.exe -ErrorAction SilentlyContinue).Source\""
@@ -75,9 +101,12 @@ def find_signtool() -> str | None:
     kits_root = Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) / "Windows Kits" / "10" / "bin"
     if kits_root.exists():
         matches = sorted(kits_root.rglob("signtool.exe"), reverse=True)
-        for match in matches:
-            if "\\x64\\" in str(match).lower():
-                return str(match)
+        # SSL.com, eSigner CKA ile x64 sorununda x86 SignTool kullanılmasını
+        # öneriyor. CKA 32-bit kurulduğu için yerel akışta x86'yı öne alıyoruz.
+        for architecture in ("\\x86\\", "\\x64\\"):
+            for match in matches:
+                if architecture in str(match).lower():
+                    return str(match)
     return None
 
 
@@ -130,6 +159,7 @@ class ReleaseManagerWindow(QMainWindow):
         self.products = self.config.get("products") or []
         self.cert = self.config.get("certificate") or {}
         self.signtool_path: str | None = None
+        self.signing_ready = False
         self.worker: CommandWorker | None = None
 
         self.setWindowTitle("İmleç Release Manager")
@@ -195,15 +225,18 @@ class ReleaseManagerWindow(QMainWindow):
         grid.setColumnStretch(1, 1)
 
         self.signtool_status = QLabel("Kontrol edilmedi")
+        self.cka_status = QLabel("Kontrol edilmedi")
         self.cert_status = QLabel("Kontrol edilmedi")
         self.artifact_status = QLabel("Kontrol edilmedi")
 
         grid.addWidget(QLabel("SignTool"), 0, 0)
         grid.addWidget(self.signtool_status, 0, 1)
-        grid.addWidget(QLabel("Sertifika"), 1, 0)
-        grid.addWidget(self.cert_status, 1, 1)
-        grid.addWidget(QLabel("Dosyalar"), 2, 0)
-        grid.addWidget(self.artifact_status, 2, 1)
+        grid.addWidget(QLabel("eSigner CKA"), 1, 0)
+        grid.addWidget(self.cka_status, 1, 1)
+        grid.addWidget(QLabel("Sertifika / KSP"), 2, 0)
+        grid.addWidget(self.cert_status, 2, 1)
+        grid.addWidget(QLabel("Dosyalar"), 3, 0)
+        grid.addWidget(self.artifact_status, 3, 1)
         return box
 
     def build_actions_box(self) -> QFrame:
@@ -216,12 +249,18 @@ class ReleaseManagerWindow(QMainWindow):
         self.sign_button = QPushButton("İmzala")
         self.verify_button = QPushButton("İmzayı Doğrula")
         self.package_button = QPushButton("Paketle")
+        self.open_cka_button = QPushButton("CKA'yı Aç")
+        self.cka_download_button = QPushButton("Resmî CKA Sayfası")
 
         self.check_button.clicked.connect(self.run_startup_checks)
         self.build_button.clicked.connect(self.build_product)
         self.sign_button.clicked.connect(self.sign_artifacts)
         self.verify_button.clicked.connect(self.verify_artifacts)
         self.package_button.clicked.connect(self.package_product)
+        self.open_cka_button.clicked.connect(self.open_cka)
+        self.cka_download_button.clicked.connect(
+            lambda: webbrowser.open(CKA_DOWNLOAD_URL)
+        )
 
         for button in (
             self.check_button,
@@ -229,6 +268,8 @@ class ReleaseManagerWindow(QMainWindow):
             self.sign_button,
             self.verify_button,
             self.package_button,
+            self.open_cka_button,
+            self.cka_download_button,
         ):
             layout.addWidget(button)
         layout.addStretch(1)
@@ -273,6 +314,7 @@ class ReleaseManagerWindow(QMainWindow):
     @Slot()
     def run_startup_checks(self) -> None:
         self.log_message("Kontroller başlatıldı.")
+        self.signing_ready = False
         self.signtool_path = find_signtool()
         if self.signtool_path:
             self.signtool_status.setText(self.signtool_path)
@@ -281,29 +323,69 @@ class ReleaseManagerWindow(QMainWindow):
             self.signtool_status.setText("Bulunamadı. Windows SDK / SignTool gerekli.")
             self.log_message("HATA: SignTool bulunamadı.")
 
+        cka_version = installed_cka_version()
+        if not CKA_EXE.is_file():
+            self.cka_status.setText("Kurulu değil. Güncel CKA 1.1.2 gerekli.")
+            self.log_message("HATA: eSigner CKA bulunamadı.")
+        elif not cka_version:
+            self.cka_status.setText("Kurulu, sürüm okunamadı")
+            self.log_message(f"CKA bulundu: {CKA_EXE}")
+        elif version_tuple(cka_version) < MINIMUM_CKA_VERSION:
+            self.cka_status.setText(
+                f"Eski sürüm {cka_version}; en az 1.1.2 kurulmalı"
+            )
+            self.log_message(
+                f"HATA: eSigner CKA {cka_version} eski. Güncel sürüm: 1.1.2."
+            )
+        else:
+            self.cka_status.setText(f"Hazır: {cka_version}")
+            self.log_message(f"eSigner CKA sürümü: {cka_version}")
+
         thumbprint = str(self.cert.get("thumbprint") or "").replace(" ", "")
         if thumbprint:
-            command = (
-                "powershell -NoProfile -Command "
-                f"\"$c=Get-ChildItem Cert:\\CurrentUser\\My | Where-Object {{$_.Thumbprint -eq '{thumbprint}'}}; "
-                "if($c){$c | Select-Object Subject,Thumbprint,HasPrivateKey,NotAfter | Format-List | Out-String}else{'NOT_FOUND'}\""
+            certutil = run_command(
+                ["certutil", "-user", "-store", "My", thumbprint]
             )
-            result = run_command(command)
-            text = result.output.strip()
-            if "NOT_FOUND" in text or not text:
+            certutil_text = certutil.output.strip()
+            if certutil.code != 0 or thumbprint.lower() not in certutil_text.lower():
                 self.cert_status.setText("Sertifika bulunamadı")
-            elif "HasPrivateKey : True" in text or "HasPrivateKey: True" in text:
-                certutil = run_command(f"certutil -user -store My {thumbprint}")
-                certutil_text = certutil.output.strip()
-                self.log_message(certutil_text)
-                if "Encryption test FAILED" in certutil_text:
-                    self.cert_status.setText("Sertifika var ama CKA özel anahtarı erişilemiyor")
-                else:
-                    self.cert_status.setText("Sertifika hazır ve özel anahtar erişilebilir")
+                self.log_message(certutil_text or "Sertifika sorgusu çıktı üretmedi.")
             else:
-                self.cert_status.setText("Sertifika var ama özel anahtar doğrulanamadı")
-            self.log_message(text)
+                self.log_message(certutil_text)
+                container_match = re.search(
+                    r"Key Container\s*=\s*([^\r\n]+)", certutil_text, re.IGNORECASE
+                )
+                key_list = run_command("certutil -user -csp eSignerKSP -key")
+                key_text = key_list.output.strip()
+                self.log_message(key_text)
+                container = container_match.group(1).strip() if container_match else ""
+                if not container or container.lower() not in key_text.lower():
+                    self.cert_status.setText(
+                        "Sertifika var; CKA anahtar konteyneri yüklü değil"
+                    )
+                    self.log_message(
+                        "HATA: Sertifikaya bağlı eSignerKSP anahtar konteyneri bulunamadı."
+                    )
+                else:
+                    self.cert_status.setText("Sertifika ve CKA anahtarı hazır")
+                    self.signing_ready = bool(
+                        self.signtool_path
+                        and cka_version
+                        and version_tuple(cka_version) >= MINIMUM_CKA_VERSION
+                    )
+        self.sign_button.setEnabled(self.signing_ready)
         self.refresh_product()
+
+    @Slot()
+    def open_cka(self) -> None:
+        if not CKA_EXE.is_file():
+            QMessageBox.warning(
+                self,
+                "eSigner CKA",
+                "eSigner CKA kurulu değil. Önce Resmî CKA Sayfası düğmesini kullanın.",
+            )
+            return
+        subprocess.Popen([str(CKA_EXE)])
 
     def start_worker(self, title: str, command: str | list[str], cwd: str | Path | None = None) -> None:
         if self.worker and self.worker.isRunning():
@@ -334,6 +416,8 @@ class ReleaseManagerWindow(QMainWindow):
             self.package_button,
         ):
             button.setEnabled(enabled)
+        if enabled:
+            self.sign_button.setEnabled(self.signing_ready)
 
     @Slot()
     def build_product(self) -> None:
@@ -355,6 +439,14 @@ class ReleaseManagerWindow(QMainWindow):
         if not self.signtool_path:
             QMessageBox.warning(self, "İmzalama", "SignTool bulunamadı. Kontrolleri yenileyin.")
             return
+        if not self.signing_ready:
+            QMessageBox.warning(
+                self,
+                "İmzalama",
+                "CKA sürümü veya eSignerKSP anahtar bağlantısı hazır değil. "
+                "Önce CKA'yı güncelleyip Kontrolleri Yenile'yi çalıştırın.",
+            )
+            return
         paths = artifact_paths(product)
         missing = [path for path in paths if not path.exists()]
         if missing:
@@ -364,7 +456,7 @@ class ReleaseManagerWindow(QMainWindow):
         timestamp_url = str(self.cert.get("timestamp_url") or "http://ts.ssl.com")
         quoted_paths = " ".join(f'"{path}"' for path in paths)
         command = (
-            f'"{self.signtool_path}" sign /fd SHA256 /tr {timestamp_url} /td SHA256 '
+            f'"{self.signtool_path}" sign /debug /fd SHA256 /tr {timestamp_url} /td SHA256 '
             f'/sha1 {thumbprint} /v {quoted_paths}'
         )
         self.start_worker("İmzalama", command)
