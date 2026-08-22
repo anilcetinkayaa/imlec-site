@@ -104,6 +104,29 @@ export async function POST(request: Request) {
     return bridgeError("ACCOUNTANT_HAS_NO_FIS260", 409);
   }
 
+  // Muhasebeci değişikliği bilinçli olmalı: başka bir muhasebeciyle
+  // bekleyen/aktif bağlantı varken yeni istek açılamaz — önce koparılır.
+  const mevcutBaglanti = await prisma.taxpayerLink.findFirst({
+    where: {
+      jewelerUserId: auth.user.id,
+      status: { in: [TaxpayerLinkStatus.PENDING, TaxpayerLinkStatus.ACTIVE] },
+      NOT: { accountantUserId: accountant.id },
+    },
+    include: { accountant: { select: { email: true } } },
+  });
+
+  if (mevcutBaglanti) {
+    return Response.json(
+      {
+        ok: false,
+        error: "ANOTHER_LINK_ACTIVE",
+        currentAccountant: mevcutBaglanti.accountant.email,
+        currentStatus: mevcutBaglanti.status,
+      },
+      { status: 409 },
+    );
+  }
+
   const veriler = {
     businessName: body.businessName?.trim() || null,
     businessVkn: body.businessVkn?.trim() || null,
