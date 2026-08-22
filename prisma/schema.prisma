@@ -157,6 +157,21 @@ enum FeatureSuggestionStatus {
   ARCHIVED
 }
 
+// Mükellef Köprüsü: KUYVERA kuyumcusu <-> FIS260 muhasebecisi eşleşmesi.
+// Paketler yalnız ACTIVE bağlantı üzerinden akar (rastgele gönderim yok).
+enum TaxpayerLinkStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  REVOKED
+}
+
+enum TaxpayerPackageStatus {
+  RECEIVED
+  DOWNLOADED
+  PROCESSED
+}
+
 model User {
   id               String    @id @default(cuid())
   email            String    @unique
@@ -193,6 +208,8 @@ model User {
   targetedEvents          AuditLog[]               @relation("AuditTarget")
   passwordResetTokens     PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
+  taxpayerLinksAsJeweler    TaxpayerLink[]         @relation("TaxpayerLinkJeweler")
+  taxpayerLinksAsAccountant TaxpayerLink[]         @relation("TaxpayerLinkAccountant")
 
   @@index([role])
   @@index([username])
@@ -795,6 +812,48 @@ model FeatureSuggestion {
   @@index([userId])
   @@index([productSlug, status])
   @@index([score])
+  @@index([createdAt])
+}
+
+model TaxpayerLink {
+  id               String             @id @default(cuid())
+  jewelerUserId    String
+  accountantUserId String
+  status           TaxpayerLinkStatus @default(PENDING)
+  businessName     String?
+  businessVkn      String?
+  requestNote      String?
+  respondedAt      DateTime?
+  revokedAt        DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  jeweler    User             @relation("TaxpayerLinkJeweler", fields: [jewelerUserId], references: [id], onDelete: Restrict)
+  accountant User             @relation("TaxpayerLinkAccountant", fields: [accountantUserId], references: [id], onDelete: Restrict)
+  packages   TaxpayerPackage[]
+
+  @@unique([jewelerUserId, accountantUserId])
+  @@index([accountantUserId, status])
+  @@index([jewelerUserId, status])
+}
+
+model TaxpayerPackage {
+  id            String                @id @default(cuid())
+  linkId        String
+  schemaVersion Int                   @default(1)
+  period        String?
+  documentCount Int                   @default(0)
+  entryCount    Int                   @default(0)
+  payload       Json
+  status        TaxpayerPackageStatus @default(RECEIVED)
+  downloadedAt  DateTime?
+  processedAt   DateTime?
+  createdAt     DateTime              @default(now())
+
+  link TaxpayerLink @relation(fields: [linkId], references: [id], onDelete: Restrict)
+
+  @@index([linkId, status])
+  @@index([status, createdAt])
   @@index([createdAt])
 }
 
